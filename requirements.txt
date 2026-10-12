@@ -1,0 +1,9 @@
+# Core dependencies for Polymathix
+numpy
+scipy
+pandas
+matplotlib
+# Future dependencies:
+# openmm
+# pymol
+# pyqt6

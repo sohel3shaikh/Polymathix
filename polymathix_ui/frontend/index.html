@@ -1,0 +1,4857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POLYMATHIX — AI for Scientific Discovery</title>
+
+<!-- Three.js -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/exporters/OBJExporter.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/exporters/STLExporter.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/exporters/GLTFExporter.js"></script>
+
+<style>
+:root{
+    --bg:#020914;
+    --bg2:#061426;
+    --panel:rgba(7,25,46,.72);
+    --panel2:rgba(10,31,57,.82);
+    --border:rgba(90,178,255,.20);
+    --blue:#168cff;
+    --cyan:#00eaff;
+    --violet:#7657ff;
+    --green:#00f59b;
+    --yellow:#ffd84d;
+    --red:#ff4d67;
+    --text:#f2f7ff;
+    --muted:#7e94ad;
+    --shadow:0 0 35px rgba(0,120,255,.13);
+}
+
+*{
+    box-sizing:border-box;
+}
+
+html,body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    font-family:Inter,Segoe UI,Arial,sans-serif;
+    color:var(--text);
+    background:
+        radial-gradient(circle at 75% 5%,rgba(0,110,255,.12),transparent 30%),
+        radial-gradient(circle at 20% 80%,rgba(115,55,255,.08),transparent 30%),
+        linear-gradient(135deg,#020711,#04101e 55%,#020814);
+}
+
+button,
+input{
+    font:inherit;
+}
+
+button{
+    color:var(--text);
+}
+
+.app{
+    width:100vw;
+    height:100vh;
+    display:grid;
+    grid-template-columns:245px 1fr;
+}
+
+/* ================= SIDEBAR ================= */
+
+.sidebar{
+    position:relative;
+    padding:18px 13px;
+    border-right:1px solid var(--border);
+    background:
+        linear-gradient(180deg,rgba(4,20,38,.94),rgba(2,12,25,.94));
+    backdrop-filter:blur(24px);
+    z-index:10;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.nav{
+    margin-top:12px;
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: none;
+    padding-bottom: 10px;
+}
+.nav::-webkit-scrollbar { display: none; }
+
+.logo{
+    height:65px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:3px 10px 12px;
+}
+
+.logoCube{
+    width:42px;
+    height:42px;
+    border-radius:12px;
+    display:grid;
+    place-items:center;
+    font-size:23px;
+    color:#fff;
+    background:
+        linear-gradient(135deg,#08eaff,#416cff 55%,#8758ff);
+    box-shadow:
+        0 0 15px rgba(0,220,255,.6),
+        inset 0 0 15px rgba(255,255,255,.22);
+}
+
+.logoText{
+    font-size:21px;
+    letter-spacing:1px;
+    font-weight:700;
+}
+
+.logoSub{
+    font-size:10px;
+    color:#67caff;
+    margin-top:3px;
+    letter-spacing:.7px;
+}
+
+.nav{
+    margin-top:12px;
+}
+
+.navItem{
+    height:46px;
+    display:flex;
+    align-items:center;
+    gap:13px;
+    padding:0 14px;
+    margin:4px 0;
+    border:1px solid transparent;
+    border-radius:12px;
+    color:#a7b8cb;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.navItem:hover{
+    background:rgba(20,100,200,.12);
+    color:#fff;
+}
+
+.navItem.active{
+    color:#fff;
+    border-color:rgba(40,145,255,.4);
+    background:
+        linear-gradient(90deg,rgba(20,102,255,.58),rgba(21,77,157,.23));
+    box-shadow:
+        inset 0 0 22px rgba(0,120,255,.16),
+        0 0 15px rgba(0,110,255,.13);
+}
+
+.navIcon{
+    width:24px;
+    text-align:center;
+    font-size:18px;
+}
+
+.navArrow{
+    margin-left:auto;
+    color:#55708d;
+}
+
+.quote{
+    position: relative;
+    margin-top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    min-height: 110px;
+    padding: 13px;
+    border: 1px solid rgba(80,160,255,.18);
+    border-radius: 14px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background:
+        linear-gradient(135deg,rgba(8,28,53,.86),rgba(7,20,37,.74));
+}
+
+.quote:after{
+    content:"";
+    position:absolute;
+    width:160px;
+    height:160px;
+    right:-60px;
+    bottom:-70px;
+    border-radius:50%;
+    background:radial-gradient(circle,rgba(0,180,255,.22),transparent 65%);
+}
+
+.quoteText{
+    position:relative;
+    z-index:1;
+    font-size:15px;
+    line-height:1.55;
+    font-style:italic;
+    color:#eaf4ff;
+}
+
+.quoteSub{
+    position:relative;
+    z-index:1;
+    margin-top:13px;
+    font-size:10px;
+    color:#68819c;
+}
+
+/* ================= MAIN ================= */
+
+.main{
+    min-width:0;
+    height:100vh;
+    padding:13px;
+    display:grid;
+    grid-template-rows:72px 92px minmax(0,1fr) 245px 54px;
+    gap:10px;
+}
+
+/* ================= TOPBAR ================= */
+
+.topbar{
+    display:flex;
+    align-items:center;
+    gap:13px;
+}
+
+.search{
+    flex:1;
+    height:58px;
+    display:flex;
+    align-items:center;
+    gap:13px;
+    padding:0 13px;
+    border:1px solid rgba(48,156,255,.35);
+    border-radius:15px;
+    background:linear-gradient(135deg,rgba(8,31,59,.83),rgba(4,19,38,.7));
+    box-shadow:var(--shadow);
+}
+
+.aiOrb{
+    width:35px;
+    height:35px;
+    flex:0 0 35px;
+    border-radius:50%;
+    display:grid;
+    place-items:center;
+    background:radial-gradient(circle,#00eaff,#0e71ff 60%,transparent 68%);
+    box-shadow:0 0 20px rgba(0,225,255,.45);
+}
+
+.searchText{
+    min-width:0;
+    flex:1;
+}
+
+.searchMain{
+    font-size:14px;
+}
+
+.searchExample{
+    margin-top:5px;
+    font-size:11px;
+    color:#708ba7;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.sendBtn{
+    width:40px;
+    height:40px;
+    border:0;
+    border-radius:11px;
+    cursor:pointer;
+    background:linear-gradient(135deg,#087dff,#624dff);
+    box-shadow:0 0 18px rgba(30,117,255,.38);
+}
+
+.topButton{
+    width:43px;
+    height:43px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:rgba(9,28,49,.8);
+    cursor:pointer;
+}
+
+.profile{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding-left:3px;
+    min-width:185px;
+}
+
+.avatar{
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    display:grid;
+    place-items:center;
+    font-weight:700;
+    background:linear-gradient(135deg,#2169c8,#684dff);
+    box-shadow:0 0 20px rgba(65,111,255,.3);
+}
+
+.profileName{
+    font-size:13px;
+    font-weight:600;
+}
+
+.profileRole{
+    margin-top:3px;
+    font-size:10px;
+    color:#7188a3;
+}
+
+/* ================= KPI ================= */
+
+.kpis{
+    display:grid;
+    grid-template-columns:repeat(5,1fr) 1.35fr;
+    gap:10px;
+}
+
+.kpi,
+.dateCard{
+    border:1px solid var(--border);
+    border-radius:14px;
+    background:
+        linear-gradient(145deg,rgba(8,30,53,.82),rgba(5,19,35,.7));
+    box-shadow:var(--shadow);
+    overflow:hidden;
+}
+
+.kpi{
+    padding:14px;
+    position:relative;
+}
+
+.kpiIcon{
+    font-size:22px;
+    color:#00cfff;
+}
+
+.kpiTitle{
+    position:absolute;
+    left:50px;
+    top:14px;
+    font-size:10px;
+    color:#7891aa;
+}
+
+.kpiValue{
+    margin-top:7px;
+    font-size:22px;
+    font-weight:700;
+}
+
+.kpiTrend{
+    font-size:10px;
+    color:var(--green);
+    margin-top:3px;
+}
+
+.kpiGlow{
+    position:absolute;
+    width:90px;
+    height:90px;
+    right:-40px;
+    bottom:-50px;
+    border-radius:50%;
+    background:radial-gradient(circle,rgba(0,160,255,.25),transparent 70%);
+}
+
+.dateCard{
+    padding:12px 15px;
+    position:relative;
+}
+
+.dateSmall{
+    color:#839bb4;
+    font-size:11px;
+}
+
+.dateTime{
+    margin-top:6px;
+    font-size:23px;
+    font-weight:700;
+}
+
+.dateGood{
+    margin-top:2px;
+    font-size:10px;
+    color:#839bb4;
+}
+
+.planet{
+    position:absolute;
+    right:-25px;
+    top:-25px;
+    width:115px;
+    height:115px;
+    border-radius:50%;
+    background:
+        radial-gradient(circle at 35% 30%,#6f8e9f,#1c3545 43%,#061422 68%);
+    box-shadow:inset -15px -12px 25px rgba(0,0,0,.65),0 0 35px rgba(0,170,255,.12);
+}
+
+/* ================= MIDDLE ================= */
+
+.workspace{
+    min-height:0;
+    display:grid;
+    grid-template-columns:minmax(480px,1fr) 350px 250px;
+    gap:10px;
+}
+
+/* ================= GLASS ================= */
+
+.glass{
+    border:1px solid var(--border);
+    border-radius:16px;
+    background:
+        linear-gradient(145deg,rgba(7,27,49,.86),rgba(3,16,31,.78));
+    box-shadow:var(--shadow);
+    backdrop-filter:blur(18px);
+}
+
+/* ================= 3D ================= */
+
+.viewer{
+    min-width:0;
+    display:grid;
+    grid-template-rows:51px minmax(0,1fr) 53px;
+    overflow:hidden;
+}
+
+.tabs{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    padding:7px 10px;
+    border-bottom:1px solid rgba(90,170,255,.12);
+}
+
+.tab{
+    padding:9px 13px;
+    border-radius:10px;
+    color:#8096ad;
+    font-size:11px;
+    cursor:pointer;
+}
+
+.tab.active{
+    color:#fff;
+    background:linear-gradient(135deg,#176dff,#5c4bff);
+    box-shadow:0 0 15px rgba(39,107,255,.3);
+}
+
+.canvasWrap{
+    position:relative;
+    min-height:0;
+    overflow:hidden;
+    margin:0 9px;
+    border-radius:12px;
+    background:
+        radial-gradient(circle at 50% 45%,rgba(14,78,128,.15),transparent 45%),
+        #010811;
+}
+
+#threeCanvas{
+    width:100%;
+    height:100%;
+    display:block;
+}
+
+.viewerTools{
+    position:absolute;
+    left:10px;
+    top:12px;
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+}
+
+.viewerTool{
+    width:34px;
+    height:34px;
+    border:1px solid rgba(100,180,255,.25);
+    border-radius:9px;
+    background:rgba(4,19,34,.8);
+    color:#9bb4cc;
+    cursor:pointer;
+}
+
+.viewerTool:hover{
+    color:#fff;
+    background:rgba(24,98,195,.6);
+}
+
+.bindingPanel{
+    position:absolute;
+    top:12px;
+    right:12px;
+    width:205px;
+    padding:13px;
+    border:1px solid rgba(91,178,255,.25);
+    border-radius:13px;
+    background:rgba(3,19,34,.88);
+    backdrop-filter:blur(15px);
+    box-shadow:0 0 25px rgba(0,0,0,.3);
+}
+
+.bindingTitle{
+    display:flex;
+    justify-content:space-between;
+    font-size:12px;
+    font-weight:700;
+}
+
+.bindingMeta{
+    margin-top:9px;
+    font-size:9px;
+    color:#7189a2;
+    line-height:1.7;
+}
+
+.residue{
+    display:flex;
+    justify-content:space-between;
+    font-size:9px;
+    padding:3px 0;
+    color:#c6d7e8;
+}
+
+.residue span:last-child{
+    color:#7ba5c9;
+}
+
+.legend{
+    margin-top:6px;
+    display:grid;
+    gap:4px;
+}
+
+.legendItem{
+    font-size:8px;
+    display:flex;
+    align-items:center;
+    gap:5px;
+    color:#9eb2c7;
+}
+
+.dot{
+    width:7px;
+    height:7px;
+    border-radius:50%;
+}
+
+.hbond{background:#00f59b}
+.hydrophobic{background:#ffae3d}
+.electro{background:#ff4d67}
+.pi{background:#925cff}
+
+.viewerBottom{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    padding:8px 10px;
+}
+
+.styleBtn,
+.controlBtn{
+    border:1px solid rgba(85,160,255,.18);
+    border-radius:9px;
+    padding:8px 10px;
+    background:rgba(7,26,46,.75);
+    color:#91a8bf;
+    font-size:10px;
+    cursor:pointer;
+}
+
+.styleBtn.active{
+    color:#fff;
+    border-color:#227dff;
+    background:rgba(17,92,198,.42);
+}
+
+.viewerSpacer{
+    flex:1;
+}
+
+/* ================= AGENT ================= */
+
+.agent{
+    min-width:0;
+    padding:12px;
+    overflow:hidden;
+}
+
+.panelTitle{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-size:12px;
+    font-weight:700;
+}
+
+.status{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    padding:5px 9px;
+    border-radius:20px;
+    font-size:9px;
+    color:#00f59b;
+    border:1px solid rgba(0,245,155,.2);
+    background:rgba(0,245,155,.06);
+}
+
+.statusDot{
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:#00f59b;
+    box-shadow:0 0 8px #00f59b;
+}
+
+.session{
+    margin-top:11px;
+    padding:11px;
+    border:1px solid rgba(80,164,255,.22);
+    border-radius:12px;
+    background:linear-gradient(135deg,rgba(9,35,65,.8),rgba(6,23,42,.65));
+    position:relative;
+    overflow:hidden;
+}
+
+.sessionIcon{
+    width:40px;
+    height:40px;
+    border-radius:11px;
+    display:grid;
+    place-items:center;
+    background:linear-gradient(135deg,#1c6cff,#6b4fff);
+    float:right;
+    box-shadow:0 0 20px rgba(57,107,255,.25);
+}
+
+.label{
+    color:#68839f;
+    font-size:8px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+}
+
+.sessionName{
+    margin:4px 0 12px;
+    font-size:13px;
+    font-weight:700;
+}
+
+.workflow{
+    margin-top:11px;
+}
+
+.workflowTitle{
+    font-size:10px;
+    margin-bottom:7px;
+}
+
+.step{
+    height:27px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:9px;
+    color:#9db0c3;
+}
+
+.stepNum{
+    width:20px;
+    height:20px;
+    border:1px solid #365572;
+    border-radius:50%;
+    display:grid;
+    place-items:center;
+    font-size:8px;
+}
+
+.step.done .stepNum{
+    color:#001f15;
+    background:#00ed98;
+    border-color:#00ed98;
+}
+
+.step.running .stepNum{
+    color:#fff;
+    border-color:#2386ff;
+    background:#126de8;
+    box-shadow:0 0 10px rgba(20,120,255,.4);
+}
+
+.step.done{
+    color:#d6e6f5;
+}
+
+.progress{
+    height:6px;
+    margin-top:11px;
+    border-radius:10px;
+    background:#071a2c;
+    overflow:hidden;
+}
+
+.progressFill{
+    width:50%;
+    height:100%;
+    border-radius:10px;
+    background:linear-gradient(90deg,#158cff,#8a5cff);
+    box-shadow:0 0 12px rgba(35,133,255,.5);
+}
+
+.progressText{
+    display:flex;
+    justify-content:space-between;
+    margin-top:6px;
+    font-size:8px;
+    color:#7289a0;
+}
+
+.agentButtons{
+    display:flex;
+    gap:6px;
+    margin-top:10px;
+}
+
+.agentButton{
+    flex:1;
+    padding:8px 3px;
+    border-radius:8px;
+    border:1px solid rgba(70,150,255,.2);
+    background:rgba(6,27,48,.8);
+    cursor:pointer;
+}
+
+/* ================= CONNECTORS ================= */
+
+.connectors{
+    padding:12px;
+    overflow:hidden;
+}
+
+.connector{
+    height:42px;
+    display:flex;
+    align-items:center;
+    gap:9px;
+    border-bottom:1px solid rgba(90,170,255,.08);
+}
+
+.connectorIcon{
+    width:28px;
+    height:28px;
+    display:grid;
+    place-items:center;
+    border-radius:8px;
+    background:rgba(25,65,105,.7);
+    font-size:13px;
+}
+
+.connectorName{
+    flex:1;
+    font-size:9px;
+}
+
+.connection{
+    font-size:8px;
+    padding:4px 6px;
+    border-radius:10px;
+    color:#8ba2b8;
+    background:rgba(130,160,190,.08);
+}
+
+.connection.ok{
+    color:#00e99a;
+    background:rgba(0,245,155,.07);
+}
+
+.connection.run{
+    color:#4ca8ff;
+    background:rgba(45,135,255,.08);
+}
+
+.connection.off{
+    color:#ff5870;
+    background:rgba(255,65,95,.08);
+}
+
+.more{
+    color:#59738e;
+    cursor:pointer;
+}
+
+/* ================= BOTTOM ================= */
+
+.bottom{
+    min-height:0;
+    display:grid;
+    grid-template-columns:minmax(0,1.2fr) minmax(400px,.9fr);
+    gap:10px;
+}
+
+.logs,
+.results{
+    min-width:0;
+    overflow:hidden;
+}
+
+.logsHeader,
+.resultsHeader{
+    height:42px;
+    display:flex;
+    align-items:center;
+    gap:20px;
+    padding:0 12px;
+    border-bottom:1px solid rgba(90,170,255,.1);
+}
+
+.logTab{
+    font-size:10px;
+    color:#748da7;
+}
+
+.logTab.active{
+    color:#fff;
+}
+
+.logSearch{
+    margin:8px 10px;
+    height:28px;
+    border:1px solid rgba(80,160,255,.12);
+    border-radius:8px;
+    background:#041426;
+    color:#8ba0b5;
+    padding:0 10px;
+    outline:none;
+    width:calc(100% - 20px);
+    font-size:9px;
+}
+
+.logBody{
+    height:calc(100% - 78px);
+    overflow:auto;
+    padding:2px 12px 8px;
+    font-family:Consolas,monospace;
+    font-size:9px;
+    line-height:1.75;
+    color:#7892ac;
+}
+
+.logInfo{color:#7594b0}
+.logSuccess{color:#00e99b}
+.logWarn{color:#ffd34d}
+.logError{color:#ff536c}
+
+.resultGrid{
+    height:calc(100% - 42px);
+    padding:9px;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+}
+
+.resultCard{
+    min-width:0;
+    border:1px solid rgba(80,160,255,.12);
+    border-radius:10px;
+    overflow:hidden;
+    background:#031222;
+    cursor:pointer;
+}
+
+.resultPreview{
+    height:78px;
+    background:
+        radial-gradient(circle at 50% 50%,rgba(0,185,255,.25),transparent 35%),
+        linear-gradient(135deg,#07182b,#020a14);
+    display:grid;
+    place-items:center;
+    font-size:27px;
+}
+
+.resultName{
+    padding:6px 7px 0;
+    font-size:8px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.resultMeta{
+    padding:3px 7px 7px;
+    color:#526d87;
+    font-size:7px;
+}
+
+/* ================= QUICK ================= */
+
+.quick{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+.quickTitle{
+    font-size:10px;
+    color:#748da5;
+    padding-left:3px;
+}
+
+.quickBtn{
+    height:36px;
+    padding:0 13px;
+    border:1px solid rgba(80,160,255,.18);
+    border-radius:9px;
+    background:linear-gradient(135deg,rgba(10,37,65,.85),rgba(5,22,39,.8));
+    cursor:pointer;
+    font-size:9px;
+}
+
+.quickBtn:hover{
+    border-color:#288cff;
+    background:rgba(20,87,170,.4);
+}
+
+.footerGlow{
+    margin-left:auto;
+    width:180px;
+    height:34px;
+    border-radius:30px;
+    background:
+        radial-gradient(ellipse,rgba(0,145,255,.25),transparent 65%);
+}
+
+/* ================= MODAL ================= */
+
+.modalOverlay{
+    position:fixed;
+    inset:0;
+    z-index:100;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:rgba(0,5,12,.68);
+    backdrop-filter:blur(10px);
+}
+
+.modalOverlay.show{
+    display:flex;
+}
+
+.exportModal{
+    width:min(1050px,92vw);
+    max-height:88vh;
+    overflow:auto;
+    border:1px solid rgba(68,167,255,.35);
+    border-radius:19px;
+    background:
+        linear-gradient(145deg,rgba(8,31,54,.97),rgba(3,15,29,.97));
+    box-shadow:
+        0 30px 100px rgba(0,0,0,.65),
+        0 0 50px rgba(0,120,255,.12);
+}
+
+.modalHeader{
+    height:61px;
+    display:flex;
+    align-items:center;
+    padding:0 19px;
+    border-bottom:1px solid rgba(90,170,255,.12);
+}
+
+.modalTitle{
+    font-size:16px;
+    font-weight:700;
+}
+
+.modalClose{
+    margin-left:auto;
+    width:32px;
+    height:32px;
+    border:0;
+    border-radius:8px;
+    background:rgba(255,255,255,.05);
+    color:#94aac0;
+    cursor:pointer;
+}
+
+.exportTabs{
+    display:flex;
+    gap:5px;
+    padding:11px;
+    border-bottom:1px solid rgba(90,170,255,.1);
+}
+
+.exportTab{
+    flex:1;
+    padding:10px;
+    border:1px solid rgba(90,160,255,.12);
+    border-radius:8px;
+    background:rgba(6,24,42,.7);
+    color:#7690a9;
+    cursor:pointer;
+    font-size:10px;
+}
+
+.exportTab.active{
+    color:#fff;
+    border-color:#1e83ff;
+    background:rgba(20,99,204,.35);
+}
+
+.exportBody{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:11px;
+    padding:12px;
+}
+
+.exportSection{
+    padding:12px;
+    border:1px solid rgba(90,160,255,.12);
+    border-radius:12px;
+    background:rgba(3,18,32,.7);
+}
+
+.sectionTitle{
+    font-size:10px;
+    font-weight:700;
+    margin-bottom:11px;
+}
+
+.option{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    min-height:31px;
+    font-size:9px;
+    color:#9eb2c6;
+}
+
+.option input{
+    accent-color:#228bff;
+}
+
+.format{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    min-height:43px;
+    padding:7px;
+    border:1px solid transparent;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.format:hover{
+    background:rgba(30,100,190,.1);
+}
+
+.format.selected{
+    border-color:#1887ff;
+    background:rgba(20,99,200,.16);
+}
+
+.formatIcon{
+    width:30px;
+    height:30px;
+    display:grid;
+    place-items:center;
+    border-radius:7px;
+    background:rgba(30,105,190,.25);
+}
+
+.formatName{
+    font-size:10px;
+    color:#e2edf7;
+}
+
+.formatDesc{
+    font-size:7px;
+    color:#647e98;
+    margin-top:2px;
+}
+
+.exportFooter{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:12px;
+    border-top:1px solid rgba(90,170,255,.12);
+}
+
+.exportMain{
+    margin-left:auto;
+    padding:12px 20px;
+    border:0;
+    border-radius:10px;
+    color:#fff;
+    cursor:pointer;
+    background:linear-gradient(135deg,#087fff,#664eff);
+    box-shadow:0 0 25px rgba(30,120,255,.25);
+}
+
+.exportMessage{
+    font-size:9px;
+    color:#6f8ba6;
+}
+
+/* ================= TOAST ================= */
+
+.toast{
+    position:fixed;
+    right:25px;
+    bottom:25px;
+    z-index:200;
+    min-width:270px;
+    padding:13px 15px;
+    border:1px solid rgba(0,225,160,.3);
+    border-radius:12px;
+    background:rgba(4,28,39,.94);
+    box-shadow:0 10px 40px rgba(0,0,0,.45);
+    transform:translateY(100px);
+    opacity:0;
+    transition:.3s;
+    font-size:10px;
+}
+
+.toast.show{
+    transform:translateY(0);
+    opacity:1;
+}
+
+.toastTitle{
+    color:#00ed9a;
+    font-weight:700;
+    margin-bottom:4px;
+}
+
+.toastText{
+    color:#89a2b9;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media(max-width:1200px){
+    .app{
+        grid-template-columns:200px 1fr;
+    }
+
+    .workspace{
+        grid-template-columns:minmax(400px,1fr) 310px;
+    }
+
+    .connectors{
+        display:none;
+    }
+
+    .kpis{
+        grid-template-columns:repeat(3,1fr);
+    }
+
+    .dateCard{
+        display:none;
+    }
+}
+
+@media(max-width:900px){
+    body{
+        overflow:auto;
+    }
+
+    .app{
+        display:block;
+        height:auto;
+    }
+
+    .sidebar{
+        display:none;
+    }
+
+    .main{
+        height:auto;
+        min-height:100vh;
+        grid-template-rows:auto;
+    }
+
+    .workspace,
+    .bottom{
+        grid-template-columns:1fr;
+    }
+
+    .viewer{
+        height:600px;
+    }
+
+    .agent{
+        min-height:550px;
+    }
+
+    .logs,
+    .results{
+        min-height:300px;
+    }
+}
+
+/* ================= ENHANCED WORKSPACE PANELS & INPUTS ================= */
+.searchMainInput {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #f2f7ff;
+    font-size: 14px;
+    font-family: inherit;
+    font-weight: 500;
+}
+.searchMainInput::placeholder {
+    color: #65819e;
+}
+
+.workspacePanel {
+    position: relative;
+    min-height: 0;
+    overflow-y: auto;
+    margin: 0 9px;
+    padding: 18px;
+    border-radius: 12px;
+    background: radial-gradient(circle at 50% 45%, rgba(14,78,128,.15), transparent 45%), #010811;
+    display: none;
+    color: #e2e8f0;
+}
+
+.workspacePanel.active {
+    display: block;
+}
+
+.seqGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.seqChip {
+    padding: 8px 4px;
+    text-align: center;
+    border-radius: 8px;
+    background: rgba(14, 38, 64, 0.7);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    font-size: 11px;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+.seqChip:hover {
+    border-color: #38bdf8;
+    background: rgba(20, 75, 130, 0.8);
+    transform: translateY(-2px);
+}
+.seqResName {
+    font-weight: bold;
+    color: #38bdf8;
+}
+.seqResNum {
+    font-size: 9px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.propTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 14px;
+}
+.propTable th, .propTable td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid rgba(90, 178, 255, 0.15);
+    font-size: 12px;
+}
+.propTable th {
+    color: #7dd3fc;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+}
+.propTable td {
+    color: #f1f5f9;
+}
+
+.analysisPlotPreview {
+    max-width: 100%;
+    border-radius: 10px;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    box-shadow: 0 0 20px rgba(0, 120, 255, 0.2);
+    margin-top: 12px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<!-- ================= SIDEBAR ================= -->
+
+<aside class="sidebar">
+
+    <div class="logo">
+        <div class="logoCube">⬡</div>
+        <div>
+            <div class="logoText">POLYMATHIX</div>
+            <div class="logoSub">AI FOR SCIENTIFIC DISCOVERY</div>
+        </div>
+    </div>
+
+    <div class="nav">
+
+        <div class="navItem active">
+            <div class="navIcon">⌂</div>
+            <div>Home</div>
+        </div>
+
+        <div class="navItem">
+            <div class="navIcon">◌</div>
+            <div>AI Chat</div>
+        </div>
+
+        <div class="navItem">
+            <div class="navIcon">▣</div>
+            <div>Research Sessions</div>
+        </div>
+
+        <div class="navItem">
+            <div class="navIcon">▤</div>
+            <div>Protocols</div>
+        </div>
+
+        <div class="navItem">
+            <div class="navIcon">⌘</div>
+            <div>Molecular Tools</div>
+            <div class="navArrow">⌄</div>
+        </div>
+
+        <div class="navItem">
+            <div class="navIcon">△</div>
+            <div>Simulations</div>
+            <div class="navArrow">⌄</div>
+        </div>
+
+        <div class="navItem">
+            <div class="navIcon">▥</div>
+            <div>Data Analysis</div>
+            <div class="navArrow">⌄</div>
+        </div>
+
+        <div class="navItem">
+            <div class="navIcon">◇</div>
+            <div>Visualization</div>
+            <div class="navArrow">⌄</div>
+        </div>
+
+        <div class="navItem">
+            <div class="navIcon">▦</div>
+            <div>3D Library</div>
+        </div>
+
+        <div class="navItem">
+            <div class="navIcon">▤</div>
+            <div>Notebooks</div>
+        </div>
+
+        <div class="navItem">
+            <div class="navIcon">□</div>
+            <div>Files & Data</div>
+        </div>
+
+        <div class="navItem">
+            <div class="navIcon">♧</div>
+            <div>Team & Collaboration</div>
+        </div>
+
+        <div class="navItem">
+            <div class="navIcon">⚙</div>
+            <div>Settings</div>
+        </div>
+
+    </div>
+
+    <div class="quote">
+        <div class="quoteText">
+            “Science<br>
+            Today,<br>
+            Better<br>
+            Tomorrow.”
+        </div>
+        <div class="quoteSub">
+            POLYMATHIX RESEARCH ENGINE
+        </div>
+    </div>
+
+</aside>
+
+
+<!-- ================= MAIN ================= -->
+
+<main class="main">
+
+<!-- TOP BAR -->
+
+<header class="topbar">
+
+    <div class="search">
+
+        <div class="aiOrb">✦</div>
+
+        <div class="searchText">
+            <input type="text" class="searchMainInput" id="aiInput" placeholder="Ask Polymathix anything... (e.g., 'Run Membrane MD v2.4' or 'Synthesize novel drug with RDKit')" onkeydown="if(event.key==='Enter') runAI()" />
+            <div class="searchExample" style="display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-top:3px;">
+                <span style="color:#38bdf8;cursor:pointer;background:rgba(56,189,248,0.1);padding:2px 8px;border-radius:6px;border:1px solid rgba(56,189,248,0.2);" onclick="runAI('Run Crop Proteome & Thermal Adaptation protocol')">🌿 Crop Resilience</span>
+                <span style="color:#00f59b;cursor:pointer;background:rgba(0,245,155,0.1);padding:2px 8px;border-radius:6px;border:1px solid rgba(0,245,155,0.2);" onclick="runAI('Run Veterinary Broad-Spectrum Antimicrobial protocol')">🐾 Veterinary Health</span>
+                <span style="color:#a855f7;cursor:pointer;background:rgba(168,85,247,0.1);padding:2px 8px;border-radius:6px;border:1px solid rgba(168,85,247,0.2);" onclick="runAI('Synthesize novel drug with RDKit and Lipinski screening')">🧪 De-Novo Drug Design</span>
+                <span style="color:#ffd84d;cursor:pointer;background:rgba(255,216,77,0.1);padding:2px 8px;border-radius:6px;border:1px solid rgba(255,216,77,0.2);" onclick="runAI('Load 1UBQ')">🧬 Fetch Ubiquitin (1UBQ)</span>
+                <span style="color:#f43f5e;cursor:pointer;background:rgba(244,63,94,0.1);padding:2px 8px;border-radius:6px;border:1px solid rgba(244,63,94,0.2);" onclick="runAI('Load 4HHB')">🩸 Fetch Hemoglobin (4HHB)</span>
+            </div>
+        </div>
+
+        <button class="sendBtn" onclick="runAI()">➤</button>
+
+    </div>
+
+    <button class="topButton">♩</button>
+
+    <button class="topButton">♧</button>
+
+    <div class="profile">
+
+        <div class="avatar">SS</div>
+
+        <div>
+            <div class="profileName">
+                Lead Scientist
+            </div>
+
+            <div class="profileRole">
+                Researcher
+            </div>
+        </div>
+
+        <div>⌄</div>
+
+    </div>
+
+</header>
+
+
+<!-- KPI -->
+
+<section class="kpis">
+
+    <div class="kpi">
+        <div class="kpiIcon">⚗</div>
+        <div class="kpiTitle">ACTIVE SESSIONS</div>
+        <div class="kpiValue">8</div>
+        <div class="kpiTrend">↑ 2</div>
+        <div class="kpiGlow"></div>
+    </div>
+
+    <div class="kpi">
+        <div class="kpiIcon">▱</div>
+        <div class="kpiTitle">CONNECTED TOOLS</div>
+        <div class="kpiValue">12</div>
+        <div class="kpiTrend">↑ 3</div>
+        <div class="kpiGlow"></div>
+    </div>
+
+    <div class="kpi">
+        <div class="kpiIcon">▣</div>
+        <div class="kpiTitle">RUNNING JOBS</div>
+        <div class="kpiValue">28</div>
+        <div class="kpiTrend">↑ 5</div>
+        <div class="kpiGlow"></div>
+    </div>
+
+    <div class="kpi">
+        <div class="kpiIcon">◉</div>
+        <div class="kpiTitle">TOTAL DATA</div>
+        <div class="kpiValue">1.4 TB</div>
+        <div class="kpiTrend">↑ 12%</div>
+        <div class="kpiGlow"></div>
+    </div>
+
+    <div class="kpi">
+        <div class="kpiIcon">ϟ</div>
+        <div class="kpiTitle">SYSTEM UPTIME</div>
+        <div class="kpiValue">99.8%</div>
+        <div class="kpiTrend">Live</div>
+        <div class="kpiGlow"></div>
+    </div>
+
+    <div class="dateCard">
+        <div class="dateSmall">Wed, 17 Sep 2026</div>
+        <div class="dateTime" id="clock">19:42</div>
+        <div class="dateGood">Good Evening, Researcher!</div>
+        <div class="planet"></div>
+    </div>
+
+</section>
+
+
+<!-- ================= WORKSPACE ================= -->
+
+<section class="workspace">
+
+<!-- 3D VIEWER -->
+
+<div class="viewer glass">
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchWorkspaceTab('viewer', this)">3D Viewer</div>
+        <div class="tab" onclick="switchWorkspaceTab('sequence', this)">Sequence</div>
+        <div class="tab" onclick="switchWorkspaceTab('trajectory', this)">Trajectory</div>
+        <div class="tab" onclick="switchWorkspaceTab('surfaces', this)">Surfaces</div>
+        <div class="tab" onclick="switchWorkspaceTab('properties', this)">Properties</div>
+        <div class="tab" onclick="switchWorkspaceTab('analysis', this)">Analysis</div>
+    </div>
+
+
+    <div class="canvasWrap" id="threeCanvasWrap">
+
+        <canvas id="threeCanvas"></canvas>
+
+        <div class="viewerTools">
+
+            <button class="viewerTool" onclick="resetCamera()">↖</button>
+            <button class="viewerTool" onclick="focusMolecule()">◎</button>
+            <button class="viewerTool" onclick="toggleSurface()">◉</button>
+            <button class="viewerTool" onclick="randomizeMolecule()">✣</button>
+            <button class="viewerTool" onclick="showToast('Binding site selected','4 Å interaction radius applied')">⌖</button>
+            <button class="viewerTool" onclick="takeSnapshot()">▣</button>
+            <button class="viewerTool" onclick="openExport()">↓</button>
+
+        </div>
+
+
+        <div class="bindingPanel">
+
+            <div class="bindingTitle">
+                <span>Binding Site Analysis</span>
+                <span>×</span>
+            </div>
+
+            <div class="bindingMeta">
+                Ligand: Glucose<br>
+                Distance cutoff: 4.0 Å<br>
+                Interacting residues (8)
+            </div>
+
+            <div class="residue">
+                <span>ASN 203</span>
+                <span>2.8 Å</span>
+            </div>
+
+            <div class="residue">
+                <span>SER 205</span>
+                <span>3.1 Å</span>
+            </div>
+
+            <div class="residue">
+                <span>TYR 207</span>
+                <span>3.4 Å</span>
+            </div>
+
+            <div class="residue">
+                <span>ARG 210</span>
+                <span>3.6 Å</span>
+            </div>
+
+            <div class="residue">
+                <span>GLU 277</span>
+                <span>3.8 Å</span>
+            </div>
+
+            <div class="residue">
+                <span>HIS 310</span>
+                <span>3.9 Å</span>
+            </div>
+
+            <div class="residue">
+                <span>THR 312</span>
+                <span>3.9 Å</span>
+            </div>
+
+            <div class="residue">
+                <span>LYS 315</span>
+                <span>4.0 Å</span>
+            </div>
+
+            <div class="legend">
+
+                <div class="legendItem">
+                    <span class="dot hbond"></span>
+                    Hydrogen bond
+                </div>
+
+                <div class="legendItem">
+                    <span class="dot hydrophobic"></span>
+                    Hydrophobic
+                </div>
+
+                <div class="legendItem">
+                    <span class="dot electro"></span>
+                    Electrostatic
+                </div>
+
+                <div class="legendItem">
+                    <span class="dot pi"></span>
+                    π-π interaction
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- SEQUENCE PANEL -->
+    <div class="workspacePanel" id="sequencePanel">
+        <div style="font-size:14px;font-weight:700;color:#38bdf8;display:flex;justify-content:space-between;align-items:center;">
+            <span>Primary Sequence (1CRN - Chain A)</span>
+            <span style="font-size:11px;color:#94a3b8;">46 Residues | High Resolution</span>
+        </div>
+        <div class="seqGrid" id="seqGridContainer">
+            <!-- Populated dynamically from PDB data -->
+        </div>
+    </div>
+
+    <!-- TRAJECTORY PANEL -->
+    <div class="workspacePanel" id="trajectoryPanel">
+        <div style="font-size:14px;font-weight:700;color:#38bdf8;">Molecular Dynamics Trajectory Timeline</div>
+        <div style="margin-top:10px;font-size:12px;color:#94a3b8;">Frames: 1500 / 1500 | Timestep: 2.0 fs | Ensemble: NPT (300K, 1 bar)</div>
+        <div style="margin-top:18px;display:flex;align-items:center;gap:12px;">
+            <button class="styleBtn" onclick="toggleTrajectoryPlay()">▶ Play / Pause</button>
+            <input type="range" min="0" max="1500" value="750" style="flex:1" id="trajSlider" oninput="document.getElementById('trajFrame').innerText = this.value" />
+            <span id="trajFrame" style="font-size:12px;font-family:monospace;min-width:60px;">750</span>
+        </div>
+        <div style="margin-top:20px;padding:14px;background:rgba(10,31,57,0.6);border-radius:10px;border:1px solid rgba(56,189,248,0.2);">
+            <div style="font-size:12px;color:#7dd3fc;font-weight:600;">RMSD & Energy Stability</div>
+            <div style="font-size:11px;color:#cbd5e1;margin-top:6px;">Average Backbone RMSD: 0.84 ± 0.05 Å. System maintains stable crystallographic fold throughout production run.</div>
+        </div>
+    </div>
+
+    <!-- SURFACES PANEL -->
+    <div class="workspacePanel" id="surfacesPanel">
+        <div style="font-size:14px;font-weight:700;color:#38bdf8;">Molecular Surfaces & Potentials</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;">
+            <div style="padding:14px;background:rgba(10,31,57,0.6);border-radius:10px;border:1px solid rgba(56,189,248,0.2);cursor:pointer;" onclick="toggleSurface()">
+                <div style="font-weight:600;color:#38bdf8;">Solvent Accessible Surface (SASA)</div>
+                <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Probe radius: 1.4 Å | Conolly analytical rolling ball algorithm</div>
+            </div>
+            <div style="padding:14px;background:rgba(10,31,57,0.6);border-radius:10px;border:1px solid rgba(56,189,248,0.2);cursor:pointer;" onclick="showToast('Surface','Electrostatic potential map loaded')">
+                <div style="font-weight:600;color:#ff4d67;">Poisson-Boltzmann Electrostatics</div>
+                <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Coulombic charge mapping (-10 kT/e to +10 kT/e)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROPERTIES PANEL -->
+    <div class="workspacePanel" id="propertiesPanel">
+        <div style="font-size:14px;font-weight:700;color:#38bdf8;">Physicochemical Properties</div>
+        <table class="propTable" id="propertiesTable">
+            <tbody>
+                <tr><th>Structure</th><td>1CRN (Crambin)</td></tr>
+                <tr><th>Resolution</th><td>1.50 Å (X-Ray Diffraction)</td></tr>
+                <tr><th>Molecular Weight</th><td>4720.5 Da</td></tr>
+                <tr><th>Total Atoms</th><td>327 Atoms (Chain A)</td></tr>
+                <tr><th>Residues</th><td>46 Amino Acids</td></tr>
+                <tr><th>Formula</th><td>C202 H315 N55 O64 S6</td></tr>
+                <tr><th>Disulfide Bridges</th><td>3 Bonds (CYS3-CYS40, CYS4-CYS32, CYS16-CYS26)</td></tr>
+                <tr><th>Isoelectric Point (pI)</th><td>8.85</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ANALYSIS PANEL -->
+    <div class="workspacePanel" id="analysisPanel">
+        <div style="font-size:14px;font-weight:700;color:#38bdf8;">Active Scientific Analysis</div>
+        <div style="margin-top:10px;font-size:12px;color:#94a3b8;">Autonomous Deep Non-Linear Manifold Projection & Energy Convergence</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;">
+            <div style="background:rgba(10,31,57,0.6);padding:12px;border-radius:10px;border:1px solid rgba(56,189,248,0.2);">
+                <div style="font-size:11px;color:#7dd3fc;font-weight:600;">Deep Latent Space (Kernel PCA)</div>
+                <img src="/assets/deep_pca_comparison.png" class="analysisPlotPreview" onerror="this.style.display='none'" />
+            </div>
+            <div style="background:rgba(10,31,57,0.6);padding:12px;border-radius:10px;border:1px solid rgba(56,189,248,0.2);">
+                <div style="font-size:11px;color:#7dd3fc;font-weight:600;">Energy Minimization Trajectory</div>
+                <img src="/assets/energy_plot.png" class="analysisPlotPreview" onerror="this.style.display='none'" />
+            </div>
+        </div>
+    </div>
+
+    <div class="viewerBottom">
+        <button class="styleBtn active" id="btnRepCartoon" onclick="setRepresentation('cartoon', this)">Cartoon</button>
+        <button class="styleBtn" id="btnRepSurface" onclick="setRepresentation('surface', this)">Surface</button>
+        <button class="styleBtn" id="btnRepSticks" onclick="setRepresentation('sticks', this)">Sticks</button>
+        <button class="styleBtn" id="btnRepSphere" onclick="setRepresentation('sphere', this)">Sphere</button>
+        <button class="styleBtn" id="btnRepMesh" onclick="setRepresentation('mesh', this)">Mesh</button>
+
+        <div class="viewerSpacer"></div>
+
+        <button class="controlBtn">
+            Quality ▾
+        </button>
+
+        <button class="controlBtn" onclick="takeSnapshot()">
+            📷
+        </button>
+
+        <button class="controlBtn" onclick="openExport()">
+            ⛶
+        </button>
+
+        <button class="controlBtn" onclick="openExport()">
+            ↓ Export 3D
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- AGENT -->
+
+<div class="agent glass">
+
+    <div class="panelTitle">
+
+        <span>🧠 AI Agent Control Center</span>
+
+        <span class="status" id="sessionStatusDisplay"><span class="statusDot"></span>Active</span>
+
+    </div>
+
+
+    <div class="session">
+
+        <div class="sessionIcon">
+            🧬
+        </div>
+
+        <div class="label">
+            SESSION
+        </div>
+
+        <div class="sessionName" id="sessionNameDisplay">MembraneONE</div>
+
+        <div class="label">
+            MODEL
+        </div>
+
+        <div class="sessionName">
+            AI Research Agent
+        </div>
+
+        <div class="label">
+            PROTOCOL
+        </div>
+
+        <div class="sessionName" id="protocolNameDisplay">Membrane MD v2.4</div>
+
+    </div>
+
+
+    <div class="workflow">
+
+        <div class="workflowTitle">
+            Workflow Steps
+        </div>
+
+        <div class="step done">
+            <div class="stepNum">1</div>
+            <span>Structure preparation</span>
+            <span style="margin-left:auto;color:#00f59b">✓</span>
+        </div>
+
+        <div class="step done">
+            <div class="stepNum">2</div>
+            <span>Membrane insertion</span>
+            <span style="margin-left:auto;color:#00f59b">✓</span>
+        </div>
+
+        <div class="step done">
+            <div class="stepNum">3</div>
+            <span>Solvation</span>
+            <span style="margin-left:auto;color:#00f59b">✓</span>
+        </div>
+
+        <div class="step done">
+            <div class="stepNum">4</div>
+            <span>Ionization</span>
+            <span style="margin-left:auto;color:#00f59b">✓</span>
+        </div>
+
+        <div class="step running">
+            <div class="stepNum">5</div>
+            <span>Minimization</span>
+            <span style="margin-left:auto;color:#529fff">●</span>
+        </div>
+
+        <div class="step">
+            <div class="stepNum">6</div>
+            <span>Equilibration</span>
+        </div>
+
+        <div class="step">
+            <div class="stepNum">7</div>
+            <span>Production</span>
+        </div>
+
+        <div class="step">
+            <div class="stepNum">8</div>
+            <span>Analysis</span>
+        </div>
+
+    </div>
+
+
+    <div class="progress">
+        <div class="progressFill" id="progressFill"></div>
+    </div>
+
+    <div class="progressText">
+        <span id="progressValue">50%</span>
+        <span id="timeRemainingDisplay">Estimated time remaining: 2h 14m</span>
+    </div>
+
+
+    <div class="agentButtons">
+        <button class="agentButton" onclick="triggerAgentControl('pause')">
+            ⏸
+        </button>
+
+        <button class="agentButton" onclick="triggerAgentControl('stop')">
+            ■
+        </button>
+
+        <button class="agentButton" onclick="triggerAgentControl('run')">
+            ▶ Run
+        </button>
+    </div>
+
+</div>
+
+
+<!-- CONNECTORS -->
+
+<div class="connectors glass">
+
+    <div class="panelTitle">
+        <span>🔌 Tool Connectors</span>
+        <button class="controlBtn">
+            Manage
+        </button>
+    </div>
+
+
+    <div class="connector">
+        <div class="connectorIcon">🧬</div>
+        <div class="connectorName">PyMOL</div>
+        <div class="connection ok">Connected</div>
+        <div class="more">•••</div>
+    </div>
+
+    <div class="connector">
+        <div class="connectorIcon">🔬</div>
+        <div class="connectorName">ChimeraX</div>
+        <div class="connection ok">Connected</div>
+        <div class="more">•••</div>
+    </div>
+
+    <div class="connector">
+        <div class="connectorIcon">⚛</div>
+        <div class="connectorName">GROMACS</div>
+        <div class="connection run">Running</div>
+        <div class="more">•••</div>
+    </div>
+
+    <div class="connector">
+        <div class="connectorIcon">◈</div>
+        <div class="connectorName">OpenMM</div>
+        <div class="connection">Ready</div>
+        <div class="more">•••</div>
+    </div>
+
+    <div class="connector">
+        <div class="connectorIcon">⚗</div>
+        <div class="connectorName">AutoDock Vina</div>
+        <div class="connection">Ready</div>
+        <div class="more">•••</div>
+    </div>
+
+    <div class="connector">
+        <div class="connectorIcon">RD</div>
+        <div class="connectorName">RDKit</div>
+        <div class="connection">Ready</div>
+        <div class="more">•••</div>
+    </div>
+
+    <div class="connector">
+        <div class="connectorIcon">Ω</div>
+        <div class="connectorName">ORCA</div>
+        <div class="connection off">Disconnected</div>
+        <div class="more">•••</div>
+    </div>
+
+    <div class="connector">
+        <div class="connectorIcon">▣</div>
+        <div class="connectorName">MATLAB</div>
+        <div class="connection">Ready</div>
+        <div class="more">•••</div>
+    </div>
+
+    <div class="connector">
+        <div class="connectorIcon">🐍</div>
+        <div class="connectorName">Python</div>
+        <div class="connection ok">Connected</div>
+        <div class="more">•••</div>
+    </div>
+
+    <div class="connector">
+        <div class="connectorIcon">◉</div>
+        <div class="connectorName">Blender</div>
+        <div class="connection">Ready</div>
+        <div class="more">•••</div>
+    </div>
+
+</div>
+
+</section>
+
+
+<!-- ================= BOTTOM ================= -->
+
+<section class="bottom">
+
+<!-- LOGS -->
+
+<div class="logs glass">
+
+    <div class="logsHeader">
+
+        <div class="logTab active">
+            ▣ Terminal / Logs
+        </div>
+
+        <div class="logTab">
+            Analysis Output
+        </div>
+
+        <div class="logTab">
+            Plots
+        </div>
+
+        <div class="logTab">
+            System Messages
+        </div>
+
+        <div style="margin-left:auto;color:#00ed9a;font-size:9px">
+            ● Clear
+        </div>
+
+    </div>
+
+    <input
+        class="logSearch"
+        placeholder="Search logs..."
+        id="logSearch"
+        oninput="filterLogs()"
+    >
+
+    <div class="logBody" id="logBody">
+
+        <div class="logLine">
+            [19:41:02]
+            <span class="logInfo">INFO</span>
+            Selecting binding site (radius 4.0 Å)...
+        </div>
+
+        <div class="logLine">
+            [19:41:03]
+            <span class="logSuccess">SUCCESS</span>
+            Found 8 interacting residues
+        </div>
+
+        <div class="logLine">
+            [19:41:04]
+            <span class="logInfo">INFO</span>
+            Calculating distances...
+        </div>
+
+        <div class="logLine">
+            [19:41:06]
+            <span class="logSuccess">SUCCESS</span>
+            Generating visualization...
+        </div>
+
+        <div class="logLine">
+            [19:41:08]
+            <span class="logInfo">INFO</span>
+            Render completed (2.4 s)
+        </div>
+
+        <div class="logLine">
+            [19:41:16]
+            <span class="logSuccess">SUCCESS</span>
+            Ready for export
+        </div>
+
+        <div class="logLine">
+            [19:41:20]
+            <span class="logInfo">INFO</span>
+            Simulation started (Job ID: #B247)
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- RESULTS -->
+
+<div class="results glass">
+
+    <div class="resultsHeader">
+
+        <div style="font-size:11px;font-weight:700">
+            📊 Results & Visualizations
+        </div>
+
+        <button
+            class="controlBtn"
+            style="margin-left:auto"
+        >
+            View All
+        </button>
+
+    </div>
+
+    <div class="resultGrid" id="resultGrid">
+
+        <div class="resultCard" onclick="openExport()">
+            <div class="resultPreview">
+                🧬
+            </div>
+
+            <div class="resultName">
+                glucose_binding.glb
+            </div>
+
+            <div class="resultMeta">
+                2 min ago
+            </div>
+        </div>
+
+
+        <div class="resultCard">
+            <div class="resultPreview">
+                🧪
+            </div>
+
+            <div class="resultName">
+                binding_site.png
+            </div>
+
+            <div class="resultMeta">
+                5 min ago
+            </div>
+        </div>
+
+
+        <div class="resultCard">
+            <div class="resultPreview">
+                📈
+            </div>
+
+            <div class="resultName">
+                interaction_plot.svg
+            </div>
+
+            <div class="resultMeta">
+                12 min ago
+            </div>
+        </div>
+
+
+        <div class="resultCard">
+            <div class="resultPreview">
+                🎞
+            </div>
+
+            <div class="resultName">
+                trajectory.mp4
+            </div>
+
+            <div class="resultMeta">
+                25 min ago
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+</section>
+
+
+<!-- QUICK ACTIONS -->
+
+<footer class="quick glass">
+
+    <div class="quickTitle">
+        Quick Actions
+    </div>
+
+    <button class="quickBtn" onclick="triggerQuickAction('new_session')">
+        ＋ New Session
+    </button>
+
+    <button class="quickBtn" onclick="triggerQuickAction('run_protocol')">
+        ◈ Run Protocol
+    </button>
+
+    <button class="quickBtn" onclick="triggerQuickAction('analyze_data')">
+        ∫ Analyze Data
+    </button>
+
+    <button class="quickBtn" onclick="triggerQuickAction('generate_plot')">
+        ▥ Generate Plot
+    </button>
+
+    <button class="quickBtn" onclick="triggerQuickAction('create_report')">
+        ▤ Create Report
+    </button>
+
+    <button class="quickBtn" onclick="openExport()">
+        ↓ Export All
+    </button>
+
+    <div class="footerGlow"></div>
+
+</footer>
+
+</main>
+
+</div>
+
+
+<!-- ================= EXPORT MODAL ================= -->
+
+<div class="modalOverlay" id="exportOverlay">
+
+<div class="exportModal">
+
+    <div class="modalHeader">
+
+        <div class="modalTitle">
+            ＋ Export 3D Model
+        </div>
+
+        <button class="modalClose" onclick="closeExport()">
+            ×
+        </button>
+
+    </div>
+
+
+    <div class="exportTabs">
+
+        <button class="exportTab active">
+            3D Model
+        </button>
+
+        <button class="exportTab">
+            Image / Render
+        </button>
+
+        <button class="exportTab">
+            Animation
+        </button>
+
+        <button class="exportTab">
+            Presentation
+        </button>
+
+        <button class="exportTab">
+            Data
+        </button>
+
+    </div>
+
+
+    <div class="exportBody">
+
+
+        <!-- FORMAT -->
+
+        <div class="exportSection">
+
+            <div class="sectionTitle">
+                Export Format
+            </div>
+
+
+            <div
+                class="format selected"
+                data-format="glb"
+                onclick="selectFormat(this,'glb')"
+            >
+
+                <div class="formatIcon">
+                    ◈
+                </div>
+
+                <div>
+                    <div class="formatName">
+                        GLB (Recommended)
+                    </div>
+
+                    <div class="formatDesc">
+                        Single file, colors, materials
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div
+                class="format"
+                data-format="obj"
+                onclick="selectFormat(this,'obj')"
+            >
+
+                <div class="formatIcon">
+                    ◇
+                </div>
+
+                <div>
+                    <div class="formatName">
+                        OBJ + MTL
+                    </div>
+
+                    <div class="formatDesc">
+                        For Blender, materials
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div
+                class="format"
+                data-format="stl"
+                onclick="selectFormat(this,'stl')"
+            >
+
+                <div class="formatIcon">
+                    ◇
+                </div>
+
+                <div>
+                    <div class="formatName">
+                        STL
+                    </div>
+
+                    <div class="formatDesc">
+                        For 3D printing
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div
+                class="format"
+                data-format="ply"
+                onclick="selectFormat(this,'ply')"
+            >
+
+                <div class="formatIcon">
+                    ◇
+                </div>
+
+                <div>
+                    <div class="formatName">
+                        PLY
+                    </div>
+
+                    <div class="formatDesc">
+                        Colored mesh / point cloud
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div
+                class="format"
+                data-format="gltf"
+                onclick="selectFormat(this,'gltf')"
+            >
+
+                <div class="formatIcon">
+                    ◈
+                </div>
+
+                <div>
+                    <div class="formatName">
+                        GLTF
+                    </div>
+
+                    <div class="formatDesc">
+                        Web 3D / interactive
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div
+                class="format"
+                data-format="fbx"
+                onclick="selectFormat(this,'fbx')"
+            >
+
+                <div class="formatIcon">
+                    ◈
+                </div>
+
+                <div>
+                    <div class="formatName">
+                        FBX
+                    </div>
+
+                    <div class="formatDesc">
+                        Blender / animation
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div
+                class="format"
+                data-format="usd"
+                onclick="selectFormat(this,'usd')"
+            >
+
+                <div class="formatIcon">
+                    ◈
+                </div>
+
+                <div>
+                    <div class="formatName">
+                        USD / USDZ
+                    </div>
+
+                    <div class="formatDesc">
+                        Advanced 3D / AR
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div
+                class="format"
+                data-format="vtk"
+                onclick="selectFormat(this,'vtk')"
+            >
+
+                <div class="formatIcon">
+                    ◈
+                </div>
+
+                <div>
+                    <div class="formatName">
+                        VTK
+                    </div>
+
+                    <div class="formatDesc">
+                        Scientific visualization
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- CONTENT -->
+
+        <div class="exportSection">
+
+            <div class="sectionTitle">
+                Include in Export
+            </div>
+
+            <label class="option">
+                <input type="checkbox" checked>
+                Protein
+            </label>
+
+            <label class="option">
+                <input type="checkbox" checked>
+                Ligand
+            </label>
+
+            <label class="option">
+                <input type="checkbox" checked>
+                Molecular Surface
+            </label>
+
+            <label class="option">
+                <input type="checkbox" checked>
+                Hydrogen Bonds
+            </label>
+
+            <label class="option">
+                <input type="checkbox" checked>
+                Residue Labels
+            </label>
+
+            <label class="option">
+                <input type="checkbox">
+                Water Molecules
+            </label>
+
+            <label class="option">
+                <input type="checkbox">
+                Solvent
+            </label>
+
+            <label class="option">
+                <input type="checkbox">
+                Trajectory
+            </label>
+
+            <label class="option">
+                <input type="checkbox" checked>
+                Camera & Lighting
+            </label>
+
+            <div class="sectionTitle" style="margin-top:15px">
+                Appearance Preset
+            </div>
+
+            <label class="option">
+                <input type="radio" name="appearance" checked>
+                Current View
+            </label>
+
+            <label class="option">
+                <input type="radio" name="appearance">
+                Publication Style
+            </label>
+
+            <label class="option">
+                <input type="radio" name="appearance">
+                Presentation Style
+            </label>
+
+            <label class="option">
+                <input type="radio" name="appearance">
+                Blender Material
+            </label>
+
+            <label class="option">
+                <input type="radio" name="appearance">
+                Custom
+            </label>
+
+        </div>
+
+
+        <!-- QUALITY -->
+
+        <div class="exportSection">
+
+            <div class="sectionTitle">
+                Background
+            </div>
+
+            <label class="option">
+                <input
+                    type="radio"
+                    name="background"
+                    checked
+                >
+                Transparent
+            </label>
+
+            <label class="option">
+                <input type="radio" name="background">
+                Black
+            </label>
+
+            <label class="option">
+                <input type="radio" name="background">
+                White
+            </label>
+
+            <label class="option">
+                <input type="radio" name="background">
+                Gradient
+            </label>
+
+
+            <div class="sectionTitle" style="margin-top:16px">
+                Quality / Resolution
+            </div>
+
+            <label class="option">
+                <input type="radio" name="quality">
+                Draft (Fast)
+            </label>
+
+            <label class="option">
+                <input type="radio" name="quality" checked>
+                High (Recommended)
+            </label>
+
+            <label class="option">
+                <input type="radio" name="quality">
+                Ultra (4K)
+            </label>
+
+
+            <div class="sectionTitle" style="margin-top:16px">
+                Additional Options
+            </div>
+
+            <label class="option">
+                <input type="checkbox" checked>
+                Export metadata (JSON)
+            </label>
+
+            <label class="option">
+                <input type="checkbox" checked>
+                Include textures
+            </label>
+
+            <label class="option">
+                <input type="checkbox">
+                Separate objects
+            </label>
+
+            <label class="option">
+                <input type="checkbox">
+                Compress file (ZIP)
+            </label>
+
+        </div>
+
+    </div>
+
+
+    <div class="exportFooter">
+
+        <div class="exportMessage" id="exportMessage">
+            Current scene: Glucose binding site
+        </div>
+
+        <button class="controlBtn" onclick="closeExport()">
+            Cancel
+        </button>
+
+        <button
+            class="exportMain"
+            id="exportButton"
+            onclick="performExport()"
+        >
+            ↓ Export GLB
+        </button>
+
+    </div>
+
+</div>
+
+</div>
+
+
+<!-- TOAST -->
+
+<div class="toast" id="toast">
+
+    <div class="toastTitle" id="toastTitle">
+        Success
+    </div>
+
+    <div class="toastText" id="toastText">
+        Operation completed.
+    </div>
+
+</div>
+
+
+<script>
+/* ================= STREAMLIT INSTANT HANDSHAKE ================= */
+const Streamlit = {
+    setComponentReady: function() {
+        try {
+            window.parent.postMessage({isStreamlitMessage: true, type: 'streamlit:componentReady', apiVersion: 1}, '*');
+        } catch(e) { console.warn('Streamlit handshake error:', e); }
+    },
+    setFrameHeight: function(height) {
+        try {
+            const h = height || document.body.scrollHeight || window.innerHeight || 1200;
+            window.parent.postMessage({isStreamlitMessage: true, type: 'streamlit:setFrameHeight', height: h}, '*');
+        } catch(e) {}
+    },
+    setComponentValue: function(value) {
+        try {
+            window.parent.postMessage({isStreamlitMessage: true, type: 'streamlit:setComponentValue', value: value}, '*');
+        } catch(e) {}
+    }
+};
+
+// Handshake immediately to prevent Streamlit component loading timeout!
+Streamlit.setComponentReady();
+Streamlit.setFrameHeight(window.innerHeight || 1200);
+
+document.addEventListener('DOMContentLoaded', function() {
+    Streamlit.setComponentReady();
+    Streamlit.setFrameHeight(window.innerHeight || 1200);
+});
+
+window.addEventListener('load', function() {
+    Streamlit.setComponentReady();
+    Streamlit.setFrameHeight(window.innerHeight || 1200);
+});
+
+
+/* =========================================================
+   POLYMATHIX
+   SCIENTIFIC 3D DASHBOARD
+   ========================================================= */
+
+
+/* ================= CLOCK ================= */
+
+function updateClock(){
+
+    const now = new Date();
+
+    const h = String(now.getHours()).padStart(2,"0");
+    const m = String(now.getMinutes()).padStart(2,"0");
+
+    document.getElementById("clock").textContent =
+        `${h}:${m}`;
+
+}
+
+setInterval(updateClock,1000);
+updateClock();
+
+
+/* ================= TOAST ================= */
+
+function showToast(title,text){
+
+    const toast =
+        document.getElementById("toast");
+
+    document.getElementById("toastTitle")
+        .textContent = title;
+
+    document.getElementById("toastText")
+        .textContent = text;
+
+    toast.classList.add("show");
+
+    setTimeout(()=>{
+        toast.classList.remove("show");
+    },3200);
+
+}
+
+
+/* ================= THREE.JS ================= */
+
+let scene;
+let camera;
+let renderer;
+let controls;
+
+let moleculeGroup;
+let surfaceGroup;
+let ligandGroup;
+let bondGroup;
+
+let surfaceVisible = true;
+
+const canvas =
+    document.getElementById("threeCanvas");
+
+
+function initThree(){
+
+    scene = new THREE.Scene();
+
+    scene.background =
+        new THREE.Color(0x010812);
+
+
+    camera =
+        new THREE.PerspectiveCamera(
+            45,
+            canvas.clientWidth / canvas.clientHeight,
+            0.1,
+            2000
+        );
+
+    camera.position.set(
+        0,
+        8,
+        24
+    );
+
+
+    renderer =
+        new THREE.WebGLRenderer({
+            canvas:canvas,
+            antialias:true,
+            preserveDrawingBuffer:true
+        });
+
+    renderer.setPixelRatio(
+        Math.min(window.devicePixelRatio,2)
+    );
+
+    renderer.setSize(
+        canvas.clientWidth,
+        canvas.clientHeight,
+        false
+    );
+
+    renderer.outputColorSpace =
+        THREE.SRGBColorSpace;
+
+
+    controls =
+        new THREE.OrbitControls(
+            camera,
+            renderer.domElement
+        );
+
+    controls.enableDamping = true;
+    controls.dampingFactor = .06;
+    controls.minDistance = 8;
+    controls.maxDistance = 60;
+
+
+    const ambient =
+        new THREE.AmbientLight(
+            0x6688ff,
+            2
+        );
+
+    scene.add(ambient);
+
+
+    const key =
+        new THREE.DirectionalLight(
+            0x8fdcff,
+            3
+        );
+
+    key.position.set(
+        10,
+        15,
+        10
+    );
+
+    scene.add(key);
+
+
+    const fill =
+        new THREE.PointLight(
+            0x8d4cff,
+            8,
+            80
+        );
+
+    fill.position.set(
+        -15,
+        -5,
+        10
+    );
+
+    scene.add(fill);
+
+
+    moleculeGroup =
+        new THREE.Group();
+
+    surfaceGroup =
+        new THREE.Group();
+
+    ligandGroup =
+        new THREE.Group();
+
+    bondGroup =
+        new THREE.Group();
+
+
+    moleculeGroup.add(
+        surfaceGroup
+    );
+
+    moleculeGroup.add(
+        ligandGroup
+    );
+
+    moleculeGroup.add(
+        bondGroup
+    );
+
+    scene.add(
+        moleculeGroup
+    );
+
+
+    createProtein();
+
+    createLigand();
+
+    createInteractions();
+
+    createParticles();
+
+
+    window.addEventListener(
+        "resize",
+        resizeThree
+    );
+
+
+    animate();
+
+}
+
+
+function createProtein(){
+
+    /*
+        Stylized scientific protein representation.
+        Replace this with real PDB/GLB geometry later.
+    */
+
+    const colors = [
+        0x18b9ff,
+        0x385cff,
+        0x9a45ff,
+        0x00d5ff
+    ];
+
+
+    for(let chain=0;chain<4;chain++){
+
+        const points=[];
+
+        for(
+            let i=0;
+            i<42;
+            i++
+        ){
+
+            const t =
+                i / 41 * Math.PI * 3.2;
+
+            const radius =
+                4.1 +
+                chain*.35;
+
+            const x =
+                Math.cos(t + chain*.9)
+                * radius;
+
+            const y =
+                (i-20)*.27 +
+                Math.sin(t*2)*1.2;
+
+            const z =
+                Math.sin(t + chain*.9)
+                * radius;
+
+            points.push(
+                new THREE.Vector3(
+                    x,
+                    y,
+                    z
+                )
+            );
+
+        }
+
+
+        const curve =
+            new THREE.CatmullRomCurve3(
+                points
+            );
+
+
+        const geometry =
+            new THREE.TubeGeometry(
+                curve,
+                150,
+                .18,
+                8,
+                false
+            );
+
+
+        const material =
+            new THREE.MeshStandardMaterial({
+                color:colors[chain],
+                metalness:.15,
+                roughness:.28,
+                transparent:true,
+                opacity:.94
+            });
+
+
+        const mesh =
+            new THREE.Mesh(
+                geometry,
+                material
+            );
+
+
+        surfaceGroup.add(
+            mesh
+        );
+
+
+        /*
+            second parallel strand
+        */
+
+        const curve2 =
+            curve.clone();
+
+        const points2 =
+            points.map(
+                p =>
+                new THREE.Vector3(
+                    p.x*.82,
+                    p.y+.5,
+                    p.z*.82
+                )
+            );
+
+        const curveAlt =
+            new THREE.CatmullRomCurve3(
+                points2
+            );
+
+        const geom2 =
+            new THREE.TubeGeometry(
+                curveAlt,
+                150,
+                .10,
+                7,
+                false
+            );
+
+        const mesh2 =
+            new THREE.Mesh(
+                geom2,
+                new THREE.MeshStandardMaterial({
+                    color:0x00d9ff,
+                    transparent:true,
+                    opacity:.5
+                })
+            );
+
+        surfaceGroup.add(
+            mesh2
+        );
+
+    }
+
+
+    /*
+        Molecular surface sphere
+    */
+
+    const surfaceGeometry =
+        new THREE.IcosahedronGeometry(
+            5.3,
+            4
+        );
+
+
+    const surfaceMaterial =
+        new THREE.MeshPhysicalMaterial({
+            color:0x2477c9,
+            transparent:true,
+            opacity:.075,
+            roughness:.12,
+            metalness:.05,
+            transmission:.1,
+            side:THREE.DoubleSide
+        });
+
+
+    const surface =
+        new THREE.Mesh(
+            surfaceGeometry,
+            surfaceMaterial
+        );
+
+
+    surfaceGroup.add(
+        surface
+    );
+
+}
+
+
+function createLigand(){
+
+    const center =
+        new THREE.Vector3(
+            0,
+            0,
+            0
+        );
+
+
+    const atomPositions = [
+
+        [0,0,0,0xff3f55],
+        [1.1,.3,.2,0xffffff],
+        [-1.1,.3,.2,0xff3f55],
+        [0,-1.1,.3,0x22d8ff],
+        [.2,1.1,.2,0xffffff],
+        [.7,-.5,1,0xff3f55],
+        [-.8,-.6,.9,0x22d8ff],
+        [-.7,.9,-.5,0xffffff],
+        [.9,.8,-.5,0xff3f55],
+        [0,0,-1.25,0xffffff]
+
+    ];
+
+
+    atomPositions.forEach(
+        atom => {
+
+            const geo =
+                new THREE.SphereGeometry(
+                    .34,
+                    20,
+                    20
+                );
+
+            const mat =
+                new THREE.MeshStandardMaterial({
+                    color:atom[3],
+                    roughness:.2,
+                    metalness:.25
+                });
+
+            const mesh =
+                new THREE.Mesh(
+                    geo,
+                    mat
+                );
+
+            mesh.position.set(
+                atom[0],
+                atom[1],
+                atom[2]
+            );
+
+            ligandGroup.add(
+                mesh
+            );
+
+        }
+    );
+
+
+    /*
+        bonds
+    */
+
+    const positions =
+        atomPositions.map(
+            a =>
+            new THREE.Vector3(
+                a[0],
+                a[1],
+                a[2]
+            )
+        );
+
+
+    for(
+        let i=0;
+        i<positions.length-1;
+        i++
+    ){
+
+        createBond(
+            positions[i],
+            positions[i+1],
+            0x8ccaff
+        );
+
+    }
+
+}
+
+
+function createBond(
+    a,
+    b,
+    color
+){
+
+    const direction =
+        new THREE.Vector3()
+        .subVectors(b,a);
+
+    const length =
+        direction.length();
+
+
+    const geo =
+        new THREE.CylinderGeometry(
+            .08,
+            .08,
+            length,
+            8
+        );
+
+
+    const mat =
+        new THREE.MeshStandardMaterial({
+            color:color,
+            metalness:.4,
+            roughness:.25
+        });
+
+
+    const mesh =
+        new THREE.Mesh(
+            geo,
+            mat
+        );
+
+
+    mesh.position.copy(
+        a.clone().add(
+            b
+                .clone()
+                .sub(a)
+                .multiplyScalar(.5)
+        )
+    );
+
+
+    mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0,1,0),
+        direction.normalize()
+    );
+
+
+    ligandGroup.add(
+        mesh
+    );
+
+}
+
+
+function createInteractions(){
+
+    const points = [
+
+        [2.8,1.4,1.2],
+        [-2.2,1.6,.8],
+        [2.4,-1.3,.7],
+        [-2.6,-1.1,1.1]
+
+    ];
+
+
+    points.forEach(
+        point => {
+
+            const start =
+                new THREE.Vector3(
+                    0,
+                    0,
+                    0
+                );
+
+            const end =
+                new THREE.Vector3(
+                    point[0],
+                    point[1],
+                    point[2]
+                );
+
+
+            createDashedBond(
+                start,
+                end,
+                0x00ff9d
+            );
+
+        }
+    );
+
+}
+
+
+function createDashedBond(
+    a,
+    b,
+    color
+){
+
+    const points=[
+        a,
+        b
+    ];
+
+    const geo =
+        new THREE.BufferGeometry()
+        .setFromPoints(points);
+
+
+    const mat =
+        new THREE.LineDashedMaterial({
+            color:color,
+            dashSize:.25,
+            gapSize:.15,
+            transparent:true,
+            opacity:.9
+        });
+
+
+    const line =
+        new THREE.Line(
+            geo,
+            mat
+        );
+
+    line.computeLineDistances();
+
+    bondGroup.add(
+        line
+    );
+
+}
+
+
+function createParticles(){
+
+    const count=600;
+
+    const positions =
+        new Float32Array(
+            count*3
+        );
+
+    for(
+        let i=0;
+        i<count*3;
+        i+=3
+    ){
+
+        positions[i] =
+            (Math.random()-.5)*35;
+
+        positions[i+1] =
+            (Math.random()-.5)*25;
+
+        positions[i+2] =
+            (Math.random()-.5)*35;
+
+    }
+
+
+    const geometry =
+        new THREE.BufferGeometry();
+
+    geometry.setAttribute(
+        "position",
+        new THREE.BufferAttribute(
+            positions,
+            3
+        )
+    );
+
+
+    const material =
+        new THREE.PointsMaterial({
+            color:0x1977ff,
+            size:.025,
+            transparent:true,
+            opacity:.6
+        });
+
+
+    const particles =
+        new THREE.Points(
+            geometry,
+            material
+        );
+
+
+    scene.add(
+        particles
+    );
+
+}
+
+
+function animate(){
+    resizeThree();
+
+    requestAnimationFrame(
+        animate
+    );
+
+
+    if(moleculeGroup){
+
+        moleculeGroup.rotation.y += .0018;
+
+    }
+
+
+    if(controls){
+
+        controls.update();
+
+    }
+
+
+    renderer.render(
+        scene,
+        camera
+    );
+
+}
+
+
+function resizeThree(){
+
+    if(!renderer || !camera)
+        return;
+
+
+    const width =
+        canvas.clientWidth;
+
+    const height =
+        canvas.clientHeight;
+
+
+    camera.aspect =
+        width / height;
+
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(
+        width,
+        height,
+        false
+    );
+
+}
+
+
+function resetCamera(){
+
+    camera.position.set(
+        0,
+        8,
+        24
+    );
+
+    controls.target.set(
+        0,
+        0,
+        0
+    );
+
+    controls.update();
+
+}
+
+
+function focusMolecule(){
+
+    camera.position.set(
+        0,
+        4,
+        15
+    );
+
+    controls.target.set(
+        0,
+        0,
+        0
+    );
+
+    controls.update();
+
+}
+
+
+function toggleSurface(){
+
+    surfaceVisible =
+        !surfaceVisible;
+
+    surfaceGroup.children.forEach(
+        child => {
+
+            child.visible =
+                surfaceVisible;
+
+        }
+    );
+
+    showToast(
+        "3D Viewer",
+        surfaceVisible
+            ? "Molecular surface enabled"
+            : "Molecular surface hidden"
+    );
+
+}
+
+
+function randomizeMolecule(){
+
+    moleculeGroup.rotation.x =
+        Math.random()*.8;
+
+    moleculeGroup.rotation.y =
+        Math.random()*Math.PI;
+
+    moleculeGroup.rotation.z =
+        Math.random()*.5;
+
+    showToast(
+        "3D Scene",
+        "Molecular orientation changed"
+    );
+
+}
+
+
+/* ================= SNAPSHOT ================= */
+
+function takeSnapshot(){
+
+    renderer.render(
+        scene,
+        camera
+    );
+
+    const data =
+        renderer.domElement
+        .toDataURL(
+            "image/png"
+        );
+
+
+    const link =
+        document.createElement("a");
+
+    link.download =
+        "polymathix-scientific-render.png";
+
+    link.href=data;
+
+    link.click();
+
+
+    showToast(
+        "Render Exported",
+        "PNG scientific render downloaded"
+    );
+
+}
+
+
+/* ================= EXPORT ================= */
+
+let selectedFormat="glb";
+
+
+function openExport(){
+
+    document
+        .getElementById("exportOverlay")
+        .classList.add("show");
+
+}
+
+
+function closeExport(){
+
+    document
+        .getElementById("exportOverlay")
+        .classList.remove("show");
+
+}
+
+
+function selectFormat(
+    element,
+    format
+){
+
+    document
+        .querySelectorAll(".format")
+        .forEach(
+            el =>
+            el.classList.remove(
+                "selected"
+            )
+        );
+
+
+    element.classList.add(
+        "selected"
+    );
+
+
+    selectedFormat =
+        format;
+
+
+    document
+        .getElementById("exportButton")
+        .textContent =
+        "↓ Export " +
+        format.toUpperCase();
+
+}
+
+
+function downloadBlob(
+    blob,
+    filename
+){
+
+    const url =
+        URL.createObjectURL(blob);
+
+    const link =
+        document.createElement("a");
+
+    link.href=url;
+    link.download=filename;
+
+    document.body.appendChild(
+        link
+    );
+
+    link.click();
+
+    link.remove();
+
+    setTimeout(
+        () =>
+        URL.revokeObjectURL(url),
+        1000
+    );
+
+}
+
+
+function performExport(){
+
+    if(
+        selectedFormat === "obj"
+    ){
+
+        exportOBJ();
+
+        return;
+
+    }
+
+
+    if(
+        selectedFormat === "stl"
+    ){
+
+        exportSTL();
+
+        return;
+
+    }
+
+
+    if(
+        selectedFormat === "glb"
+    ){
+
+        exportGLB();
+
+        return;
+
+    }
+
+
+    if(
+        selectedFormat === "gltf"
+    ){
+
+        exportGLTF();
+
+        return;
+
+    }
+
+
+    if(
+        selectedFormat === "ply"
+    ){
+
+        exportPLY();
+
+        return;
+
+    }
+
+
+    showToast(
+        "Export",
+        selectedFormat.toUpperCase() +
+        " exporter will be connected to the scientific backend."
+    );
+
+}
+
+
+function exportOBJ(){
+
+    const exporter =
+        new THREE.OBJExporter();
+
+    const result =
+        exporter.parse(
+            moleculeGroup
+        );
+
+
+    const blob =
+        new Blob(
+            [result],
+            {
+                type:"text/plain"
+            }
+        );
+
+
+    downloadBlob(
+        blob,
+        "polymathix-scientific-model.obj"
+    );
+
+
+    closeExport();
+
+
+    showToast(
+        "OBJ Exported",
+        "3D model exported for Blender"
+    );
+
+}
+
+
+function exportSTL(){
+
+    const exporter =
+        new THREE.STLExporter();
+
+
+    const result =
+        exporter.parse(
+            moleculeGroup,
+            {
+                binary:true
+            }
+        );
+
+
+    const blob =
+        new Blob(
+            [result],
+            {
+                type:"application/octet-stream"
+            }
+        );
+
+
+    downloadBlob(
+        blob,
+        "polymathix-scientific-model.stl"
+    );
+
+
+    closeExport();
+
+
+    showToast(
+        "STL Exported",
+        "Mesh exported for 3D printing/CAD"
+    );
+
+}
+
+
+function exportGLB(){
+
+    const exporter =
+        new THREE.GLTFExporter();
+
+
+    exporter.parse(
+
+        moleculeGroup,
+
+        function(result){
+
+            const blob =
+                new Blob(
+                    [result],
+                    {
+                        type:
+                        "application/octet-stream"
+                    }
+                );
+
+
+            downloadBlob(
+                blob,
+                "polymathix-scientific-model.glb"
+            );
+
+
+            closeExport();
+
+
+            showToast(
+                "GLB Exported",
+                "Colored 3D model ready for Blender"
+            );
+
+        },
+
+        function(error){
+
+            console.error(
+                error
+            );
+
+            showToast(
+                "Export Error",
+                "GLB export failed"
+            );
+
+        },
+
+        {
+            binary:true
+        }
+
+    );
+
+}
+
+
+function exportGLTF(){
+
+    const exporter =
+        new THREE.GLTFExporter();
+
+
+    exporter.parse(
+
+        moleculeGroup,
+
+        function(result){
+
+            const json =
+                JSON.stringify(
+                    result,
+                    null,
+                    2
+                );
+
+
+            const blob =
+                new Blob(
+                    [json],
+                    {
+                        type:
+                        "application/json"
+                    }
+                );
+
+
+            downloadBlob(
+                blob,
+                "polymathix-scientific-model.gltf"
+            );
+
+
+            closeExport();
+
+
+            showToast(
+                "GLTF Exported",
+                "Web-ready 3D scene exported"
+            );
+
+        },
+
+        function(error){
+
+            console.error(
+                error
+            );
+
+        },
+
+        {
+            binary:false
+        }
+
+    );
+
+}
+
+
+function exportPLY(){
+
+    /*
+       Basic PLY export generated from
+       visible vertices.
+    */
+
+    let vertices=[];
+
+
+    moleculeGroup.traverse(
+        object => {
+
+            if(
+                !object.isMesh ||
+                !object.geometry
+            )
+                return;
+
+
+            const position =
+                object.geometry
+                .getAttribute(
+                    "position"
+                );
+
+
+            if(!position)
+                return;
+
+
+            const matrix =
+                object.matrixWorld;
+
+
+            for(
+                let i=0;
+                i<position.count;
+                i++
+            ){
+
+                const v =
+                    new THREE.Vector3()
+                    .fromBufferAttribute(
+                        position,
+                        i
+                    )
+                    .applyMatrix4(
+                        matrix
+                    );
+
+
+                vertices.push(v);
+
+            }
+
+        }
+    );
+
+
+    let ply =
+`ply
+format ascii 1.0
+element vertex ${vertices.length}
+property float x
+property float y
+property float z
+end_header
+`;
+
+
+    vertices.forEach(
+        v => {
+
+            ply +=
+                `${v.x} ${v.y} ${v.z}\n`;
+
+        }
+    );
+
+
+    const blob =
+        new Blob(
+            [ply],
+            {
+                type:"text/plain"
+            }
+        );
+
+
+    downloadBlob(
+        blob,
+        "polymathix-scientific-model.ply"
+    );
+
+
+    closeExport();
+
+
+    showToast(
+        "PLY Exported",
+        "Scientific mesh exported"
+    );
+
+}
+
+
+/* ================= AI ================= */
+
+function runAI(){
+    const input = document.querySelector('.searchMain').innerText || 'Run AI';
+    Streamlit.setComponentValue({ action: 'runAI', data: input });
+
+
+    showToast(
+        "AI Research Agent",
+        "Planning scientific workflow..."
+    );
+
+
+    addLog(
+        "AI",
+        "Planning workflow: structure → binding site → interaction analysis"
+    );
+
+
+    setTimeout(
+        () => {
+
+            addLog(
+                "SUCCESS",
+                "Workflow plan generated"
+            );
+
+            showToast(
+                "Workflow Ready",
+                "AI generated a scientific execution plan"
+            );
+
+        },
+        1000
+    );
+
+}
+
+
+function addLog(
+    type,
+    message
+){
+
+    const logBody =
+        document.getElementById(
+            "logBody"
+        );
+
+
+    const time =
+        new Date()
+        .toLocaleTimeString(
+            [],
+            {
+                hour12:false
+            }
+        );
+
+
+    const div =
+        document.createElement(
+            "div"
+        );
+
+
+    let cls =
+        "logInfo";
+
+
+    if(
+        type === "SUCCESS"
+    )
+        cls="logSuccess";
+
+
+    if(
+        type === "WARN"
+    )
+        cls="logWarn";
+
+
+    if(
+        type === "ERROR"
+    )
+        cls="logError";
+
+
+    div.className="logLine";
+
+    div.innerHTML =
+        `[${time}] <span class="${cls}">${type}</span> ${message}`;
+
+
+    logBody.appendChild(
+        div
+    );
+
+
+    logBody.scrollTop =
+        logBody.scrollHeight;
+
+}
+
+
+function pauseJob(){
+
+    showToast(
+        "Simulation",
+        "Job paused"
+    );
+
+    addLog(
+        "INFO",
+        "Simulation paused by researcher"
+    );
+
+}
+
+
+function stopJob(){
+
+    showToast(
+        "Simulation",
+        "Stop command submitted"
+    );
+
+    addLog(
+        "WARN",
+        "Stop command submitted to job #B247"
+    );
+
+}
+
+
+function newSession(){
+
+    showToast(
+        "Research Session",
+        "New research session created"
+    );
+
+}
+
+
+function runProtocol(){
+
+    showToast(
+        "Protocol",
+        "Membrane MD v2.4 execution started"
+    );
+
+    addLog(
+        "INFO",
+        "Protocol execution requested"
+    );
+
+}
+
+
+function analyzeData(){
+
+    showToast(
+        "Analysis",
+        "AI analysis pipeline started"
+    );
+
+    addLog(
+        "INFO",
+        "Analysis engine initialized"
+    );
+
+}
+
+
+function generatePlot(){
+
+    showToast(
+        "Visualization",
+        "Scientific plot generation started"
+    );
+
+    addLog(
+        "INFO",
+        "Generating analysis plot"
+    );
+
+}
+
+
+function createReport(){
+
+    showToast(
+        "Report",
+        "Scientific report generation started"
+    );
+
+    addLog(
+        "INFO",
+        "Preparing evidence-backed research report"
+    );
+
+}
+
+
+/* ================= LOG SEARCH ================= */
+
+function filterLogs(){
+
+    const query =
+        document
+        .getElementById(
+            "logSearch"
+        )
+        .value
+        .toLowerCase();
+
+
+    document
+        .querySelectorAll(
+            "#logBody .logLine"
+        )
+        .forEach(
+            line => {
+
+                line.style.display =
+                    line.textContent
+                    .toLowerCase()
+                    .includes(query)
+                        ? ""
+                        : "none";
+
+            }
+        );
+
+}
+
+
+/* ================= NAV ================= */
+
+document
+    .querySelectorAll(
+        ".navItem"
+    )
+    .forEach(
+        item => {
+
+            item.addEventListener(
+                "click",
+                function(){
+
+                    document
+                        .querySelectorAll(
+                            ".navItem"
+                        )
+                        .forEach(
+                            x =>
+                            x.classList.remove(
+                                "active"
+                            )
+                        );
+
+                    this.classList.add(
+                        "active"
+                    );
+
+
+                    showToast(
+                        "Polymathix",
+                        this.textContent
+                            .trim() +
+                        " module selected"
+                    );
+
+                }
+            );
+
+        }
+    );
+
+
+/* ================= STYLE BUTTONS ================= */
+
+document
+    .querySelectorAll(
+        ".styleBtn"
+    )
+    .forEach(
+        button => {
+
+            button.addEventListener(
+                "click",
+                function(){
+
+                    document
+                        .querySelectorAll(
+                            ".styleBtn"
+                        )
+                        .forEach(
+                            x =>
+                            x.classList.remove(
+                                "active"
+                            )
+                        );
+
+                    this.classList.add(
+                        "active"
+                    );
+
+                    showToast(
+                        "3D Representation",
+                        this.textContent +
+                        " mode selected"
+                    );
+
+                }
+            );
+
+        }
+    );
+
+
+/* ================= EXPORT TABS ================= */
+
+document
+    .querySelectorAll(
+        ".exportTab"
+    )
+    .forEach(
+        tab => {
+
+            tab.addEventListener(
+                "click",
+                function(){
+
+                    document
+                        .querySelectorAll(
+                            ".exportTab"
+                        )
+                        .forEach(
+                            x =>
+                            x.classList.remove(
+                                "active"
+                            )
+                        );
+
+                    this.classList.add(
+                        "active"
+                    );
+
+                }
+            );
+
+        }
+    );
+
+
+/* ================= KEYBOARD ================= */
+
+document.addEventListener(
+    "keydown",
+    event => {
+
+        if(
+            event.key === "Escape"
+        ){
+
+            closeExport();
+
+        }
+
+
+        if(
+            (event.ctrlKey ||
+             event.metaKey) &&
+            event.key.toLowerCase()==="e"
+        ){
+
+            event.preventDefault();
+
+            openExport();
+
+        }
+
+    }
+);
+
+
+/* ================= INITIALIZE ================= */
+
+
+function safeInitThree() {
+    if (typeof THREE === 'undefined') {
+        setTimeout(safeInitThree, 150);
+        return;
+    }
+    try {
+        initThree();
+    } catch(err) {
+        console.warn("Three.js init error:", err);
+    }
+}
+safeInitThree();
+
+
+
+/* ================= ADVANCED POLYMATHIX INTERACTIVITY ================= */
+
+function runAI(customQuery){
+    const inputElem = document.getElementById('aiInput');
+    const query = customQuery || (inputElem ? inputElem.value : '') || 'Run scientific protocol';
+    
+    showToast('AI Research Agent', 'Planning & orchestrating protocol...');
+    addLog('AI', 'Natural language instruction received: "' + query + '"');
+
+    Streamlit.setComponentValue({
+        action: 'runAI',
+        query: query,
+        timestamp: Date.now()
+    });
+    
+    if (inputElem) inputElem.value = '';
+}
+
+function triggerQuickAction(actionType){
+    showToast('Polymathix OS', 'Executing ' + actionType.replace('_', ' ') + '...');
+    Streamlit.setComponentValue({
+        action: 'quick_action',
+        type: actionType,
+        timestamp: Date.now()
+    });
+}
+
+function triggerAgentControl(cmd){
+    showToast('Agent Control', 'Command: ' + cmd.toUpperCase());
+    Streamlit.setComponentValue({
+        action: 'agent_control',
+        cmd: cmd,
+        timestamp: Date.now()
+    });
+}
+
+function switchWorkspaceTab(tabName, elem){
+    document.querySelectorAll('.viewer .tab').forEach(t => t.classList.remove('active'));
+    if (elem) elem.classList.add('active');
+
+    // Hide all panels
+    const canvasWrap = document.getElementById('threeCanvasWrap');
+    if (canvasWrap) canvasWrap.style.display = (tabName === 'viewer') ? 'block' : 'none';
+
+    document.querySelectorAll('.workspacePanel').forEach(p => p.classList.remove('active'));
+    
+    if (tabName !== 'viewer') {
+        const target = document.getElementById(tabName + 'Panel');
+        if (target) target.classList.add('active');
+    }
+
+    showToast('Workspace', tabName.toUpperCase() + ' panel active');
+}
+
+let trajInterval = null;
+function toggleTrajectoryPlay(){
+    const slider = document.getElementById('trajSlider');
+    const frameLabel = document.getElementById('trajFrame');
+    if (trajInterval) {
+        clearInterval(trajInterval);
+        trajInterval = null;
+        showToast('Trajectory', 'Playback paused');
+    } else {
+        showToast('Trajectory', 'Playback running');
+        trajInterval = setInterval(() => {
+            let val = parseInt(slider.value) + 15;
+            if (val > 1500) val = 0;
+            slider.value = val;
+            frameLabel.innerText = val;
+            if (moleculeGroup) {
+                moleculeGroup.rotation.y += 0.03;
+            }
+        }, 80);
+    }
+}
+
+
+/* ================= ROBUST THREE.JS RESIZING & MULTI-STYLE ENGINE ================= */
+
+let currentRep = 'cartoon';
+let cartoonGroup, sticksGroup, sphereGroup, realSurfaceGroup, meshGroup;
+let lastCanvasWidth = 0, lastCanvasHeight = 0;
+
+function resizeThree(){
+    if(!renderer || !camera || !canvas) return;
+    const parent = canvas.parentElement;
+    const width = canvas.clientWidth || (parent ? parent.clientWidth : 700) || 700;
+    const height = canvas.clientHeight || (parent ? parent.clientHeight : 450) || 450;
+    
+    if (width > 20 && height > 20 && (width !== lastCanvasWidth || height !== lastCanvasHeight)) {
+        lastCanvasWidth = width;
+        lastCanvasHeight = height;
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height, false);
+    }
+}
+
+function setRepresentation(style, elem){
+    currentRep = style;
+    document.querySelectorAll('.viewerBottom .styleBtn').forEach(b => b.classList.remove('active'));
+    if (elem) elem.classList.add('active');
+
+    if (cartoonGroup) cartoonGroup.visible = (style === 'cartoon');
+    if (realSurfaceGroup) realSurfaceGroup.visible = (style === 'surface');
+    if (sticksGroup) sticksGroup.visible = (style === 'sticks');
+    if (sphereGroup) sphereGroup.visible = (style === 'sphere');
+    if (meshGroup) meshGroup.visible = (style === 'mesh');
+
+    showToast('3D Representation', style.toUpperCase() + ' representation activated');
+}
+
+function renderRealPDB(pdbData){
+    if (!pdbData || !pdbData.ca_coords || pdbData.ca_coords.length === 0) return;
+
+    // Clear old molecule
+    if (moleculeGroup) {
+        while(moleculeGroup.children.length > 0) {
+            moleculeGroup.remove(moleculeGroup.children[0]);
+        }
+    } else {
+        moleculeGroup = new THREE.Group();
+        scene.add(moleculeGroup);
+    }
+
+    cartoonGroup = new THREE.Group();
+    sphereGroup = new THREE.Group();
+    sticksGroup = new THREE.Group();
+    realSurfaceGroup = new THREE.Group();
+    meshGroup = new THREE.Group();
+
+    // 1. CARTOON RIBBON: CatmullRomCurve3 through all CA coordinates
+    const caPoints = pdbData.ca_coords.map(c => new THREE.Vector3(c.x, c.y, c.z));
+    if (caPoints.length >= 2) {
+        const curve = new THREE.CatmullRomCurve3(caPoints);
+        const tubeGeo = new THREE.TubeGeometry(curve, Math.max(100, caPoints.length * 6), 0.42, 12, false);
+        
+        // Multi-color vertex coloring (Rainbow from N to C terminus)
+        const count = tubeGeo.attributes.position.count;
+        const colors = new Float32Array(count * 3);
+        const tempColor = new THREE.Color();
+        for (let i = 0; i < count; i++) {
+            const t = (i / count);
+            tempColor.setHSL(0.55 - t * 0.55, 0.95, 0.55); // Cyan -> Green -> Yellow -> Orange -> Magenta
+            colors[i * 3] = tempColor.r;
+            colors[i * 3 + 1] = tempColor.g;
+            colors[i * 3 + 2] = tempColor.b;
+        }
+        tubeGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const tubeMat = new THREE.MeshStandardMaterial({
+            vertexColors: true,
+            roughness: 0.25,
+            metalness: 0.2
+        });
+        const ribbonMesh = new THREE.Mesh(tubeGeo, tubeMat);
+        cartoonGroup.add(ribbonMesh);
+
+        // Alpha-carbon spheres
+        const caSphereGeo = new THREE.SphereGeometry(0.55, 16, 16);
+        caPoints.forEach((pt, idx) => {
+            const frac = idx / caPoints.length;
+            const mat = new THREE.MeshStandardMaterial({
+                color: new THREE.Color().setHSL(0.55 - frac * 0.55, 0.95, 0.6),
+                roughness: 0.2
+            });
+            const sMesh = new THREE.Mesh(caSphereGeo, mat);
+            sMesh.position.copy(pt);
+            cartoonGroup.add(sMesh);
+        });
+    }
+
+    // 2. SPHERE (CPK Space-Filling) & STICKS: All Atoms
+    const atoms = pdbData.atoms || [];
+    const sphereGeo = new THREE.SphereGeometry(0.48, 14, 14);
+    const elemColors = {
+        'C': 0x00d9ff, 'N': 0x3b82f6, 'O': 0xef4444, 'S': 0xfacc15, 'H': 0xffffff, 'P': 0xf97316
+    };
+
+    atoms.forEach(a => {
+        const col = elemColors[a.elem] || 0x10b981;
+        const mat = new THREE.MeshStandardMaterial({ color: col, roughness: 0.3 });
+        const sMesh = new THREE.Mesh(sphereGeo, mat);
+        sMesh.position.set(a.x, a.y, a.z);
+        sphereGroup.add(sMesh);
+    });
+
+    // Sticks: Connect consecutive CA atoms and close atoms (< 1.8 Å)
+    const stickMat = new THREE.MeshStandardMaterial({ color: 0x93c5fd, roughness: 0.3 });
+    for (let i = 0; i < caPoints.length - 1; i++) {
+        const p1 = caPoints[i];
+        const p2 = caPoints[i+1];
+        const dist = p1.distanceTo(p2);
+        if (dist < 4.2) {
+            const cylinderGeo = new THREE.CylinderGeometry(0.18, 0.18, dist, 8);
+            const cyl = new THREE.Mesh(cylinderGeo, stickMat);
+            cyl.position.copy(p1).add(p2).multiplyScalar(0.5);
+            cyl.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), p2.clone().sub(p1).normalize());
+            sticksGroup.add(cyl);
+        }
+    }
+
+    // 3. SURFACE: Translucent Molecular Envelope
+    const box = new THREE.Box3().setFromPoints(caPoints);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    const center = new THREE.Vector3();
+    box.getCenter(center);
+    const maxDim = Math.max(size.x, size.y, size.z) * 0.65;
+
+    const surfaceGeo = new THREE.IcosahedronGeometry(Math.max(6, maxDim), 3);
+    const surfaceMat = new THREE.MeshPhysicalMaterial({
+        color: 0x0ea5e9,
+        transparent: true,
+        opacity: 0.22,
+        roughness: 0.1,
+        transmission: 0.6,
+        side: THREE.DoubleSide
+    });
+    const sMeshObj = new THREE.Mesh(surfaceGeo, surfaceMat);
+    sMeshObj.position.copy(center);
+    realSurfaceGroup.add(sMeshObj);
+
+    // 4. MESH WIREFRAME
+    const wireMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true });
+    const wireMesh = new THREE.Mesh(surfaceGeo, wireMat);
+    wireMesh.position.copy(center);
+    meshGroup.add(wireMesh);
+
+    // Add all to moleculeGroup
+    moleculeGroup.add(cartoonGroup);
+    moleculeGroup.add(sphereGroup);
+    moleculeGroup.add(sticksGroup);
+    moleculeGroup.add(realSurfaceGroup);
+    moleculeGroup.add(meshGroup);
+
+    // Set initial representation
+    setRepresentation(currentRep, document.getElementById('btnRep' + currentRep.charAt(0).toUpperCase() + currentRep.slice(1)));
+
+    // Fit camera smoothly
+    camera.position.set(0, maxDim * 0.8, maxDim * 2.2);
+    if (controls) {
+        controls.target.set(center.x, center.y, center.z);
+        controls.update();
+    }
+
+    // Populate sequence chips
+    const seqContainer = document.getElementById('seqGridContainer');
+    if (seqContainer && pdbData.sequence) {
+        seqContainer.innerHTML = '';
+        pdbData.sequence.forEach(s => {
+            const chip = document.createElement('div');
+            chip.className = 'seqChip';
+            chip.innerHTML = `<div class="seqResName">${s.name}</div><div class="seqResNum">${s.id}</div>`;
+            chip.onclick = () => {
+                showToast('Residue Selected', `${s.name} #${s.id} focused`);
+            };
+            seqContainer.appendChild(chip);
+        });
+    }
+
+    // Populate properties table
+    if (pdbData.properties) {
+        const pTable = document.getElementById('propertiesTable');
+        if (pTable) {
+            let tbody = '<tbody>';
+            for (const [k, v] of Object.entries(pdbData.properties)) {
+                tbody += `<tr><th>${k}</th><td>${v}</td></tr>`;
+            }
+            tbody += '</tbody>';
+            pTable.innerHTML = tbody;
+        }
+    }
+}
+
+
+let realProteinGroup = null;
+
+function renderRealPDB(pdbData){
+    if (!pdbData || !pdbData.ca_coords || pdbData.ca_coords.length === 0) return;
+
+    if (realProteinGroup) {
+        scene.remove(realProteinGroup);
+    }
+    realProteinGroup = new THREE.Group();
+
+    // 1. CatmullRomCurve3 Backbone Tube through all CA coordinates
+    const points = pdbData.ca_coords.map(c => new THREE.Vector3(c.x, c.y, c.z));
+    const curve = new THREE.CatmullRomCurve3(points);
+    const tubeGeo = new THREE.TubeGeometry(curve, 200, 0.35, 10, false);
+    
+    const tubeMat = new THREE.MeshStandardMaterial({
+        color: 0x00d9ff,
+        metalness: 0.25,
+        roughness: 0.25,
+        transparent: true,
+        opacity: 0.95
+    });
+    const tubeMesh = new THREE.Mesh(tubeGeo, tubeMat);
+    realProteinGroup.add(tubeMesh);
+
+    // 2. Add alpha-carbon spheres with residue color variation
+    const sphereGeo = new THREE.SphereGeometry(0.42, 16, 16);
+    points.forEach((pt, idx) => {
+        const hue = (idx / points.length) * 0.7 + 0.15;
+        const color = new THREE.Color().setHSL(hue, 0.9, 0.55);
+        const mat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.3 });
+        const sphere = new THREE.Mesh(sphereGeo, mat);
+        sphere.position.copy(pt);
+        realProteinGroup.add(sphere);
+    });
+
+    // Replace default surface group with real structure
+    if (surfaceGroup) {
+        surfaceGroup.visible = false;
+    }
+    scene.add(realProteinGroup);
+    
+    // Populate sequence chips
+    const seqContainer = document.getElementById('seqGridContainer');
+    if (seqContainer && pdbData.sequence) {
+        seqContainer.innerHTML = '';
+        pdbData.sequence.forEach(s => {
+            const chip = document.createElement('div');
+            chip.className = 'seqChip';
+            chip.innerHTML = `<div class="seqResName">${s.name}</div><div class="seqResNum">${s.id}</div>`;
+            chip.onclick = () => {
+                showToast('Residue Selected', `${s.name} #${s.id} focused`);
+            };
+            seqContainer.appendChild(chip);
+        });
+    }
+}
+
+/* ================= PYTHON STATE SYNCHRONIZATION ================= */
+
+function updateStateFromPython(state){
+    if (!state) return;
+
+    // 1. Session & Protocol
+    if (state.session_name) {
+        const sElem = document.getElementById('sessionNameDisplay');
+        if (sElem) sElem.innerText = state.session_name;
+    }
+    if (state.protocol_name) {
+        const pElem = document.getElementById('protocolNameDisplay');
+        if (pElem) pElem.innerText = state.protocol_name;
+    }
+    if (state.status) {
+        const stElem = document.getElementById('sessionStatusDisplay');
+        if (stElem) {
+            const isAct = state.status === 'Active';
+            stElem.innerHTML = `<span class="statusDot" style="background:${isAct ? '#00f59b' : '#ffae3d'}"></span>${state.status}`;
+        }
+    }
+
+    // 2. Workflow Steps
+    if (state.workflow_steps && Array.isArray(state.workflow_steps)) {
+        const wfContainer = document.querySelector('.workflow');
+        if (wfContainer) {
+            let html = '<div class="workflowTitle">Workflow Steps</div>';
+            state.workflow_steps.forEach((step, idx) => {
+                const num = idx + 1;
+                let cls = 'step';
+                let icon = '';
+                if (step.status === 'done') {
+                    cls = 'step done';
+                    icon = '<span style="margin-left:auto;color:#00f59b">✓</span>';
+                } else if (step.status === 'running') {
+                    cls = 'step running';
+                    icon = '<span style="margin-left:auto;color:#529fff">●</span>';
+                }
+                html += `<div class="${cls}"><div class="stepNum">${num}</div><span>${step.name}</span>${icon}</div>`;
+            });
+            wfContainer.innerHTML = html;
+        }
+    }
+
+    // 3. Progress & Time Remaining
+    if (typeof state.progress_percent === 'number') {
+        const pFill = document.getElementById('progressFill');
+        const pVal = document.getElementById('progressValue');
+        if (pFill) pFill.style.width = state.progress_percent + '%';
+        if (pVal) pVal.innerText = state.progress_percent + '%';
+    }
+    if (state.time_remaining) {
+        const tRem = document.getElementById('timeRemainingDisplay');
+        if (tRem) tRem.innerText = 'Estimated time remaining: ' + state.time_remaining;
+    }
+
+    // 4. Logs
+    if (state.logs && Array.isArray(state.logs)) {
+        const logBody = document.getElementById('logBody');
+        if (logBody) {
+            logBody.innerHTML = '';
+            state.logs.forEach(l => {
+                let cls = 'logInfo';
+                if (l.type === 'SUCCESS') cls = 'logSuccess';
+                if (l.type === 'WARN') cls = 'logWarn';
+                if (l.type === 'ERROR') cls = 'logError';
+                if (l.type === 'AI') cls = 'logSuccess';
+                
+                const div = document.createElement('div');
+                div.className = 'logLine';
+                div.innerHTML = `[${l.time}] <span class="${cls}">${l.type}</span> ${l.msg}`;
+                logBody.appendChild(div);
+            });
+            logBody.scrollTop = logBody.scrollHeight;
+        }
+    }
+
+    // 5. Results Grid
+    if (state.results && Array.isArray(state.results)) {
+        const grid = document.getElementById('resultGrid');
+        if (grid) {
+            grid.innerHTML = '';
+            state.results.forEach(r => {
+                const card = document.createElement('div');
+                card.className = 'resultCard';
+                card.onclick = () => {
+                    showToast('Result Item', 'Opening ' + r.name);
+                };
+                card.innerHTML = `
+                    <div class="resultPreview">${r.icon || '🧬'}</div>
+                    <div class="resultName">${r.name}</div>
+                    <div class="resultMeta">${r.meta || 'Recent'}</div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+    }
+
+    // 6. Real PDB coordinates
+    if (state.pdb_data) {
+        renderRealPDB(state.pdb_data);
+    }
+}
+
+/* ================= STREAMLIT BRIDGE LISTENER ================= */
+window.addEventListener('message', function(event) {
+    if (event.data.type === 'streamlit:render') {
+        const args = event.data.args;
+        const state = (args && args.initial_data) ? args.initial_data : args;
+        if (state) {
+            updateStateFromPython(state);
+        }
+    }
+});
+
+window.addEventListener('load', function() {
+    Streamlit.setComponentReady();
+    Streamlit.setFrameHeight(window.innerHeight);
+});
+
+window.addEventListener('resize', function() {
+    Streamlit.setFrameHeight(window.innerHeight);
+});
+
+
+</script>
+
+</body>
+</html>
