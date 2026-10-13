@@ -9,13 +9,13 @@
 <script src="js/three.min.js"></script>
 <script>
 if(typeof THREE === 'undefined'){
-    document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\/script>');
+    document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\\/script>');
 }
 </script>
 <script src="js/OrbitControls.js"></script>
 <script>
 if(typeof THREE !== 'undefined' && typeof THREE.OrbitControls === 'undefined'){
-    document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"><\/script>');
+    document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"><\\/script>');
 }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/OBJExporter.js"></script>
@@ -321,6 +321,77 @@ button, input{ font:inherit; color:var(--text); outline:none; }
 #threeCanvas{
     width:100%; height:100%; display:block;
 }
+
+
+/* SIMULATION HUD OVERLAY */
+.simHUD{
+    position:absolute; left:52px; top:12px;
+    padding:8px 12px; border-radius:10px;
+    background:rgba(4,22,44,.85); backdrop-filter:blur(12px);
+    border:1px solid rgba(56,189,248,.3);
+    box-shadow:0 0 20px rgba(0,140,255,.15);
+    z-index:5; display:flex; flex-direction:column; gap:6px;
+    pointer-events:none; transition:opacity .2s;
+}
+.simHUDHeader{
+    display:flex; align-items:center; gap:8px;
+    font-size:10px; font-weight:700; color:#38bdf8; letter-spacing:0.5px;
+}
+.simDot{
+    width:7px; height:7px; border-radius:50%; background:#00f59b;
+    box-shadow:0 0 8px #00f59b; animation:pulseDot 1.5s infinite;
+}
+@keyframes pulseDot{ 0%,100%{ opacity:1; } 50%{ opacity:0.3; } }
+.simBadge{
+    font-size:9px; padding:1px 6px; border-radius:4px;
+    background:rgba(56,189,248,.2); color:#7dd3fc; text-transform:uppercase;
+}
+.simMetrics{
+    display:flex; gap:12px; align-items:center;
+}
+.simMetric{
+    display:flex; flex-direction:column;
+}
+.simMVal{
+    font-size:11px; font-family:monospace; font-weight:700; color:#f1f5f9;
+}
+.simMLbl{
+    font-size:8px; color:#7891aa; font-weight:600; text-transform:uppercase; letter-spacing:0.4px;
+}
+
+/* SIMULATION BOTTOM CONTROLS BAR */
+.simControlsBar{
+    position:absolute; left:50%; bottom:10px; transform:translateX(-50%);
+    padding:5px 12px; border-radius:10px;
+    background:rgba(6,24,48,.88); backdrop-filter:blur(16px);
+    border:1px solid rgba(56,189,248,.35);
+    box-shadow:0 0 25px rgba(0,120,255,.2);
+    z-index:6; display:flex; align-items:center; gap:10px;
+    user-select:none;
+}
+.simPlayBtn{
+    padding:4px 10px; border-radius:6px; border:none;
+    background:linear-gradient(135deg,#00f59b,#00b874); color:#02140a;
+    font-size:10px; font-weight:700; cursor:pointer; transition:.15s;
+    box-shadow:0 0 10px rgba(0,245,155,.3);
+}
+.simPlayBtn.paused{
+    background:linear-gradient(135deg,#38bdf8,#0284c7); color:#020914;
+    box-shadow:0 0 10px rgba(56,189,248,.3);
+}
+.simPlayBtn:hover{ transform:scale(1.03); }
+.simDivider{ width:1px; height:16px; background:rgba(90,178,255,.25); }
+.simSelect{
+    background:rgba(4,18,34,.9); border:1px solid rgba(56,189,248,.3);
+    color:#e2e8f0; font-size:10px; padding:3px 6px; border-radius:6px; outline:none;
+}
+.simSliderWrap{ display:flex; align-items:center; gap:6px; }
+.simLayers{ display:flex; align-items:center; gap:8px; }
+.layerCheck{
+    display:flex; align-items:center; gap:4px; font-size:10px; color:#94a3b8; cursor:pointer;
+}
+.layerCheck input{ cursor:pointer; accent-color:#38bdf8; }
+.layerCheck:hover{ color:#fff; }
 
 /* TOOLBAR OVERLAY */
 .viewerTools{
@@ -780,6 +851,45 @@ button, input{ font:inherit; color:var(--text); outline:none; }
         <div class="canvasWrap" id="threeCanvasWrap">
             <canvas id="threeCanvas"></canvas>
 
+            <!-- SIMULATION HUD -->
+            <div class="simHUD" id="simHUD">
+                <div class="simHUDHeader">
+                    <span class="simDot" id="simDot"></span>
+                    <span id="simStatusText">BIOPHYSICAL MD (300K)</span>
+                    <span class="simBadge" id="simModeBadge">Thermal</span>
+                </div>
+                <div class="simMetrics">
+                    <div class="simMetric"><span class="simMVal" id="hudTemp">300.2 K</span><span class="simMLbl">TEMP</span></div>
+                    <div class="simMetric"><span class="simMVal" id="hudRMSD">0.84 Å</span><span class="simMLbl">RMSD</span></div>
+                    <div class="simMetric"><span class="simMVal" id="hudEnergy">-146k</span><span class="simMLbl">POT.E</span></div>
+                    <div class="simMetric"><span class="simMVal" id="hudDeltaG" style="color:#00f59b;">-7.82</span><span class="simMLbl">ΔG POCKET</span></div>
+                </div>
+            </div>
+
+            <!-- SIMULATION CONTROLS BAR -->
+            <div class="simControlsBar" id="simControlsBar">
+                <button class="simPlayBtn" id="btnSimPlay" onclick="toggleSimPlay()">⏸ Pause</button>
+                <div class="simDivider"></div>
+                <select class="simSelect" id="simModeSelect" onchange="setSimMode(this.value)">
+                    <option value="thermal">Thermal Dynamics (300K)</option>
+                    <option value="nma">Domain Breathing (NMA)</option>
+                    <option value="docking">Induced-Fit Ligand Docking</option>
+                </select>
+                <div class="simDivider"></div>
+                <div class="simSliderWrap" title="Simulation Temperature">
+                    <span style="font-size:10px;color:#94a3b8;">Temp:</span>
+                    <input type="range" min="260" max="360" value="300" id="simTempSlider" oninput="setSimTemp(this.value)" style="width:65px;">
+                    <span id="simTempDisplay" style="font-size:10px;font-family:monospace;min-width:32px;">300K</span>
+                </div>
+                <div class="simDivider"></div>
+                <div class="simLayers">
+                    <label class="layerCheck" title="Toggle Disulfide Bridges (S-S)"><input type="checkbox" id="chkDisulfides" checked onchange="toggleDisulfides(this.checked)"><span>S-S</span></label>
+                    <label class="layerCheck" title="Toggle TIP3P Water Hydration Shell"><input type="checkbox" id="chkHydration" checked onchange="toggleHydration(this.checked)"><span>H₂O</span></label>
+                    <label class="layerCheck" title="Toggle POPC Lipid Bilayer Slab"><input type="checkbox" id="chkMembrane" onchange="toggleMembrane(this.checked)"><span>POPC</span></label>
+                </div>
+            </div>
+
+
             <div class="viewerTools">
                 <button class="viewerTool" onclick="resetCamera()" title="Reset Camera View">↖</button>
                 <button class="viewerTool" onclick="focusMolecule()" title="Focus Center">◎</button>
@@ -875,11 +985,11 @@ button, input{ font:inherit; color:var(--text); outline:none; }
 
         <!-- VIEWER BOTTOM -->
         <div class="viewerBottom">
-            <button class="styleBtn active" id="btnRepCartoon" onclick="setRepresentation('cartoon', this)">Cartoon</button>
-            <button class="styleBtn" id="btnRepSurface" onclick="setRepresentation('surface', this)">Surface</button>
-            <button class="styleBtn" id="btnRepSticks" onclick="setRepresentation('sticks', this)">Sticks</button>
-            <button class="styleBtn" id="btnRepSphere" onclick="setRepresentation('sphere', this)">Sphere</button>
-            <button class="styleBtn" id="btnRepMesh" onclick="setRepresentation('mesh', this)">Mesh</button>
+            <button class="styleBtn active" id="btnRepRibbon" onclick="setRepresentation('ribbon', this)">Ribbon</button>
+            <button class="styleBtn" id="btnRepElectro" onclick="setRepresentation('electro', this)">Electrostatic</button>
+            <button class="styleBtn" id="btnRepGlass" onclick="setRepresentation('glass', this)">Glass Surface</button>
+            <button class="styleBtn" id="btnRepSticks" onclick="setRepresentation('sticks', this)">Ball & Stick</button>
+            <button class="styleBtn" id="btnRepSphere" onclick="setRepresentation('sphere', this)">Spacefill</button>
 
             <div class="viewerSpacer"></div>
 
@@ -1166,10 +1276,18 @@ updateClock();
 
 /* ================= THREE.JS 3D SCENE ================= */
 let scene, camera, renderer, controls;
-let moleculeGroup, cartoonGroup, sphereGroup, sticksGroup, surfaceGroup, meshGroup, glucoseGroup, interactionGroup;
-let currentRep = 'cartoon';
+let moleculeGroup, ribbonGroup, electroGroup, glassGroup, sticksGroup, sphereGroup;
+let disulfideGroup, hydrationGroup, membraneGroup, glucoseGroup, interactionGroup;
+let currentRep = 'ribbon';
 let autoRotate = true;
-let surfaceVisible = false;
+let simRunning = true;
+let simMode = 'thermal';
+let simTemp = 300.0;
+let simSpeed = 1.0;
+let livePDBData = null;
+let originalCAPoints = [];
+let originalAtoms = [];
+let liveGlucoseBonds = [];
 const canvas = document.getElementById("threeCanvas");
 
 function initThree(){
@@ -1182,18 +1300,18 @@ function initThree(){
     try {
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0x010812);
+        scene.fog = new THREE.FogExp2(0x010812, 0.012);
 
         const wrap = document.getElementById("threeCanvasWrap");
         const width = (wrap && wrap.clientWidth > 50) ? wrap.clientWidth : (canvas.clientWidth || 700);
         const height = (wrap && wrap.clientHeight > 50) ? wrap.clientHeight : (canvas.clientHeight || 450);
 
         camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 2000);
-        camera.position.set(0, 8, 28);
+        camera.position.set(0, 10, 36);
 
         renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, preserveDrawingBuffer: true, alpha: true });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setSize(width, height, false);
-
         if (THREE.sRGBEncoding) renderer.outputEncoding = THREE.sRGBEncoding;
 
         // Controls
@@ -1202,37 +1320,47 @@ function initThree(){
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
             controls.minDistance = 4;
-            controls.maxDistance = 120;
+            controls.maxDistance = 140;
         } else {
             setupSimpleControls(camera, renderer.domElement);
         }
 
-        // Lighting
+        // Realistic Studio Lighting
         const ambient = new THREE.AmbientLight(0xffffff, 1.4);
         scene.add(ambient);
 
-        const key = new THREE.DirectionalLight(0xffffff, 2.0);
-        key.position.set(15, 20, 15);
-        scene.add(key);
+        const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
+        keyLight.position.set(18, 22, 16);
+        scene.add(keyLight);
 
-        const fill = new THREE.DirectionalLight(0x7da4ff, 1.2);
-        fill.position.set(-15, -10, -15);
-        scene.add(fill);
+        const blueRimLight = new THREE.DirectionalLight(0x7da4ff, 1.4);
+        blueRimLight.position.set(-18, -12, -16);
+        scene.add(blueRimLight);
 
-        // Molecular Groups
+        const fillLight = new THREE.PointLight(0xa855f7, 3, 80);
+        fillLight.position.set(-14, 10, 10);
+        scene.add(fillLight);
+
+        // Molecular Groups Hierarchy
         moleculeGroup = new THREE.Group();
-        cartoonGroup = new THREE.Group();
-        sphereGroup = new THREE.Group();
+        ribbonGroup = new THREE.Group();
+        electroGroup = new THREE.Group();
+        glassGroup = new THREE.Group();
         sticksGroup = new THREE.Group();
-        surfaceGroup = new THREE.Group();
-        meshGroup = new THREE.Group();
+        sphereGroup = new THREE.Group();
+        disulfideGroup = new THREE.Group();
+        hydrationGroup = new THREE.Group();
+        membraneGroup = new THREE.Group();
         glucoseGroup = new THREE.Group();
         interactionGroup = new THREE.Group();
 
-        moleculeGroup.add(cartoonGroup, sphereGroup, sticksGroup, surfaceGroup, meshGroup, glucoseGroup, interactionGroup);
+        moleculeGroup.add(
+            ribbonGroup, electroGroup, glassGroup, sticksGroup, sphereGroup,
+            disulfideGroup, hydrationGroup, membraneGroup, glucoseGroup, interactionGroup
+        );
         scene.add(moleculeGroup);
 
-        // Initial Standalone Glucose + Interactions in Pocket
+        // Initial D-Glucose Ligand & Interactions
         createGlucoseLigand();
         createInteractions();
 
@@ -1251,6 +1379,7 @@ function initThree(){
 
         setTimeout(resizeThree, 50);
         setTimeout(resizeThree, 200);
+        setTimeout(resizeThree, 500);
     } catch(err) {
         console.error("Error in initThree:", err);
     }
@@ -1267,15 +1396,6 @@ function resizeThree(){
         camera.updateProjectionMatrix();
         renderer.setSize(width, height, false);
     }
-}
-
-function animate(){
-    requestAnimationFrame(animate);
-    if(autoRotate && moleculeGroup) {
-        moleculeGroup.rotation.y += 0.0018;
-    }
-    if(controls && controls.update) controls.update();
-    if(renderer && scene && camera) renderer.render(scene, camera);
 }
 
 /* ================= GLUCOSE LIGAND & INTERACTIONS ================= */
@@ -1295,8 +1415,8 @@ const GLUCOSE_ATOMS = [
 ];
 
 const GLUCOSE_BONDS = [
-    [0,1], [1,2], [2,3], [3,4], [4,5], [5,0], // Ring
-    [0,6], [1,7], [2,8], [3,9], [4,10], [10,11] // Hydroxyls
+    [0,1], [1,2], [2,3], [3,4], [4,5], [5,0],
+    [0,6], [1,7], [2,8], [3,9], [4,10], [10,11]
 ];
 
 const BINDING_CONTACTS = [
@@ -1314,11 +1434,11 @@ function createGlucoseLigand(){
     if(!glucoseGroup) return;
     while(glucoseGroup.children.length > 0) glucoseGroup.remove(glucoseGroup.children[0]);
 
-    const cMat = new THREE.MeshStandardMaterial({ color: 0x00f59b, roughness: 0.25, metalness: 0.2 });
-    const oMat = new THREE.MeshStandardMaterial({ color: 0xff4d67, roughness: 0.2, metalness: 0.3 });
-    const bondMat = new THREE.MeshStandardMaterial({ color: 0x8be9fd, roughness: 0.3, metalness: 0.4 });
+    const cMat = new THREE.MeshPhysicalMaterial({ color: 0x00f59b, roughness: 0.25, metalness: 0.2, clearcoat: 0.5 });
+    const oMat = new THREE.MeshPhysicalMaterial({ color: 0xff4d67, roughness: 0.2, metalness: 0.3, clearcoat: 0.5 });
+    const bondMat = new THREE.MeshPhysicalMaterial({ color: 0x38bdf8, roughness: 0.25, metalness: 0.3 });
 
-    const sphereGeo = new THREE.SphereGeometry(0.35, 16, 16);
+    const sphereGeo = new THREE.SphereGeometry(0.38, 16, 16);
 
     GLUCOSE_ATOMS.forEach(atom => {
         const mesh = new THREE.Mesh(sphereGeo, atom.elem === 'O' ? oMat : cMat);
@@ -1344,27 +1464,33 @@ function createInteractions(){
     const resListEl = document.getElementById("bindingResiduesList");
     if(resListEl) resListEl.innerHTML = "";
 
-    BINDING_CONTACTS.forEach((c, idx) => {
+    BINDING_CONTACTS.forEach((c) => {
         const start = new THREE.Vector3(0, 0, 0);
         const end = new THREE.Vector3(c.x, c.y, c.z);
         
         const lineGeo = new THREE.BufferGeometry().setFromPoints([start, end]);
-        const lineMat = new THREE.LineDashedMaterial({ color: c.color, dashSize: 0.3, gapSize: 0.15 });
+        const lineMat = new THREE.LineDashedMaterial({ color: c.color, dashSize: 0.4, gapSize: 0.2, linewidth: 2 });
         const line = new THREE.Line(lineGeo, lineMat);
         line.computeLineDistances();
+        line.name = "contact_line_" + c.name;
         interactionGroup.add(line);
 
         // Marker for residue
-        const marker = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 12), new THREE.MeshStandardMaterial({ color: c.color }));
+        const marker = new THREE.Mesh(
+            new THREE.SphereGeometry(0.32, 14, 14),
+            new THREE.MeshPhysicalMaterial({ color: c.color, roughness: 0.25, metalness: 0.3, clearcoat: 0.4 })
+        );
         marker.position.copy(end);
+        marker.name = "contact_marker_" + c.name;
         interactionGroup.add(marker);
 
         // Populate Binding Panel
         if(resListEl) {
             const div = document.createElement("div");
             div.className = "residue";
+            div.id = "badge_" + c.name.replace(" ", "_");
             div.onclick = () => focusResidue(c.x, c.y, c.z, c.name, c.dist, c.type);
-            div.innerHTML = `<span class="resName">${c.name}</span><span class="resDist">${c.dist}</span>`;
+            div.innerHTML = `<span class="resName">${c.name}</span><span class="resDist" id="dist_${c.name.replace(" ", "_")}">${c.dist}</span>`;
             resListEl.appendChild(div);
         }
     });
@@ -1398,59 +1524,143 @@ function closeBindingPanel(){
 /* ================= FULL PDB RENDERING ================= */
 function renderRealPDB(pdbData){
     if(!pdbData || !pdbData.ca_coords || pdbData.ca_coords.length === 0) return;
-    if(!scene || !cartoonGroup){
+    if(!scene || !ribbonGroup){
         window._pendingPDBData = pdbData;
         return;
     }
 
-    // Clear previous
-    [cartoonGroup, sphereGroup, sticksGroup, surfaceGroup, meshGroup].forEach(g => {
+    livePDBData = pdbData;
+    originalCAPoints = pdbData.ca_coords.map(c => ({
+        x: c.x, y: c.y, z: c.z, res: c.res, id: c.id,
+        sec_struct: c.sec_struct || 'loop',
+        b_factor: c.b_factor || 15.0
+    }));
+    originalAtoms = (pdbData.atoms || []).map(a => ({ ...a }));
+
+    // Clear previous representations
+    [ribbonGroup, electroGroup, glassGroup, sticksGroup, sphereGroup, disulfideGroup, hydrationGroup, membraneGroup].forEach(g => {
         if(g) while(g.children.length > 0) g.remove(g.children[0]);
     });
 
-    // 1. CARTOON RAINBOW BACKBONE
-    const caPoints = pdbData.ca_coords.map(c => new THREE.Vector3(c.x, c.y, c.z));
+    const caPoints = originalCAPoints.map(c => new THREE.Vector3(c.x, c.y, c.z));
+
+    // 1. CHIMERAX / PYMOL STYLE SCIENTIFIC RIBBON
     if(caPoints.length >= 2){
-        const curve = new THREE.CatmullRomCurve3(caPoints);
-        const tubeGeo = new THREE.TubeGeometry(curve, caPoints.length * 6, 0.42, 10, false);
+        const fullCurve = new THREE.CatmullRomCurve3(caPoints);
         
+        // Helix, Sheet, and Loop materials with physical sheen
+        const helixMat = new THREE.MeshPhysicalMaterial({ color: 0xc084fc, roughness: 0.22, metalness: 0.15, clearcoat: 0.6 });
+        const sheetMat = new THREE.MeshPhysicalMaterial({ color: 0xfacc15, roughness: 0.20, metalness: 0.20, clearcoat: 0.5 });
+        const loopMat = new THREE.MeshPhysicalMaterial({ color: 0x38bdf8, roughness: 0.25, metalness: 0.10, clearcoat: 0.4 });
+
+        // Continuous smooth backbone ribbon with secondary structure vertex colors
+        const tubeSegments = caPoints.length * 8;
+        const tubeGeo = new THREE.TubeGeometry(fullCurve, tubeSegments, 0.42, 12, false);
         const count = tubeGeo.attributes.position.count;
         const colors = new Float32Array(count * 3);
-        const color = new THREE.Color();
+        const cColor = new THREE.Color();
+
         for(let i=0; i<count; i++){
             const t = i / count;
-            color.setHSL(0.55 - t * 0.55, 0.95, 0.55); // Cyan -> Green -> Yellow -> Orange -> Magenta
-            colors[i*3] = color.r; colors[i*3+1] = color.g; colors[i*3+2] = color.b;
+            const resIdx = Math.min(caPoints.length - 1, Math.floor(t * caPoints.length));
+            const ss = originalCAPoints[resIdx].sec_struct;
+            if(ss === 'helix') cColor.setHex(0xc084fc);
+            else if(ss === 'sheet') cColor.setHex(0xfacc15);
+            else cColor.setHex(0x38bdf8);
+
+            colors[i*3] = cColor.r; colors[i*3+1] = cColor.g; colors[i*3+2] = cColor.b;
         }
         tubeGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        const ribbonMesh = new THREE.Mesh(tubeGeo, new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.25, metalness: 0.15, clearcoat: 0.6 }));
+        ribbonMesh.name = "backbone_ribbon";
+        ribbonGroup.add(ribbonMesh);
 
-        const tubeMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.25, metalness: 0.2 });
-        cartoonGroup.add(new THREE.Mesh(tubeGeo, tubeMat));
+        // CA Nodal beads along secondary structure
+        const helixBeadGeo = new THREE.SphereGeometry(0.55, 14, 14);
+        const sheetBeadGeo = new THREE.SphereGeometry(0.50, 14, 14);
+        const loopBeadGeo = new THREE.SphereGeometry(0.42, 12, 12);
 
-        // CA spheres
-        const caGeo = new THREE.SphereGeometry(0.5, 14, 14);
-        caPoints.forEach((p, idx) => {
-            const frac = idx / caPoints.length;
-            const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0.55 - frac * 0.55, 0.95, 0.6), roughness: 0.25 });
-            const s = new THREE.Mesh(caGeo, mat);
-            s.position.copy(p);
-            cartoonGroup.add(s);
+        originalCAPoints.forEach((c) => {
+            const pos = new THREE.Vector3(c.x, c.y, c.z);
+            let beadGeo = loopBeadGeo, beadMat = loopMat;
+            if(c.sec_struct === 'helix'){ beadGeo = helixBeadGeo; beadMat = helixMat; }
+            else if(c.sec_struct === 'sheet'){ beadGeo = sheetBeadGeo; beadMat = sheetMat; }
+
+            const bead = new THREE.Mesh(beadGeo, beadMat);
+            bead.position.copy(pos);
+            bead.name = "ca_bead_" + c.id;
+            ribbonGroup.add(bead);
         });
     }
 
-    // 2. CPK SPHERES
-    const atoms = pdbData.atoms || [];
-    const sphereGeo = new THREE.SphereGeometry(0.45, 12, 12);
-    const elemColors = { 'C': 0x00d9ff, 'N': 0x3b82f6, 'O': 0xef4444, 'S': 0xfacc15, 'H': 0xffffff };
-    atoms.forEach(a => {
-        const mat = new THREE.MeshStandardMaterial({ color: elemColors[a.elem] || 0x10b981, roughness: 0.3 });
-        const m = new THREE.Mesh(sphereGeo, mat);
-        m.position.set(a.x, a.y, a.z);
-        sphereGroup.add(m);
+    // 2. AUTHENTIC DISULFIDE BRIDGES (S-S BONDS)
+    const ssbonds = pdbData.ssbonds || [];
+    const disulfideMat = new THREE.MeshPhysicalMaterial({
+        color: 0xfbbf24, roughness: 0.15, metalness: 0.85, emissive: 0x78350f, clearcoat: 0.5
+    });
+    const sSphereGeo = new THREE.SphereGeometry(0.38, 14, 14);
+
+    ssbonds.forEach((ssb, idx) => {
+        const p1 = new THREE.Vector3(ssb.x1, ssb.y1, ssb.z1);
+        const p2 = new THREE.Vector3(ssb.x2, ssb.y2, ssb.z2);
+        const dist = p1.distanceTo(p2);
+
+        const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.20, dist, 10), disulfideMat);
+        cyl.position.copy(p1).add(p2).multiplyScalar(0.5);
+        cyl.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), p2.clone().sub(p1).normalize());
+        disulfideGroup.add(cyl);
+
+        const s1 = new THREE.Mesh(sSphereGeo, disulfideMat); s1.position.copy(p1); disulfideGroup.add(s1);
+        const s2 = new THREE.Mesh(sSphereGeo, disulfideMat); s2.position.copy(p2); disulfideGroup.add(s2);
     });
 
-    // 3. STICKS
-    const stickMat = new THREE.MeshStandardMaterial({ color: 0x93c5fd, roughness: 0.3 });
+    // 3. ELECTROSTATIC POTENTIAL SURFACE (POISSON-COULOMBIC COLOR MAPPING)
+    const box = new THREE.Box3().setFromPoints(caPoints);
+    const size = new THREE.Vector3(); box.getSize(size);
+    const center = new THREE.Vector3(); box.getCenter(center);
+    const maxDim = Math.max(size.x, size.y, size.z) * 0.65;
+
+    const surfGeo = new THREE.IcosahedronGeometry(Math.max(8, maxDim), 4);
+    const surfPos = surfGeo.attributes.position;
+    const surfColors = new Float32Array(surfPos.count * 3);
+    const tempColor = new THREE.Color();
+
+    for(let i=0; i<surfPos.count; i++){
+        const vx = surfPos.getX(i) + center.x;
+        const vy = surfPos.getY(i) + center.y;
+        const vz = surfPos.getZ(i) + center.z;
+
+        // Calculate Coulombic potential sum
+        let pot = 0;
+        originalCAPoints.forEach(c => {
+            const d = Math.hypot(vx - c.x, vy - c.y, vz - c.z) + 1.0;
+            if(c.res === 'GLU' || c.res === 'ASP') pot -= 2.5 / d;
+            else if(c.res === 'ARG' || c.res === 'LYS' || c.res === 'HIS') pot += 2.5 / d;
+        });
+
+        // Map pot (-1.0 to +1.0) -> Red (negative) to Silver to Blue (positive)
+        if(pot < -0.15) tempColor.setHSL(0.0, 0.9, 0.55); // Red acidic
+        else if(pot > 0.15) tempColor.setHSL(0.6, 0.9, 0.55); // Blue basic
+        else tempColor.setHSL(0.58, 0.1, 0.90); // White/silver neutral
+
+        surfColors[i*3] = tempColor.r; surfColors[i*3+1] = tempColor.g; surfColors[i*3+2] = tempColor.b;
+    }
+    surfGeo.setAttribute('color', new THREE.BufferAttribute(surfColors, 3));
+    const electroMesh = new THREE.Mesh(surfGeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.35, metalness: 0.1, side: THREE.DoubleSide }));
+    electroMesh.position.copy(center);
+    electroGroup.add(electroMesh);
+
+    // 4. GLASS TRANSMISSION MOLECULAR ENVELOPE
+    const glassMat = new THREE.MeshPhysicalMaterial({
+        color: 0x0ea5e9, transparent: true, opacity: 0.30, transmission: 0.85,
+        roughness: 0.12, ior: 1.35, side: THREE.DoubleSide
+    });
+    const glassMesh = new THREE.Mesh(surfGeo, glassMat);
+    glassMesh.position.copy(center);
+    glassGroup.add(glassMesh);
+
+    // 5. BALL & STICK
+    const stickMat = new THREE.MeshPhysicalMaterial({ color: 0x93c5fd, roughness: 0.25, metalness: 0.3 });
     for(let i=0; i<caPoints.length-1; i++){
         const p1 = caPoints[i], p2 = caPoints[i+1];
         if(p1.distanceTo(p2) < 4.2){
@@ -1461,30 +1671,67 @@ function renderRealPDB(pdbData){
         }
     }
 
-    // 4. SURFACE ENVELOPE
-    const box = new THREE.Box3().setFromPoints(caPoints);
-    const size = new THREE.Vector3(); box.getSize(size);
-    const center = new THREE.Vector3(); box.getCenter(center);
-    const maxDim = Math.max(size.x, size.y, size.z) * 0.65;
+    // 6. CPK SPACEFILL (VAN DER WAALS SPHERES)
+    const atoms = pdbData.atoms || [];
+    const sphereGeo = new THREE.SphereGeometry(0.48, 14, 14);
+    const elemColors = { 'C': 0x00d9ff, 'N': 0x3b82f6, 'O': 0xef4444, 'S': 0xfacc15, 'H': 0xffffff };
+    atoms.forEach(a => {
+        const mat = new THREE.MeshPhysicalMaterial({ color: elemColors[a.elem] || 0x10b981, roughness: 0.25, clearcoat: 0.4 });
+        const m = new THREE.Mesh(sphereGeo, mat);
+        m.position.set(a.x, a.y, a.z);
+        sphereGroup.add(m);
+    });
 
-    const surfGeo = new THREE.IcosahedronGeometry(Math.max(6, maxDim), 3);
-    const surfMat = new THREE.MeshPhysicalMaterial({ color: 0x0ea5e9, transparent: true, opacity: 0.22, transmission: 0.6, side: THREE.DoubleSide });
-    const sMesh = new THREE.Mesh(surfGeo, surfMat);
-    sMesh.position.copy(center);
-    surfaceGroup.add(sMesh);
+    // 7. HYDRATION SHELL (TIP3P WATER ENVELOPE)
+    const waterWaters = pdbData.hydration_waters || [];
+    const wOGeo = new THREE.SphereGeometry(0.26, 12, 12);
+    const wHGeo = new THREE.SphereGeometry(0.14, 10, 10);
+    const wOMat = new THREE.MeshPhysicalMaterial({ color: 0xef4444, roughness: 0.2, clearcoat: 0.4 });
+    const wHMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.2, clearcoat: 0.4 });
 
-    // 5. MESH WIREFRAME
-    const wireMesh = new THREE.Mesh(surfGeo, new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true }));
-    wireMesh.position.copy(center);
-    meshGroup.add(wireMesh);
+    waterWaters.forEach((w, idx) => {
+        const wGroup = new THREE.Group();
+        wGroup.position.set(w.x, w.y, w.z);
+        wGroup.name = "water_" + idx;
 
-    // Apply active representation
+        const oMesh = new THREE.Mesh(wOGeo, wOMat);
+        const h1Mesh = new THREE.Mesh(wHGeo, wHMat); h1Mesh.position.set(0.24, 0.20, 0);
+        const h2Mesh = new THREE.Mesh(wHGeo, wHMat); h2Mesh.position.set(-0.24, 0.20, 0);
+
+        wGroup.add(oMesh, h1Mesh, h2Mesh);
+        hydrationGroup.add(wGroup);
+    });
+
+    // 8. MEMBRANE BILAYER SLAB (POPC PHOSPHOLIPIDS)
+    const headGeo = new THREE.SphereGeometry(0.42, 10, 10);
+    const headMat1 = new THREE.MeshPhysicalMaterial({ color: 0x06b6d4, roughness: 0.25, transmission: 0.4, transparent: true, opacity: 0.75 });
+    const headMat2 = new THREE.MeshPhysicalMaterial({ color: 0xf59e0b, roughness: 0.25, transmission: 0.4, transparent: true, opacity: 0.75 });
+
+    for(let i=-3; i<=3; i++){
+        for(let j=-3; j<=3; j++){
+            const hTop = new THREE.Mesh(headGeo, (i+j)%2===0 ? headMat1 : headMat2);
+            hTop.position.set(i * 3.8, 12.0, j * 3.8);
+            membraneGroup.add(hTop);
+
+            const hBot = new THREE.Mesh(headGeo, (i+j)%2===0 ? headMat2 : headMat1);
+            hBot.position.set(i * 3.8, -12.0, j * 3.8);
+            membraneGroup.add(hBot);
+        }
+    }
+    const coreSlab = new THREE.Mesh(
+        new THREE.BoxGeometry(26, 22, 26),
+        new THREE.MeshBasicMaterial({ color: 0x06182e, transparent: true, opacity: 0.20, side: THREE.DoubleSide })
+    );
+    membraneGroup.add(coreSlab);
+    membraneGroup.visible = false; // Default hidden until toggled
+
+    // Apply Active Representation
     setRepresentation(currentRep, document.getElementById('btnRep' + currentRep.charAt(0).toUpperCase() + currentRep.slice(1)));
 
     // Fit camera
     const fitDist = Math.max(26, maxDim * 2.2);
     camera.position.set(0, fitDist * 0.35, fitDist);
-    if(controls){ controls.target.set(center.x, center.y, center.z); controls.update(); }
+    if(controls){ controls.target.set(0, 0, 0); controls.update(); }
 
     // Sequence Chips
     const seqCont = document.getElementById("seqGridContainer");
@@ -1515,23 +1762,28 @@ function renderRealPDB(pdbData){
     }
 }
 
-/* ================= 3D CONTROLS & CAMERA ================= */
+/* ================= 3D REPRESENTATIONS ================= */
 function setRepresentation(style, elem){
     currentRep = style;
     document.querySelectorAll(".viewerBottom .styleBtn").forEach(b => b.classList.remove("active"));
     if(elem) elem.classList.add("active");
 
-    if(cartoonGroup) cartoonGroup.visible = (style === 'cartoon');
-    if(surfaceGroup) surfaceGroup.visible = (style === 'surface');
+    const wrap = document.getElementById("threeCanvasWrap");
+    if(wrap && wrap.style.display === 'none'){
+        switchWorkspaceTab('viewer', document.querySelectorAll('.viewer .tab')[0]);
+    }
+
+    if(ribbonGroup) ribbonGroup.visible = (style === 'ribbon' || style === 'glass');
+    if(electroGroup) electroGroup.visible = (style === 'electro');
+    if(glassGroup) glassGroup.visible = (style === 'glass');
     if(sticksGroup) sticksGroup.visible = (style === 'sticks');
     if(sphereGroup) sphereGroup.visible = (style === 'sphere');
-    if(meshGroup) meshGroup.visible = (style === 'mesh');
 
     showToast("3D Representation", `${style.toUpperCase()} active`);
 }
 
 function resetCamera(){
-    camera.position.set(0, 8, 28);
+    camera.position.set(0, 10, 36);
     if(controls){ controls.target.set(0,0,0); controls.update(); }
     showToast("Camera", "Reset to default orientation");
 }
@@ -1542,9 +1794,8 @@ function focusMolecule(){
 }
 
 function toggleSurface(){
-    surfaceVisible = !surfaceVisible;
-    if(surfaceGroup) surfaceGroup.visible = surfaceVisible;
-    showToast("Molecular Surface", surfaceVisible ? "Surface envelope visible" : "Surface hidden");
+    const nextStyle = (currentRep === 'electro') ? 'ribbon' : 'electro';
+    setRepresentation(nextStyle, document.getElementById('btnRep' + nextStyle.charAt(0).toUpperCase() + nextStyle.slice(1)));
 }
 
 function randomizeMolecule(){
@@ -1582,323 +1833,146 @@ function toggleQuality(){
     showToast("Render Quality", nextP === 2 ? "High (2x Antialiasing)" : "Medium (1x Balanced)");
 }
 
-/* ================= WORKSPACE TABS ================= */
-function switchWorkspaceTab(tabName, elem){
-    document.querySelectorAll(".viewer .tab").forEach(t => t.classList.remove("active"));
-    if(elem) elem.classList.add("active");
+/* ================= SIMULATION CONTROLS & PHYSICS ================= */
+function toggleSimPlay(){
+    simRunning = !simRunning;
+    const btn = document.getElementById("btnSimPlay");
+    const dot = document.getElementById("simDot");
+    const statusText = document.getElementById("simStatusText");
 
-    const wrap = document.getElementById("threeCanvasWrap");
-    if(wrap) wrap.style.display = (tabName === 'viewer') ? 'block' : 'none';
-
-    document.querySelectorAll(".workspacePanel").forEach(p => p.classList.remove("active"));
-    if(tabName !== 'viewer'){
-        const p = document.getElementById(tabName + "Panel");
-        if(p) p.classList.add("active");
+    if(btn){
+        btn.textContent = simRunning ? "⏸ Pause" : "▶ Resume";
+        btn.classList.toggle("paused", !simRunning);
     }
-    showToast("Workspace", `${tabName.toUpperCase()} tab active`);
-    if(tabName === 'viewer') setTimeout(resizeThree, 50);
-}
-
-/* ================= TRAJECTORY PLAY/PAUSE ================= */
-let trajTimer = null;
-function toggleTrajectoryPlay(){
-    const btn = document.getElementById("btnPlayTraj");
-    const slider = document.getElementById("trajSlider");
-    const label = document.getElementById("trajFrame");
-
-    if(trajTimer){
-        clearInterval(trajTimer);
-        trajTimer = null;
-        if(btn) btn.textContent = "▶ Play Trajectory";
-        showToast("Trajectory", "Simulation playback paused");
-    } else {
-        if(btn) btn.textContent = "⏸ Pause Playback";
-        showToast("Trajectory", "Playing production dynamics");
-        trajTimer = setInterval(() => {
-            let val = parseInt(slider.value) + 10;
-            if(val > 1500) val = 0;
-            slider.value = val;
-            if(label) label.textContent = `Frame ${val}`;
-            if(moleculeGroup) moleculeGroup.rotation.y += 0.04;
-        }, 80);
+    if(dot){
+        dot.style.background = simRunning ? "#00f59b" : "#facc15";
+        dot.style.boxShadow = simRunning ? "0 0 8px #00f59b" : "0 0 8px #facc15";
     }
-}
-function scrubTrajectory(val){
-    const label = document.getElementById("trajFrame");
-    if(label) label.textContent = `Frame ${val}`;
-    if(moleculeGroup) moleculeGroup.rotation.y = (val / 1500) * Math.PI * 4;
-}
-
-/* ================= LOG TABS & FILTERING ================= */
-let currentLogTab = 'all';
-function switchLogTab(tab, elem){
-    currentLogTab = tab;
-    document.querySelectorAll(".logsHeader .logTab").forEach(t => t.classList.remove("active"));
-    if(elem) elem.classList.add("active");
-    filterLogs();
-}
-
-function clearLogs(){
-    const body = document.getElementById("logBody");
-    if(body) body.innerHTML = `<div class="logLine" style="color:#64748b;">[Logs cleared by researcher]</div>`;
-    showToast("Terminal", "Logs cleared");
-}
-
-function filterLogs(){
-    const q = (document.getElementById("logSearch")?.value || "").toLowerCase();
-    document.querySelectorAll("#logBody .logLine").forEach(line => {
-        const text = line.textContent.toLowerCase();
-        let matchTab = true;
-        if(currentLogTab === 'analysis') matchTab = text.includes('success') || text.includes('ai') || text.includes('plan');
-        if(currentLogTab === 'system') matchTab = text.includes('info') || text.includes('connector') || text.includes('cluster');
-        if(currentLogTab === 'plots') matchTab = text.includes('plot') || text.includes('graph') || text.includes('pca');
-
-        const matchQ = !q || text.includes(q);
-        line.style.display = (matchTab && matchQ) ? "" : "none";
-    });
-}
-
-/* ================= SIDEBAR NAV ROUTING ================= */
-function navSelect(name, elem){
-    document.querySelectorAll(".sidebar .navItem").forEach(n => n.classList.remove("active"));
-    if(elem) elem.classList.add("active");
-
-    if(name === 'Home') switchWorkspaceTab('viewer', document.querySelectorAll('.viewer .tab')[0]);
-    else if(name === 'AI Chat') {
-        const inp = document.getElementById('aiInput');
-        if(inp){ inp.focus(); showToast("AI Chat", "Type scientific query and press Enter"); }
+    if(statusText){
+        statusText.textContent = simRunning ? `BIOPHYSICAL MD (${simTemp.toFixed(0)}K)` : "DYNAMICS PAUSED";
     }
-    else if(name === 'Research Sessions') openSessionModal();
-    else if(name === 'Protocols') runAI('Run Crop Proteome & Thermal Adaptation protocol');
-    else if(name === 'Simulations') switchWorkspaceTab('trajectory', document.querySelectorAll('.viewer .tab')[2]);
-    else if(name === 'Data Analysis') switchWorkspaceTab('analysis', document.querySelectorAll('.viewer .tab')[5]);
-    else if(name === 'Visualization') switchWorkspaceTab('viewer', document.querySelectorAll('.viewer .tab')[0]);
-    else if(name === '3D Library' || name === 'Files & Data') openResultsModal();
-    else if(name === 'Settings') openSettingsModal();
-    else showToast("Polymathix OS", `${name} selected`);
+    showToast("Biophysical MD", simRunning ? "Simulation running" : "Dynamics paused");
 }
 
-/* ================= MODAL CONTROLS ================= */
-function openSessionModal(){
-    const o = document.getElementById("sessionModalOverlay");
-    if(o) o.classList.add("show");
-}
-function closeSessionModal(){
-    const o = document.getElementById("sessionModalOverlay");
-    if(o) o.classList.remove("show");
-}
-function openExport(){
-    const o = document.getElementById("exportOverlay");
-    if(o) o.classList.add("show");
-}
-function closeExport(){
-    const o = document.getElementById("exportOverlay");
-    if(o) o.classList.remove("show");
-}
-function openResultsModal(){
-    const o = document.getElementById("resultsModalOverlay");
-    if(o) o.classList.add("show");
-}
-function closeResultsModal(){
-    const o = document.getElementById("resultsModalOverlay");
-    if(o) o.classList.remove("show");
-}
-function openSettingsModal(){
-    const o = document.getElementById("settingsModalOverlay");
-    if(o) o.classList.add("show");
-}
-function closeSettingsModal(){
-    const o = document.getElementById("settingsModalOverlay");
-    if(o) o.classList.remove("show");
-}
-function openConnectorsModal(){
-    showToast("Tool Connectors", "Click any connector card to toggle status");
+function setSimMode(mode){
+    simMode = mode;
+    const badge = document.getElementById("simModeBadge");
+    if(badge) badge.textContent = mode.toUpperCase();
+    showToast("Simulation Mode", `Switched to: ${mode.toUpperCase()}`);
 }
 
-let exportFormat = 'glb';
-function setExportFormat(fmt, elem){
-    exportFormat = fmt;
-    document.querySelectorAll("#exportOverlay .styleBtn").forEach(b => b.classList.remove("active"));
-    if(elem) elem.classList.add("active");
-    const btn = document.getElementById("btnDoExport");
-    if(btn) btn.textContent = `Download ${fmt.toUpperCase()}`;
-}
-function performExport(){
-    showToast("Exporting Model", `Preparing ${exportFormat.toUpperCase()} package...`);
-    closeExport();
-    // Download link
-    const link = document.createElement("a");
-    link.download = `polymathix-model.${exportFormat}`;
-    link.href = (exportFormat === 'png') ? '#' : 'assets/polymathix_3d_render.obj';
-    link.click();
+function setSimTemp(val){
+    simTemp = parseFloat(val);
+    const disp = document.getElementById("simTempDisplay");
+    const hudT = document.getElementById("hudTemp");
+    const statusText = document.getElementById("simStatusText");
+    if(disp) disp.textContent = `${simTemp}K`;
+    if(hudT) hudT.textContent = `${simTemp.toFixed(1)} K`;
+    if(statusText && simRunning) statusText.textContent = `BIOPHYSICAL MD (${simTemp.toFixed(0)}K)`;
 }
 
-function toggleAudio(){ showToast("Audio System", "Scientific sound effects enabled"); }
-function toggleTheme(){ showToast("Display FX", "Visual neon glow intensity adjusted"); }
-
-// ESC Key closes everything
-document.addEventListener('keydown', function(e){
-    if(e.key === 'Escape'){
-        const v = document.querySelector(".viewer");
-        if(v && v.classList.contains("fullscreenMode")) {
-            v.classList.remove("fullscreenMode");
-            resizeThree();
-        }
-        closeSessionModal(); closeExport(); closeResultsModal(); closeSettingsModal();
-    }
-});
-
-/* ================= SIMPLE MOUSE ORBIT CONTROLS FALLBACK ================= */
-function setupSimpleControls(cam, domElem){
-    let isDragging = false, prevMouse = { x: 0, y: 0 };
-    domElem.addEventListener('mousedown', (e) => { isDragging = true; prevMouse = { x: e.clientX, y: e.clientY }; });
-    window.addEventListener('mouseup', () => { isDragging = false; });
-    window.addEventListener('mousemove', (e) => {
-        if(!isDragging || !moleculeGroup) return;
-        moleculeGroup.rotation.y += (e.clientX - prevMouse.x) * 0.008;
-        moleculeGroup.rotation.x += (e.clientY - prevMouse.y) * 0.008;
-        prevMouse = { x: e.clientX, y: e.clientY };
-    });
-    domElem.addEventListener('wheel', (e) => {
-        if(!cam) return;
-        cam.position.z += e.deltaY * 0.02;
-        cam.position.z = Math.max(5, Math.min(120, cam.position.z));
-    }, { passive: true });
+function toggleDisulfides(show){
+    if(disulfideGroup) disulfideGroup.visible = show;
+    showToast("Disulfide Bridges", show ? "S-S covalent rods visible" : "Hidden");
 }
 
-/* ================= STREAMLIT TRIGGER FUNCTIONS ================= */
-function runAI(customQuery){
-    const inp = document.getElementById('aiInput');
-    const q = customQuery || (inp ? inp.value : '') || 'Show glucose binding pocket';
-    showToast("AI Orchestrator", `Executing: "${q}"`);
-    Streamlit.setComponentValue({ action: 'runAI', query: q, timestamp: Date.now() });
-    if(inp && !customQuery) inp.value = '';
+function toggleHydration(show){
+    if(hydrationGroup) hydrationGroup.visible = show;
+    showToast("Hydration Shell", show ? "TIP3P water molecules visible" : "Hidden");
 }
 
-function triggerQuickAction(type){
-    showToast("Quick Action", `Invoking ${type}...`);
-    Streamlit.setComponentValue({ action: 'quick_action', type: type, timestamp: Date.now() });
+function toggleMembrane(show){
+    if(membraneGroup) membraneGroup.visible = show;
+    showToast("Lipid Bilayer", show ? "POPC membrane slab visible" : "Hidden");
 }
 
-function triggerAgentControl(cmd){
-    showToast("Agent Command", cmd.toUpperCase());
-    Streamlit.setComponentValue({ action: 'agent_control', cmd: cmd, timestamp: Date.now() });
-}
+/* ================= MAIN ANIMATION & SIMULATION LOOP ================= */
+function animate(){
+    requestAnimationFrame(animate);
+    const t = performance.now() * 0.002 * simSpeed;
 
-function toggleConnector(name){
-    showToast("Connector", `Toggling ${name}...`);
-    Streamlit.setComponentValue({ action: 'toggle_connector', name: name, timestamp: Date.now() });
-}
-
-/* ================= STATE UPDATE FROM PYTHON ================= */
-function updateStateFromPython(state){
-    if(!state) return;
-
-    if(state.session_name) {
-        const el = document.getElementById("sessionNameDisplay"); if(el) el.textContent = state.session_name;
-        const mel = document.getElementById("modalSessionTitle"); if(mel) mel.textContent = `Research Session: ${state.session_name}`;
-    }
-    if(state.protocol_name) {
-        const el = document.getElementById("protocolNameDisplay"); if(el) el.textContent = state.protocol_name;
-        const mel = document.getElementById("modalProtocolName"); if(mel) mel.textContent = state.protocol_name;
-    }
-    if(state.status) {
-        const st = document.getElementById("sessionStatusDisplay");
-        if(st) {
-            const isAct = state.status === 'Active';
-            st.innerHTML = `<span class="statusDot" style="background:${isAct ? '#00f59b' : '#facc15'}"></span>${state.status}`;
-        }
+    // Cinematic continuous slow rotation when not dragging
+    if(autoRotate && moleculeGroup) {
+        moleculeGroup.rotation.y += 0.0012;
     }
 
-    // Workflow Steps
-    if(state.workflow_steps && Array.isArray(state.workflow_steps)){
-        const c = document.getElementById("workflowStepsContainer");
-        const mc = document.getElementById("modalWorkflowSteps");
-        let html = "";
-        state.workflow_steps.forEach((s, idx) => {
-            const num = idx + 1;
-            let cls = "step";
-            let icon = "";
-            if(s.status === 'done'){ cls = "step done"; icon = `<span style="margin-left:auto;color:#00f59b">✓</span>`; }
-            else if(s.status === 'running'){ cls = "step running"; icon = `<span style="margin-left:auto;color:#38bdf8">●</span>`; }
-            html += `<div class="${cls}"><div class="stepNum">${num}</div><span>${s.name}</span>${icon}</div>`;
+    // BIOPHYSICAL PHYSICS ENGINE
+    if(simRunning && originalCAPoints.length > 0){
+        const tempRatio = (simTemp / 300.0);
+
+        // 1. Thermal Langevin Vibrations on Ribbon Beads
+        originalCAPoints.forEach((c, idx) => {
+            const bead = ribbonGroup.getObjectByName("ca_bead_" + c.id);
+            if(bead){
+                const amp = (c.sec_struct === 'loop' ? 0.38 : 0.10) * tempRatio;
+                const dx = amp * Math.sin(2.3 * t + idx * 0.7);
+                const dy = amp * Math.cos(1.9 * t + idx * 0.5);
+                const dz = amp * Math.sin(2.7 * t + idx * 0.9);
+                bead.position.set(c.x + dx, c.y + dy, c.z + dz);
+            }
         });
-        if(c) c.innerHTML = html;
-        if(mc) mc.innerHTML = html;
-    }
 
-    // Progress
-    if(typeof state.progress_percent === 'number'){
-        const pf = document.getElementById("progressFill"); if(pf) pf.style.width = state.progress_percent + "%";
-        const pv = document.getElementById("progressValue"); if(pv) pv.textContent = state.progress_percent + "%";
-    }
-    if(state.time_remaining){
-        const tr = document.getElementById("timeRemainingDisplay"); if(tr) tr.textContent = `Estimated time: ${state.time_remaining}`;
-        const mtr = document.getElementById("modalTimeRemaining"); if(mtr) mtr.textContent = `Estimated time: ${state.time_remaining}`;
-    }
+        // 2. Normal Mode Conformational Breathing
+        if(simMode === 'nma' && ribbonGroup){
+            const hingeAngle = 0.05 * Math.sin(1.6 * t);
+            ribbonGroup.rotation.z = hingeAngle;
+        } else if(ribbonGroup) {
+            ribbonGroup.rotation.z = 0;
+        }
 
-    // Tool Connectors
-    if(state.connectors && Array.isArray(state.connectors)){
-        const cl = document.getElementById("connectorsList");
-        if(cl){
-            cl.innerHTML = "";
-            state.connectors.forEach(c => {
-                const div = document.createElement("div");
-                div.className = "connector";
-                div.onclick = () => toggleConnector(c.name);
-                div.innerHTML = `
-                    <div class="connIcon">${c.icon}</div>
-                    <div class="connName">${c.name}</div>
-                    <div class="connStatus ${c.status}">${c.text}</div>
-                `;
-                cl.appendChild(div);
+        // 3. Induced-Fit D-Glucose Ligand Docking Exploration
+        if(glucoseGroup && interactionGroup){
+            let gdx = 0, gdy = 0, gdz = 0;
+            if(simMode === 'docking'){
+                gdx = 0.22 * Math.sin(1.8 * t);
+                gdy = 0.18 * Math.cos(1.4 * t);
+                gdz = 0.15 * Math.sin(2.2 * t);
+                glucoseGroup.position.set(gdx, gdy, gdz);
+            } else {
+                glucoseGroup.position.set(0, 0, 0);
+            }
+
+            // Update contact line endpoints dynamically
+            BINDING_CONTACTS.forEach(c => {
+                const line = interactionGroup.getObjectByName("contact_line_" + c.name);
+                if(line){
+                    const p1 = new THREE.Vector3(gdx, gdy, gdz);
+                    const p2 = new THREE.Vector3(c.x, c.y, c.z);
+                    line.geometry.setFromPoints([p1, p2]);
+                    line.computeLineDistances();
+
+                    // Update live distance label in binding badge
+                    const distEl = document.getElementById("dist_" + c.name.replace(" ", "_"));
+                    if(distEl && simMode === 'docking'){
+                        const liveDist = (p1.distanceTo(p2)).toFixed(1);
+                        distEl.textContent = `${liveDist} Å`;
+                    }
+                }
             });
         }
-    }
 
-    // Terminal Logs
-    if(state.logs && Array.isArray(state.logs)){
-        const lb = document.getElementById("logBody");
-        if(lb){
-            lb.innerHTML = "";
-            state.logs.forEach(l => {
-                let cls = "logInfo";
-                if(l.type === "SUCCESS") cls = "logSuccess";
-                else if(l.type === "WARN") cls = "logWarn";
-                else if(l.type === "ERROR") cls = "logError";
-                else if(l.type === "AI") cls = "logAI";
-
-                const d = document.createElement("div");
-                d.className = "logLine";
-                d.innerHTML = `<span class="logTime">[${l.time}]</span><span class="${cls}">${l.type}</span> ${l.msg}`;
-                lb.appendChild(d);
+        // 4. Hydration Water Thermal Brownian Diffusion
+        if(hydrationGroup && hydrationGroup.visible){
+            hydrationGroup.children.forEach((wGroup, i) => {
+                wGroup.position.x += 0.015 * Math.sin(3.5 * t + i);
+                wGroup.position.y += 0.015 * Math.cos(3.2 * t + i * 2);
             });
-            lb.scrollTop = lb.scrollHeight;
         }
+
+        // 5. Update Simulation HUD Metrics in Real Time
+        const hudT = document.getElementById("hudTemp");
+        const hudR = document.getElementById("hudRMSD");
+        const hudE = document.getElementById("hudEnergy");
+        const hudG = document.getElementById("hudDeltaG");
+
+        if(hudT) hudT.textContent = (simTemp + Math.sin(t * 3.0) * 0.7).toFixed(1) + " K";
+        if(hudR) hudR.textContent = (0.82 + Math.abs(Math.sin(t * 1.8) * 0.06) * tempRatio).toFixed(2) + " Å";
+        if(hudE) hudE.textContent = (Math.round(-146240 + Math.sin(t * 1.4) * 160)).toLocaleString() + " kJ";
+        if(hudG) hudG.textContent = (-7.82 + Math.sin(t * 2.2) * 0.12).toFixed(2);
     }
 
-    // Results Grid
-    if(state.results && Array.isArray(state.results)){
-        const rg = document.getElementById("resultGrid");
-        const mrg = document.getElementById("modalResultGrid");
-        let html = "";
-        state.results.forEach(r => {
-            html += `
-                <div class="resultCard" onclick="showToast('Result Artifact', 'Opening ${r.name}')">
-                    <div class="resultPreview">${r.icon || '🧬'}</div>
-                    <div class="resultName">${r.name}</div>
-                    <div class="resultMeta">${r.meta || 'Recent'}</div>
-                </div>
-            `;
-        });
-        if(rg) rg.innerHTML = html;
-        if(mrg) mrg.innerHTML = html;
-    }
-
-    // Render PDB
-    if(state.pdb_data){
-        renderRealPDB(state.pdb_data);
-    }
+    if(controls && controls.update) controls.update();
+    if(renderer && scene && camera) renderer.render(scene, camera);
 }
 
 /* ================= STREAMLIT LISTENER ================= */
@@ -1918,7 +1992,7 @@ try {
 }
 
 try {
-    const INITIAL_EMBEDDED_STATE = {"session_name": "MembraneONE", "session_id": "SES-9201", "status": "Active", "model": "AI Research Agent", "active_protocol_key": "binding_site", "protocol_name": "Glucose Binding Pocket & Contact Analysis (4.0 \u00c5)", "workflow_steps": [{"name": "Ligand coordinate localization & chair conformation mapping", "status": "done"}, {"name": "Residue Euclidean distance mapping (4.0 \u00c5 cutoff)", "status": "done"}, {"name": "Hydrogen bond network identification (ASN 203, SER 205)", "status": "done"}, {"name": "Hydrophobic contact clustering (TYR 207, THR 312)", "status": "running"}, {"name": "Electrostatic & salt-bridge classification (ARG 210, GLU 277, LYS 315)", "status": "pending"}, {"name": "3D interaction render & binding affinity dossier compilation", "status": "pending"}], "progress_percent": 65, "time_remaining": "42m remaining", "is_paused": false, "logs": [{"time": "14:20:02", "type": "INFO", "msg": "Polymathix Scientific Intelligence OS initialized."}, {"time": "14:20:03", "type": "SUCCESS", "msg": "Crystallographic coordinates loaded: 1CRN (Crambin hydrophobic fold)."}, {"time": "14:20:05", "type": "AI", "msg": "Ligand docked at active pocket: D-Glucose (C6H12O6, MW=180.16 g/mol, LogP=-3.22)."}, {"time": "14:20:08", "type": "SUCCESS", "msg": "Mapped 8 interacting residues within 4.0 \u00c5 interaction cutoff."}, {"time": "14:20:12", "type": "INFO", "msg": "Key polar contacts: ASN 203 (2.8 \u00c5 H-bond), SER 205 (3.1 \u00c5 H-bond), TYR 207 (3.4 \u00c5 hydrophobic)."}, {"time": "14:20:15", "type": "SUCCESS", "msg": "Ready for multi-representation 3D inspection and geometry export."}], "kpis": {"active_sessions": 8, "connected_tools": 12, "running_jobs": 28, "total_data": "1.4 TB", "system_uptime": "99.8%"}, "connectors": [{"name": "PyMOL", "status": "ok", "text": "Connected", "icon": "\ud83e\uddec"}, {"name": "ChimeraX", "status": "ok", "text": "Connected", "icon": "\ud83d\udd2c"}, {"name": "GROMACS", "status": "run", "text": "Running", "icon": "\u269b"}, {"name": "OpenMM", "status": "ready", "text": "Ready", "icon": "\u25c8"}, {"name": "AutoDock Vina", "status": "ready", "text": "Ready", "icon": "\u2697"}, {"name": "RDKit", "status": "ok", "text": "Connected", "icon": "RD"}, {"name": "ORCA", "status": "off", "text": "Disconnected", "icon": "\u03a9"}, {"name": "MATLAB", "status": "ready", "text": "Ready", "icon": "\u25a3"}, {"name": "Python", "status": "ok", "text": "Connected", "icon": "\ud83d\udc0d"}, {"name": "Blender", "status": "ready", "text": "Ready", "icon": "\u25c9"}], "results": [{"name": "glucose_binding.glb", "type": "model", "meta": "Just now", "icon": "\ud83e\uddec", "path": "assets/polymathix_3d_render.obj"}, {"name": "glucose_2d.png", "type": "image", "meta": "Just now", "icon": "\ud83c\udf6c", "path": "assets/glucose_2d.png"}, {"name": "deep_pca_comparison.png", "type": "plot", "meta": "3 min ago", "icon": "\ud83d\udcc8", "path": "assets/deep_pca_comparison.png"}, {"name": "energy_plot.png", "type": "plot", "meta": "6 min ago", "icon": "\ud83e\uddea", "path": "assets/energy_plot.png"}, {"name": "polymathix_3d_render.obj", "type": "model", "meta": "10 min ago", "icon": "\u25c8", "path": "assets/polymathix_3d_render.obj"}], "pdb_data": {"pdb_name": "PENTAGON RINGS OF WATER MOLECULES IN CRYSTALS OF CRAMBIN", "atom_count": 327, "residue_count": 46, "resolution": "1.50 \u00c5 (Atomic Resolution)", "ca_coords": [{"x": 7.41, "y": 2.83, "z": -2.77, "res": "THR", "id": 1}, {"x": 4.3, "y": 1.52, "z": -1.04, "res": "THR", "id": 2}, {"x": 4.1, "y": 0.76, "z": 2.68, "res": "CYS", "id": 3}, {"x": 1.09, "y": -0.96, "z": 4.3, "res": "CYS", "id": 4}, {"x": -0.11, "y": -0.92, "z": 7.9, "res": "PRO", "id": 5}, {"x": -0.89, "y": -4.64, "z": 8.17, "res": "SER", "id": 6}, {"x": -0.65, "y": -7.87, "z": 6.15, "res": "ILE", "id": 7}, {"x": -4.42, "y": -7.74, "z": 5.35, "res": "VAL", "id": 8}, {"x": -3.96, "y": -4.18, "z": 3.97, "res": "ALA", "id": 9}, {"x": -1.06, "y": -5.34, "z": 1.73, "res": "ARG", "id": 10}, {"x": -3.06, "y": -8.37, "z": 0.46, "res": "SER", "id": 11}, {"x": -6.02, "y": -6.02, "z": -0.36, "res": "ASN", "id": 12}, {"x": -3.63, "y": -3.59, "z": -2.05, "res": "PHE", "id": 13}, {"x": -2.23, "y": -6.34, "z": -4.32, "res": "ASN", "id": 14}, {"x": -5.78, "y": -7.35, "z": -5.37, "res": "VAL", "id": 15}, {"x": -6.67, "y": -3.67, "z": -5.98, "res": "CYS", "id": 16}, {"x": -3.67, "y": -3.46, "z": -8.32, "res": "ARG", "id": 17}, {"x": -4.63, "y": -6.52, "z": -10.43, "res": "LEU", "id": 18}, {"x": -6.77, "y": -4.57, "z": -12.9, "res": "PRO", "id": 19}, {"x": -4.19, "y": -1.76, "z": -13.13, "res": "GLY", "id": 20}, {"x": -5.79, "y": 0.66, "z": -10.62, "res": "THR", "id": 21}, {"x": -3.42, "y": 3.56, "z": -9.8, "res": "PRO", "id": 22}, {"x": -1.45, "y": 3.15, "z": -6.61, "res": "GLU", "id": 23}, {"x": -2.95, "y": 6.37, "z": -5.19, "res": "ALA", "id": 24}, {"x": -6.49, "y": 4.94, "z": -5.35, "res": "ILE", "id": 25}, {"x": -5.38, "y": 1.6, "z": -3.92, "res": "CYS", "id": 26}, {"x": -3.68, "y": 3.55, "z": -1.08, "res": "ALA", "id": 27}, {"x": -6.87, "y": 5.27, "z": 0.09, "res": "THR", "id": 28}, {"x": -8.85, "y": 2.09, "z": -0.45, "res": "TYR", "id": 29}, {"x": -6.57, "y": 0.04, "z": 1.84, "res": "THR", "id": 30}, {"x": -4.79, "y": 2.39, "z": 4.25, "res": "GLY", "id": 31}, {"x": -1.42, "y": 1.74, "z": 2.53, "res": "CYS", "id": 32}, {"x": 0.72, "y": 4.81, "z": 1.72, "res": "ILE", "id": 33}, {"x": 2.99, "y": 5.93, "z": -1.07, "res": "ILE", "id": 34}, {"x": 6.37, "y": 7.5, "z": -0.17, "res": "ILE", "id": 35}, {"x": 9.07, "y": 8.91, "z": -2.37, "res": "PRO", "id": 36}, {"x": 11.89, "y": 7.02, "z": -0.59, "res": "GLY", "id": 37}, {"x": 12.46, "y": 3.29, "z": -0.09, "res": "ALA", "id": 38}, {"x": 12.38, "y": 2.96, "z": 3.7, "res": "THR", "id": 39}, {"x": 8.94, "y": 2.36, "z": 5.19, "res": "CYS", "id": 40}, {"x": 8.36, "y": 3.47, "z": 8.77, "res": "PRO", "id": 41}, {"x": 7.77, "y": 1.01, "z": 11.58, "res": "GLY", "id": 42}, {"x": 4.0, "y": 1.62, "z": 11.73, "res": "ASP", "id": 43}, {"x": 3.7, "y": 0.79, "z": 7.97, "res": "TYR", "id": 44}, {"x": 5.88, "y": -2.28, "z": 8.14, "res": "ALA", "id": 45}, {"x": 3.95, "y": -4.56, "z": 5.77, "res": "ASN", "id": 46}], "atoms": [{"x": 7.49, "y": 4.15, "z": -3.48, "elem": "N", "res": "THR", "res_id": 1, "name": "N"}, {"x": 7.41, "y": 2.83, "z": -2.77, "elem": "C", "res": "THR", "res_id": 1, "name": "CA"}, {"x": 6.12, "y": 2.8, "z": -1.97, "elem": "C", "res": "THR", "res_id": 1, "name": "C"}, {"x": 5.71, "y": 3.87, "z": -1.51, "elem": "O", "res": "THR", "res_id": 1, "name": "O"}, {"x": 8.61, "y": 2.75, "z": -1.77, "elem": "C", "res": "THR", "res_id": 1, "name": "CB"}, {"x": 9.77, "y": 2.88, "z": -2.64, "elem": "O", "res": "THR", "res_id": 1, "name": "OG1"}, {"x": 8.59, "y": 1.6, "z": -0.8, "elem": "C", "res": "THR", "res_id": 1, "name": "CG2"}, {"x": 5.55, "y": 1.6, "z": -1.84, "elem": "N", "res": "THR", "res_id": 2, "name": "N"}, {"x": 4.3, "y": 1.52, "z": -1.04, "elem": "C", "res": "THR", "res_id": 2, "name": "CA"}, {"x": 4.6, "y": 0.83, "z": 0.27, "elem": "C", "res": "THR", "res_id": 2, "name": "C"}, {"x": 5.43, "y": -0.09, "z": 0.34, "elem": "O", "res": "THR", "res_id": 2, "name": "O"}, {"x": 3.17, "y": 0.76, "z": -1.85, "elem": "C", "res": "THR", "res_id": 2, "name": "CB"}, {"x": 3.75, "y": -0.51, "z": -2.18, "elem": "O", "res": "THR", "res_id": 2, "name": "OG1"}, {"x": 2.92, "y": 1.49, "z": -3.21, "elem": "C", "res": "THR", "res_id": 2, "name": "CG2"}, {"x": 3.93, "y": 1.29, "z": 1.31, "elem": "N", "res": "CYS", "res_id": 3, "name": "N"}, {"x": 4.1, "y": 0.76, "z": 2.68, "elem": "C", "res": "CYS", "res_id": 3, "name": "CA"}, {"x": 2.71, "y": 0.48, "z": 3.22, "elem": "C", "res": "CYS", "res_id": 3, "name": "C"}, {"x": 1.83, "y": 1.36, "z": 3.08, "elem": "O", "res": "CYS", "res_id": 3, "name": "O"}, {"x": 4.81, "y": 1.8, "z": 3.58, "elem": "C", "res": "CYS", "res_id": 3, "name": "CB"}, {"x": 6.32, "y": 2.48, "z": 2.91, "elem": "S", "res": "CYS", "res_id": 3, "name": "SG"}, {"x": 2.46, "y": -0.68, "z": 3.82, "elem": "N", "res": "CYS", "res_id": 4, "name": "N"}, {"x": 1.09, "y": -0.96, "z": 4.3, "elem": "C", "res": "CYS", "res_id": 4, "name": "CA"}, {"x": 1.09, "y": -1.16, "z": 5.81, "elem": "C", "res": "CYS", "res_id": 4, "name": "C"}, {"x": 2.1, "y": -1.65, "z": 6.38, "elem": "O", "res": "CYS", "res_id": 4, "name": "O"}, {"x": 0.5, "y": -2.2, "z": 3.57, "elem": "C", "res": "CYS", "res_id": 4, "name": "CB"}, {"x": 0.28, "y": -1.93, "z": 1.8, "elem": "S", "res": "CYS", "res_id": 4, "name": "SG"}, {"x": 0.0, "y": -0.84, "z": 6.46, "elem": "N", "res": "PRO", "res_id": 5, "name": "N"}, {"x": -0.11, "y": -0.92, "z": 7.9, "elem": "C", "res": "PRO", "res_id": 5, "name": "CA"}, {"x": -0.27, "y": -2.28, "z": 8.5, "elem": "C", "res": "PRO", "res_id": 5, "name": "C"}, {"x": -0.07, "y": -2.43, "z": 9.71, "elem": "O", "res": "PRO", "res_id": 5, "name": "O"}, {"x": -1.33, "y": 0.01, "z": 8.24, "elem": "C", "res": "PRO", "res_id": 5, "name": "CB"}, {"x": -2.22, "y": -0.16, "z": 7.01, "elem": "C", "res": "PRO", "res_id": 5, "name": "CG"}, {"x": -1.19, "y": -0.15, "z": 5.85, "elem": "C", "res": "PRO", "res_id": 5, "name": "CD"}, {"x": -0.69, "y": -3.26, "z": 7.69, "elem": "N", "res": "SER", "res_id": 6, "name": "N"}, {"x": -0.89, "y": -4.64, "z": 8.17, "elem": "C", "res": "SER", "res_id": 6, "name": "CA"}, {"x": -0.81, "y": -5.57, "z": 6.98, "elem": "C", "res": "SER", "res_id": 6, "name": "C"}, {"x": -0.83, "y": -5.09, "z": 5.82, "elem": "O", "res": "SER", "res_id": 6, "name": "O"}, {"x": -2.22, "y": -4.83, "z": 8.89, "elem": "C", "res": "SER", "res_id": 6, "name": "CB"}, {"x": -3.29, "y": -4.73, "z": 7.92, "elem": "O", "res": "SER", "res_id": 6, "name": "OG"}, {"x": -0.68, "y": -6.88, "z": 7.25, "elem": "N", "res": "ILE", "res_id": 7, "name": "N"}, {"x": -0.65, "y": -7.87, "z": 6.15, "elem": "C", "res": "ILE", "res_id": 7, "name": "CA"}, {"x": -1.98, "y": -7.86, "z": 5.4, "elem": "C", "res": "ILE", "res_id": 7, "name": "C"}, {"x": -1.89, "y": -7.92, "z": 4.14, "elem": "O", "res": "ILE", "res_id": 7, "name": "O"}, {"x": -0.35, "y": -9.27, "z": 6.82, "elem": "C", "res": "ILE", "res_id": 7, "name": "CB"}, {"x": 1.15, "y": -9.25, "z": 7.2, "elem": "C", "res": "ILE", "res_id": 7, "name": "CG1"}, {"x": -0.75, "y": -10.43, "z": 5.86, "elem": "C", "res": "ILE", "res_id": 7, "name": "CG2"}, {"x": 1.62, "y": -10.47, "z": 8.03, "elem": "C", "res": "ILE", "res_id": 7, "name": "CD1"}, {"x": -3.1, "y": -7.79, "z": 6.05, "elem": "N", "res": "VAL", "res_id": 8, "name": "N"}, {"x": -4.42, "y": -7.74, "z": 5.35, "elem": "C", "res": "VAL", "res_id": 8, "name": "CA"}, {"x": -4.45, "y": -6.57, "z": 4.35, "elem": "C", "res": "VAL", "res_id": 8, "name": "C"}, {"x": -4.9, "y": -6.68, "z": 3.24, "elem": "O", "res": "VAL", "res_id": 8, "name": "O"}, {"x": -5.57, "y": -7.6, "z": 6.37, "elem": "C", "res": "VAL", "res_id": 8, "name": "CB"}, {"x": -6.84, "y": -7.06, "z": 5.76, "elem": "C", "res": "VAL", "res_id": 8, "name": "CG1"}, {"x": -5.8, "y": -8.92, "z": 7.1, "elem": "C", "res": "VAL", "res_id": 8, "name": "CG2"}, {"x": -3.95, "y": -5.4, "z": 4.83, "elem": "N", "res": "ALA", "res_id": 9, "name": "N"}, {"x": -3.96, "y": -4.18, "z": 3.97, "elem": "C", "res": "ALA", "res_id": 9, "name": "CA"}, {"x": -3.12, "y": -4.42, "z": 2.74, "elem": "C", "res": "ALA", "res_id": 9, "name": "C"}, {"x": -3.51, "y": -4.02, "z": 1.64, "elem": "O", "res": "ALA", "res_id": 9, "name": "O"}, {"x": -3.54, "y": -2.97, "z": 4.78, "elem": "C", "res": "ALA", "res_id": 9, "name": "CB"}, {"x": -1.91, "y": -5.04, "z": 2.9, "elem": "N", "res": "ARG", "res_id": 10, "name": "N"}, {"x": -1.06, "y": -5.34, "z": 1.73, "elem": "C", "res": "ARG", "res_id": 10, "name": "CA"}, {"x": -1.76, "y": -6.34, "z": 0.77, "elem": "C", "res": "ARG", "res_id": 10, "name": "C"}, {"x": -1.68, "y": -6.17, "z": -0.46, "elem": "O", "res": "ARG", "res_id": 10, "name": "O"}, {"x": 0.29, "y": -5.93, "z": 2.2, "elem": "C", "res": "ARG", "res_id": 10, "name": "CB"}, {"x": 1.19, "y": -6.34, "z": 1.04, "elem": "C", "res": "ARG", "res_id": 10, "name": "CG"}, {"x": 1.67, "y": -5.25, "z": 0.14, "elem": "C", "res": "ARG", "res_id": 10, "name": "CD"}, {"x": 2.58, "y": -4.38, "z": 0.93, "elem": "N", "res": "ARG", "res_id": 10, "name": "NE"}, {"x": 3.2, "y": -3.34, "z": 0.34, "elem": "C", "res": "ARG", "res_id": 10, "name": "CZ"}, {"x": 2.98, "y": -3.02, "z": -0.95, "elem": "N", "res": "ARG", "res_id": 10, "name": "NH1"}, {"x": 4.04, "y": -2.63, "z": 1.09, "elem": "N", "res": "ARG", "res_id": 10, "name": "NH2"}, {"x": -2.37, "y": -7.37, "z": 1.34, "elem": "N", "res": "SER", "res_id": 11, "name": "N"}, {"x": -3.06, "y": -8.37, "z": 0.46, "elem": "C", "res": "SER", "res_id": 11, "name": "CA"}, {"x": -4.18, "y": -7.64, "z": -0.33, "elem": "C", "res": "SER", "res_id": 11, "name": "C"}, {"x": -4.35, "y": -7.93, "z": -1.55, "elem": "O", "res": "SER", "res_id": 11, "name": "O"}, {"x": -3.65, "y": -9.49, "z": 1.29, "elem": "C", "res": "SER", "res_id": 11, "name": "CB"}, {"x": -2.57, "y": -10.22, "z": 1.9, "elem": "O", "res": "SER", "res_id": 11, "name": "OG"}, {"x": -4.91, "y": -6.77, "z": 0.34, "elem": "N", "res": "ASN", "res_id": 12, "name": "N"}, {"x": -6.02, "y": -6.02, "z": -0.36, "elem": "C", "res": "ASN", "res_id": 12, "name": "CA"}, {"x": -5.45, "y": -5.1, "z": -1.42, "elem": "C", "res": "ASN", "res_id": 12, "name": "C"}, {"x": -6.02, "y": -4.95, "z": -2.49, "elem": "O", "res": "ASN", "res_id": 12, "name": "O"}, {"x": -6.9, "y": -5.27, "z": 0.64, "elem": "C", "res": "ASN", "res_id": 12, "name": "CB"}, {"x": -7.76, "y": -6.22, "z": 1.5, "elem": "C", "res": "ASN", "res_id": 12, "name": "CG"}, {"x": -7.99, "y": -7.34, "z": 1.06, "elem": "O", "res": "ASN", "res_id": 12, "name": "OD1"}, {"x": -8.17, "y": -5.7, "z": 2.66, "elem": "N", "res": "ASN", "res_id": 12, "name": "ND2"}, {"x": -4.3, "y": -4.45, "z": -1.1, "elem": "N", "res": "PHE", "res_id": 13, "name": "N"}, {"x": -3.63, "y": -3.59, "z": -2.05, "elem": "C", "res": "PHE", "res_id": 13, "name": "CA"}, {"x": -3.26, "y": -4.37, "z": -3.31, "elem": "C", "res": "PHE", "res_id": 13, "name": "C"}, {"x": -3.42, "y": -3.88, "z": -4.45, "elem": "O", "res": "PHE", "res_id": 13, "name": "O"}, {"x": -2.38, "y": -2.96, "z": -1.35, "elem": "C", "res": "PHE", "res_id": 13, "name": "CB"}, {"x": -1.68, "y": -1.94, "z": -2.22, "elem": "C", "res": "PHE", "res_id": 13, "name": "CG"}, {"x": -0.65, "y": -2.36, "z": -3.08, "elem": "C", "res": "PHE", "res_id": 13, "name": "CD1"}, {"x": -2.03, "y": -0.58, "z": -2.12, "elem": "C", "res": "PHE", "res_id": 13, "name": "CD2"}, {"x": -0.0, "y": -1.41, "z": -3.91, "elem": "C", "res": "PHE", "res_id": 13, "name": "CE1"}, {"x": -1.38, "y": 0.33, "z": -2.96, "elem": "C", "res": "PHE", "res_id": 13, "name": "CE2"}, {"x": -0.42, "y": -0.11, "z": -3.82, "elem": "C", "res": "PHE", "res_id": 13, "name": "CZ"}, {"x": -2.66, "y": -5.56, "z": -3.12, "elem": "N", "res": "ASN", "res_id": 14, "name": "N"}, {"x": -2.23, "y": -6.34, "z": -4.32, "elem": "C", "res": "ASN", "res_id": 14, "name": "CA"}, {"x": -3.44, "y": -6.74, "z": -5.19, "elem": "C", "res": "ASN", "res_id": 14, "name": "C"}, {"x": -3.32, "y": -6.81, "z": -6.42, "elem": "O", "res": "ASN", "res_id": 14, "name": "O"}, {"x": -1.42, "y": -7.55, "z": -3.87, "elem": "C", "res": "ASN", "res_id": 14, "name": "CB"}, {"x": -0.01, "y": -7.09, "z": -3.38, "elem": "C", "res": "ASN", "res_id": 14, "name": "CG"}, {"x": 0.45, "y": -6.06, "z": -3.78, "elem": "O", "res": "ASN", "res_id": 14, "name": "OD1"}, {"x": 0.56, "y": -7.99, "z": -2.57, "elem": "N", "res": "ASN", "res_id": 14, "name": "ND2"}, {"x": -4.57, "y": -7.02, "z": -4.54, "elem": "N", "res": "VAL", "res_id": 15, "name": "N"}, {"x": -5.78, "y": -7.35, "z": -5.37, "elem": "C", "res": "VAL", "res_id": 15, "name": "CA"}, {"x": -6.26, "y": -6.08, "z": -6.1, "elem": "C", "res": "VAL", "res_id": 15, "name": "C"}, {"x": -6.61, "y": -6.13, "z": -7.3, "elem": "O", "res": "VAL", "res_id": 15, "name": "O"}, {"x": -6.86, "y": -8.0, "z": -4.5, "elem": "C", "res": "VAL", "res_id": 15, "name": "CB"}, {"x": -8.18, "y": -8.12, "z": -5.3, "elem": "C", "res": "VAL", "res_id": 15, "name": "CG1"}, {"x": -6.39, "y": -9.42, "z": -4.1, "elem": "C", "res": "VAL", "res_id": 15, "name": "CG2"}, {"x": -6.24, "y": -4.96, "z": -5.39, "elem": "N", "res": "CYS", "res_id": 16, "name": "N"}, {"x": -6.67, "y": -3.67, "z": -5.98, "elem": "C", "res": "CYS", "res_id": 16, "name": "CA"}, {"x": -5.87, "y": -3.35, "z": -7.22, "elem": "C", "res": "CYS", "res_id": 16, "name": "C"}, {"x": -6.36, "y": -2.8, "z": -8.21, "elem": "O", "res": "CYS", "res_id": 16, "name": "O"}, {"x": -6.52, "y": -2.58, "z": -4.87, "elem": "C", "res": "CYS", "res_id": 16, "name": "CB"}, {"x": -7.0, "y": -0.94, "z": -5.46, "elem": "S", "res": "CYS", "res_id": 16, "name": "SG"}, {"x": -4.56, "y": -3.72, "z": -7.21, "elem": "N", "res": "ARG", "res_id": 17, "name": "N"}, {"x": -3.67, "y": -3.46, "z": -8.32, "elem": "C", "res": "ARG", "res_id": 17, "name": "CA"}, {"x": -3.82, "y": -4.39, "z": -9.52, "elem": "C", "res": "ARG", "res_id": 17, "name": "C"}, {"x": -3.33, "y": -4.05, "z": -10.61, "elem": "O", "res": "ARG", "res_id": 17, "name": "O"}, {"x": -2.19, "y": -3.44, "z": -7.84, "elem": "C", "res": "ARG", "res_id": 17, "name": "CB"}, {"x": -1.84, "y": -2.26, "z": -6.9, "elem": "C", "res": "ARG", "res_id": 17, "name": "CG"}, {"x": -1.61, "y": -1.0, "z": -7.72, "elem": "C", "res": "ARG", "res_id": 17, "name": "CD"}, {"x": -0.35, "y": -1.09, "z": -8.44, "elem": "N", "res": "ARG", "res_id": 17, "name": "NE"}, {"x": -0.02, "y": -0.42, "z": -9.54, "elem": "C", "res": "ARG", "res_id": 17, "name": "CZ"}, {"x": -0.9, "y": 0.4, "z": -10.14, "elem": "N", "res": "ARG", "res_id": 17, "name": "NH1"}, {"x": 1.23, "y": -0.46, "z": -10.01, "elem": "N", "res": "ARG", "res_id": 17, "name": "NH2"}, {"x": -4.51, "y": -5.54, "z": -9.31, "elem": "N", "res": "LEU", "res_id": 18, "name": "N"}, {"x": -4.63, "y": -6.52, "z": -10.43, "elem": "C", "res": "LEU", "res_id": 18, "name": "CA"}, {"x": -5.16, "y": -5.94, "z": -11.73, "elem": "C", "res": "LEU", "res_id": 18, "name": "C"}, {"x": -4.57, "y": -6.2, "z": -12.79, "elem": "O", "res": "LEU", "res_id": 18, "name": "O"}, {"x": -5.36, "y": -7.77, "z": -9.97, "elem": "C", "res": "LEU", "res_id": 18, "name": "CB"}, {"x": -4.6, "y": -8.77, "z": -9.1, "elem": "C", "res": "LEU", "res_id": 18, "name": "CG"}, {"x": -5.65, "y": -9.85, "z": -8.74, "elem": "C", "res": "LEU", "res_id": 18, "name": "CD1"}, {"x": -3.43, "y": -9.34, "z": -9.88, "elem": "C", "res": "LEU", "res_id": 18, "name": "CD2"}, {"x": -6.23, "y": -5.16, "z": -11.65, "elem": "N", "res": "PRO", "res_id": 19, "name": "N"}, {"x": -6.77, "y": -4.57, "z": -12.9, "elem": "C", "res": "PRO", "res_id": 19, "name": "CA"}, {"x": -5.99, "y": -3.41, "z": -13.43, "elem": "C", "res": "PRO", "res_id": 19, "name": "C"}, {"x": -6.3, "y": -2.91, "z": -14.53, "elem": "O", "res": "PRO", "res_id": 19, "name": "O"}, {"x": -8.2, "y": -4.18, "z": -12.58, "elem": "C", "res": "PRO", "res_id": 19, "name": "CB"}, {"x": -8.34, "y": -4.26, "z": -11.1, "elem": "C", "res": "PRO", "res_id": 19, "name": "CG"}, {"x": -7.14, "y": -5.01, "z": -10.52, "elem": "C", "res": "PRO", "res_id": 19, "name": "CD"}, {"x": -5.0, "y": -2.9, "z": -12.67, "elem": "N", "res": "GLY", "res_id": 20, "name": "N"}, {"x": -4.19, "y": -1.76, "z": -13.13, "elem": "C", "res": "GLY", "res_id": 20, "name": "CA"}, {"x": -4.55, "y": -0.47, "z": -12.39, "elem": "C", "res": "GLY", "res_id": 20, "name": "C"}, {"x": -4.03, "y": 0.56, "z": -12.84, "elem": "O", "res": "GLY", "res_id": 20, "name": "O"}, {"x": -5.38, "y": -0.51, "z": -11.37, "elem": "N", "res": "THR", "res_id": 21, "name": "N"}, {"x": -5.79, "y": 0.66, "z": -10.62, "elem": "C", "res": "THR", "res_id": 21, "name": "CA"}, {"x": -4.54, "y": 1.45, "z": -10.15, "elem": "C", "res": "THR", "res_id": 21, "name": "C"}, {"x": -3.61, "y": 0.81, "z": -9.63, "elem": "O", "res": "THR", "res_id": 21, "name": "O"}, {"x": -6.57, "y": 0.24, "z": -9.33, "elem": "C", "res": "THR", "res_id": 21, "name": "CB"}, {"x": -7.51, "y": -0.81, "z": -9.73, "elem": "O", "res": "THR", "res_id": 21, "name": "OG1"}, {"x": -7.3, "y": 1.4, "z": -8.66, "elem": "C", "res": "THR", "res_id": 21, "name": "CG2"}, {"x": -4.59, "y": 2.75, "z": -10.28, "elem": "N", "res": "PRO", "res_id": 22, "name": "N"}, {"x": -3.42, "y": 3.56, "z": -9.8, "elem": "C", "res": "PRO", "res_id": 22, "name": "CA"}, {"x": -3.16, "y": 3.28, "z": -8.33, "elem": "C", "res": "PRO", "res_id": 22, "name": "C"}, {"x": -4.08, "y": 3.11, "z": -7.49, "elem": "O", "res": "PRO", "res_id": 22, "name": "O"}, {"x": -3.86, "y": 5.02, "z": -10.03, "elem": "C", "res": "PRO", "res_id": 22, "name": "CB"}, {"x": -4.88, "y": 4.94, "z": -11.1, "elem": "C", "res": "PRO", "res_id": 22, "name": "CG"}, {"x": -5.6, "y": 3.62, "z": -10.92, "elem": "C", "res": "PRO", "res_id": 22, "name": "CD"}, {"x": -1.83, "y": 3.35, "z": -8.03, "elem": "N", "res": "GLU", "res_id": 23, "name": "N"}, {"x": -1.45, "y": 3.15, "z": -6.61, "elem": "C", "res": "GLU", "res_id": 23, "name": "CA"}, {"x": -2.13, "y": 4.12, "z": -5.7, "elem": "C", "res": "GLU", "res_id": 23, "name": "C"}, {"x": -2.52, "y": 3.73, "z": -4.57, "elem": "O", "res": "GLU", "res_id": 23, "name": "O"}, {"x": 0.09, "y": 3.33, "z": -6.45, "elem": "C", "res": "GLU", "res_id": 23, "name": "CB"}, {"x": 0.88, "y": 2.14, "z": -7.04, "elem": "C", "res": "GLU", "res_id": 23, "name": "CG"}, {"x": 2.38, "y": 2.22, "z": -6.72, "elem": "C", "res": "GLU", "res_id": 23, "name": "CD"}, {"x": 2.86, "y": 3.27, "z": -6.43, "elem": "O", "res": "GLU", "res_id": 23, "name": "OE1"}, {"x": 2.98, "y": 1.12, "z": -6.82, "elem": "O", "res": "GLU", "res_id": 23, "name": "OE2"}, {"x": -2.35, "y": 5.38, "z": -6.14, "elem": "N", "res": "ALA", "res_id": 24, "name": "N"}, {"x": -2.95, "y": 6.37, "z": -5.19, "elem": "C", "res": "ALA", "res_id": 24, "name": "CA"}, {"x": -4.35, "y": 5.99, "z": -4.76, "elem": "C", "res": "ALA", "res_id": 24, "name": "C"}, {"x": -4.78, "y": 6.22, "z": -3.61, "elem": "O", "res": "ALA", "res_id": 24, "name": "O"}, {"x": -2.96, "y": 7.74, "z": -5.86, "elem": "C", "res": "ALA", "res_id": 24, "name": "CB"}, {"x": -5.12, "y": 5.37, "z": -5.7, "elem": "N", "res": "ILE", "res_id": 25, "name": "N"}, {"x": -6.49, "y": 4.94, "z": -5.35, "elem": "C", "res": "ILE", "res_id": 25, "name": "CA"}, {"x": -6.48, "y": 3.69, "z": -4.46, "elem": "C", "res": "ILE", "res_id": 25, "name": "C"}, {"x": -7.25, "y": 3.57, "z": -3.53, "elem": "O", "res": "ILE", "res_id": 25, "name": "O"}, {"x": -7.36, "y": 4.69, "z": -6.65, "elem": "C", "res": "ILE", "res_id": 25, "name": "CB"}, {"x": -7.75, "y": 6.1, "z": -7.24, "elem": "C", "res": "ILE", "res_id": 25, "name": "CG1"}, {"x": -8.66, "y": 3.91, "z": -6.3, "elem": "C", "res": "ILE", "res_id": 25, "name": "CG2"}, {"x": -8.8, "y": 6.81, "z": -6.35, "elem": "C", "res": "ILE", "res_id": 25, "name": "CD1"}, {"x": -5.53, "y": 2.81, "z": -4.79, "elem": "N", "res": "CYS", "res_id": 26, "name": "N"}, {"x": -5.38, "y": 1.6, "z": -3.92, "elem": "C", "res": "CYS", "res_id": 26, "name": "CA"}, {"x": -4.93, "y": 1.99, "z": -2.51, "elem": "C", "res": "CYS", "res_id": 26, "name": "C"}, {"x": -5.33, "y": 1.3, "z": -1.56, "elem": "O", "res": "CYS", "res_id": 26, "name": "O"}, {"x": -4.52, "y": 0.57, "z": -4.57, "elem": "C", "res": "CYS", "res_id": 26, "name": "CB"}, {"x": -5.21, "y": -0.16, "z": -6.09, "elem": "S", "res": "CYS", "res_id": 26, "name": "SG"}, {"x": -4.15, "y": 3.06, "z": -2.41, "elem": "N", "res": "ALA", "res_id": 27, "name": "N"}, {"x": -3.68, "y": 3.55, "z": -1.08, "elem": "C", "res": "ALA", "res_id": 27, "name": "CA"}, {"x": -4.86, "y": 3.96, "z": -0.23, "elem": "C", "res": "ALA", "res_id": 27, "name": "C"}, {"x": -5.03, "y": 3.47, "z": 0.92, "elem": "O", "res": "ALA", "res_id": 27, "name": "O"}, {"x": -2.68, "y": 4.66, "z": -1.28, "elem": "C", "res": "ALA", "res_id": 27, "name": "CB"}, {"x": -5.73, "y": 4.85, "z": -0.75, "elem": "N", "res": "THR", "res_id": 28, "name": "N"}, {"x": -6.87, "y": 5.27, "z": 0.09, "elem": "C", "res": "THR", "res_id": 28, "name": "CA"}, {"x": -7.89, "y": 4.18, "z": 0.33, "elem": "C", "res": "THR", "res_id": 28, "name": "C"}, {"x": -8.61, "y": 4.16, "z": 1.36, "elem": "O", "res": "THR", "res_id": 28, "name": "O"}, {"x": -7.57, "y": 6.57, "z": -0.49, "elem": "C", "res": "THR", "res_id": 28, "name": "CB"}, {"x": -7.9, "y": 6.27, "z": -1.88, "elem": "O", "res": "THR", "res_id": 28, "name": "OG1"}, {"x": -6.65, "y": 7.79, "z": -0.41, "elem": "C", "res": "THR", "res_id": 28, "name": "CG2"}, {"x": -7.94, "y": 3.24, "z": -0.6, "elem": "N", "res": "TYR", "res_id": 29, "name": "N"}, {"x": -8.85, "y": 2.09, "z": -0.45, "elem": "C", "res": "TYR", "res_id": 29, "name": "CA"}, {"x": -8.44, "y": 1.17, "z": 0.71, "elem": "C", "res": "TYR", "res_id": 29, "name": "C"}, {"x": -9.27, "y": 0.68, "z": 1.44, "elem": "O", "res": "TYR", "res_id": 29, "name": "O"}, {"x": -8.81, "y": 1.28, "z": -1.79, "elem": "C", "res": "TYR", "res_id": 29, "name": "CB"}, {"x": -9.76, "y": 0.09, "z": -1.75, "elem": "C", "res": "TYR", "res_id": 29, "name": "CG"}, {"x": -11.11, "y": 0.39, "z": -1.46, "elem": "C", "res": "TYR", "res_id": 29, "name": "CD1"}, {"x": -9.37, "y": -1.2, "z": -2.01, "elem": "C", "res": "TYR", "res_id": 29, "name": "CD2"}, {"x": -12.06, "y": -0.62, "z": -1.43, "elem": "C", "res": "TYR", "res_id": 29, "name": "CE1"}, {"x": -10.36, "y": -2.25, "z": -1.95, "elem": "C", "res": "TYR", "res_id": 29, "name": "CE2"}, {"x": -11.64, "y": -1.92, "z": -1.68, "elem": "C", "res": "TYR", "res_id": 29, "name": "CZ"}, {"x": -12.66, "y": -2.89, "z": -1.65, "elem": "O", "res": "TYR", "res_id": 29, "name": "OH"}, {"x": -7.09, "y": 1.03, "z": 0.89, "elem": "N", "res": "THR", "res_id": 30, "name": "N"}, {"x": -6.57, "y": 0.04, "z": 1.84, "elem": "C", "res": "THR", "res_id": 30, "name": "CA"}, {"x": -5.95, "y": 0.55, "z": 3.12, "elem": "C", "res": "THR", "res_id": 30, "name": "C"}, {"x": -5.79, "y": -0.24, "z": 4.08, "elem": "O", "res": "THR", "res_id": 30, "name": "O"}, {"x": -5.48, "y": -0.85, "z": 1.12, "elem": "C", "res": "THR", "res_id": 30, "name": "CB"}, {"x": -4.44, "y": 0.08, "z": 0.72, "elem": "O", "res": "THR", "res_id": 30, "name": "OG1"}, {"x": -6.07, "y": -1.63, "z": -0.07, "elem": "C", "res": "THR", "res_id": 30, "name": "CG2"}, {"x": -5.58, "y": 1.81, "z": 3.13, "elem": "N", "res": "GLY", "res_id": 31, "name": "N"}, {"x": -4.79, "y": 2.39, "z": 4.25, "elem": "C", "res": "GLY", "res_id": 31, "name": "CA"}, {"x": -3.31, "y": 2.29, "z": 4.0, "elem": "C", "res": "GLY", "res_id": 31, "name": "C"}, {"x": -2.52, "y": 2.8, "z": 4.85, "elem": "O", "res": "GLY", "res_id": 31, "name": "O"}, {"x": -2.85, "y": 1.68, "z": 2.88, "elem": "N", "res": "CYS", "res_id": 32, "name": "N"}, {"x": -1.42, "y": 1.74, "z": 2.53, "elem": "C", "res": "CYS", "res_id": 32, "name": "CA"}, {"x": -1.06, "y": 3.19, "z": 2.1, "elem": "C", "res": "CYS", "res_id": 32, "name": "C"}, {"x": -1.98, "y": 4.0, "z": 1.84, "elem": "O", "res": "CYS", "res_id": 32, "name": "O"}, {"x": -1.06, "y": 0.74, "z": 1.42, "elem": "C", "res": "CYS", "res_id": 32, "name": "CB"}, {"x": -1.51, "y": -0.96, "z": 1.77, "elem": "S", "res": "CYS", "res_id": 32, "name": "SG"}, {"x": 0.23, "y": 3.46, "z": 2.07, "elem": "N", "res": "ILE", "res_id": 33, "name": "N"}, {"x": 0.72, "y": 4.81, "z": 1.72, "elem": "C", "res": "ILE", "res_id": 33, "name": "CA"}, {"x": 1.79, "y": 4.71, "z": 0.64, "elem": "C", "res": "ILE", "res_id": 33, "name": "C"}, {"x": 2.41, "y": 3.63, "z": 0.44, "elem": "O", "res": "ILE", "res_id": 33, "name": "O"}, {"x": 1.23, "y": 5.58, "z": 2.98, "elem": "C", "res": "ILE", "res_id": 33, "name": "CB"}, {"x": 2.5, "y": 4.85, "z": 3.56, "elem": "C", "res": "ILE", "res_id": 33, "name": "CG1"}, {"x": 0.12, "y": 5.74, "z": 4.03, "elem": "C", "res": "ILE", "res_id": 33, "name": "CG2"}, {"x": 3.17, "y": 5.73, "z": 4.67, "elem": "C", "res": "ILE", "res_id": 33, "name": "CD1"}, {"x": 1.93, "y": 5.82, "z": -0.07, "elem": "N", "res": "ILE", "res_id": 34, "name": "N"}, {"x": 2.99, "y": 5.93, "z": -1.07, "elem": "C", "res": "ILE", "res_id": 34, "name": "CA"}, {"x": 4.03, "y": 6.97, "z": -0.55, "elem": "C", "res": "ILE", "res_id": 34, "name": "C"}, {"x": 3.61, "y": 8.06, "z": -0.16, "elem": "O", "res": "ILE", "res_id": 34, "name": "O"}, {"x": 2.43, "y": 6.41, "z": -2.43, "elem": "C", "res": "ILE", "res_id": 34, "name": "CB"}, {"x": 1.35, "y": 5.39, "z": -2.94, "elem": "C", "res": "ILE", "res_id": 34, "name": "CG1"}, {"x": 3.57, "y": 6.57, "z": -3.48, "elem": "C", "res": "ILE", "res_id": 34, "name": "CG2"}, {"x": 0.59, "y": 6.07, "z": -4.17, "elem": "C", "res": "ILE", "res_id": 34, "name": "CD1"}, {"x": 5.3, "y": 6.54, "z": -0.57, "elem": "N", "res": "ILE", "res_id": 35, "name": "N"}, {"x": 6.37, "y": 7.5, "z": -0.17, "elem": "C", "res": "ILE", "res_id": 35, "name": "CA"}, {"x": 7.35, "y": 7.6, "z": -1.29, "elem": "C", "res": "ILE", "res_id": 35, "name": "C"}, {"x": 7.54, "y": 6.71, "z": -2.14, "elem": "O", "res": "ILE", "res_id": 35, "name": "O"}, {"x": 7.06, "y": 7.04, "z": 1.18, "elem": "C", "res": "ILE", "res_id": 35, "name": "CB"}, {"x": 7.8, "y": 5.7, "z": 0.96, "elem": "C", "res": "ILE", "res_id": 35, "name": "CG1"}, {"x": 6.03, "y": 7.02, "z": 2.33, "elem": "C", "res": "ILE", "res_id": 35, "name": "CG2"}, {"x": 8.74, "y": 5.26, "z": 2.11, "elem": "C", "res": "ILE", "res_id": 35, "name": "CD1"}, {"x": 8.1, "y": 8.72, "z": -1.3, "elem": "N", "res": "PRO", "res_id": 36, "name": "N"}, {"x": 9.07, "y": 8.91, "z": -2.37, "elem": "C", "res": "PRO", "res_id": 36, "name": "CA"}, {"x": 10.36, "y": 8.09, "z": -2.16, "elem": "C", "res": "PRO", "res_id": 36, "name": "C"}, {"x": 11.03, "y": 7.79, "z": -3.16, "elem": "O", "res": "PRO", "res_id": 36, "name": "O"}, {"x": 9.38, "y": 10.41, "z": -2.32, "elem": "C", "res": "PRO", "res_id": 36, "name": "CB"}, {"x": 8.68, "y": 10.99, "z": -1.2, "elem": "C", "res": "PRO", "res_id": 36, "name": "CG"}, {"x": 7.81, "y": 9.95, "z": -0.51, "elem": "C", "res": "PRO", "res_id": 36, "name": "CD"}, {"x": 10.61, "y": 7.78, "z": -0.89, "elem": "N", "res": "GLY", "res_id": 37, "name": "N"}, {"x": 11.89, "y": 7.02, "z": -0.59, "elem": "C", "res": "GLY", "res_id": 37, "name": "CA"}, {"x": 11.58, "y": 5.53, "z": -0.68, "elem": "C", "res": "GLY", "res_id": 37, "name": "C"}, {"x": 10.58, "y": 5.07, "z": -1.23, "elem": "O", "res": "GLY", "res_id": 37, "name": "O"}, {"x": 12.49, "y": 4.75, "z": -0.08, "elem": "N", "res": "ALA", "res_id": 38, "name": "N"}, {"x": 12.46, "y": 3.29, "z": -0.09, "elem": "C", "res": "ALA", "res_id": 38, "name": "CA"}, {"x": 12.38, "y": 2.68, "z": 1.29, "elem": "C", "res": "ALA", "res_id": 38, "name": "C"}, {"x": 12.31, "y": 1.44, "z": 1.33, "elem": "O", "res": "ALA", "res_id": 38, "name": "O"}, {"x": 13.69, "y": 2.75, "z": -0.83, "elem": "C", "res": "ALA", "res_id": 38, "name": "CB"}, {"x": 12.33, "y": 3.48, "z": 2.33, "elem": "N", "res": "THR", "res_id": 39, "name": "N"}, {"x": 12.38, "y": 2.96, "z": 3.7, "elem": "C", "res": "THR", "res_id": 39, "name": "CA"}, {"x": 11.05, "y": 3.24, "z": 4.41, "elem": "C", "res": "THR", "res_id": 39, "name": "C"}, {"x": 10.8, "y": 4.37, "z": 4.84, "elem": "O", "res": "THR", "res_id": 39, "name": "O"}, {"x": 13.57, "y": 3.65, "z": 4.49, "elem": "C", "res": "THR", "res_id": 39, "name": "CB"}, {"x": 14.72, "y": 3.45, "z": 3.6, "elem": "O", "res": "THR", "res_id": 39, "name": "OG1"}, {"x": 13.78, "y": 2.98, "z": 5.85, "elem": "C", "res": "THR", "res_id": 39, "name": "CG2"}, {"x": 10.27, "y": 2.16, "z": 4.53, "elem": "N", "res": "CYS", "res_id": 40, "name": "N"}, {"x": 8.94, "y": 2.36, "z": 5.19, "elem": "C", "res": "CYS", "res_id": 40, "name": "CA"}, {"x": 9.12, "y": 2.5, "z": 6.68, "elem": "C", "res": "CYS", "res_id": 40, "name": "C"}, {"x": 9.97, "y": 1.77, "z": 7.25, "elem": "O", "res": "CYS", "res_id": 40, "name": "O"}, {"x": 8.02, "y": 1.17, "z": 4.89, "elem": "C", "res": "CYS", "res_id": 40, "name": "CB"}, {"x": 7.64, "y": 0.98, "z": 3.13, "elem": "S", "res": "CYS", "res_id": 40, "name": "SG"}, {"x": 8.32, "y": 3.32, "z": 7.32, "elem": "N", "res": "PRO", "res_id": 41, "name": "N"}, {"x": 8.36, "y": 3.47, "z": 8.77, "elem": "C", "res": "PRO", "res_id": 41, "name": "CA"}, {"x": 7.83, "y": 2.26, "z": 9.49, "elem": "C", "res": "PRO", "res_id": 41, "name": "C"}, {"x": 7.09, "y": 1.42, "z": 8.93, "elem": "O", "res": "PRO", "res_id": 41, "name": "O"}, {"x": 7.52, "y": 4.71, "z": 9.04, "elem": "C", "res": "PRO", "res_id": 41, "name": "CB"}, {"x": 6.54, "y": 4.74, "z": 7.89, "elem": "C", "res": "PRO", "res_id": 41, "name": "CG"}, {"x": 7.3, "y": 4.2, "z": 6.67, "elem": "C", "res": "PRO", "res_id": 41, "name": "CD"}, {"x": 8.17, "y": 2.17, "z": 10.78, "elem": "N", "res": "GLY", "res_id": 42, "name": "N"}, {"x": 7.77, "y": 1.01, "z": 11.58, "elem": "C", "res": "GLY", "res_id": 42, "name": "CA"}, {"x": 6.31, "y": 0.74, "z": 11.76, "elem": "C", "res": "GLY", "res_id": 42, "name": "C"}, {"x": 5.87, "y": -0.4, "z": 12.06, "elem": "O", "res": "GLY", "res_id": 42, "name": "O"}, {"x": 5.48, "y": 1.8, "z": 11.61, "elem": "N", "res": "ASP", "res_id": 43, "name": "N"}, {"x": 4.0, "y": 1.62, "z": 11.73, "elem": "C", "res": "ASP", "res_id": 43, "name": "CA"}, {"x": 3.38, "y": 1.28, "z": 10.36, "elem": "C", "res": "ASP", "res_id": 43, "name": "C"}, {"x": 2.16, "y": 1.09, "z": 10.32, "elem": "O", "res": "ASP", "res_id": 43, "name": "O"}, {"x": 3.37, "y": 2.79, "z": 12.47, "elem": "C", "res": "ASP", "res_id": 43, "name": "CB"}, {"x": 3.58, "y": 4.14, "z": 11.85, "elem": "C", "res": "ASP", "res_id": 43, "name": "CG"}, {"x": 4.55, "y": 4.35, "z": 11.1, "elem": "O", "res": "ASP", "res_id": 43, "name": "OD1"}, {"x": 2.71, "y": 5.01, "z": 12.16, "elem": "O", "res": "ASP", "res_id": 43, "name": "OD2"}, {"x": 4.16, "y": 1.22, "z": 9.32, "elem": "N", "res": "TYR", "res_id": 44, "name": "N"}, {"x": 3.7, "y": 0.79, "z": 7.97, "elem": "C", "res": "TYR", "res_id": 44, "name": "CA"}, {"x": 4.71, "y": -0.26, "z": 7.5, "elem": "C", "res": "TYR", "res_id": 44, "name": "C"}, {"x": 5.37, "y": -0.09, "z": 6.46, "elem": "O", "res": "TYR", "res_id": 44, "name": "O"}, {"x": 3.64, "y": 1.96, "z": 6.96, "elem": "C", "res": "TYR", "res_id": 44, "name": "CB"}, {"x": 2.44, "y": 2.87, "z": 7.29, "elem": "C", "res": "TYR", "res_id": 44, "name": "CG"}, {"x": 2.56, "y": 3.9, "z": 8.22, "elem": "C", "res": "TYR", "res_id": 44, "name": "CD1"}, {"x": 1.21, "y": 2.67, "z": 6.65, "elem": "C", "res": "TYR", "res_id": 44, "name": "CD2"}, {"x": 1.48, "y": 4.72, "z": 8.5, "elem": "C", "res": "TYR", "res_id": 44, "name": "CE1"}, {"x": 0.12, "y": 3.48, "z": 6.94, "elem": "C", "res": "TYR", "res_id": 44, "name": "CE2"}, {"x": 0.24, "y": 4.51, "z": 7.89, "elem": "C", "res": "TYR", "res_id": 44, "name": "CZ"}, {"x": -0.82, "y": 5.31, "z": 8.16, "elem": "O", "res": "TYR", "res_id": 44, "name": "OH"}, {"x": 4.78, "y": -1.31, "z": 8.31, "elem": "N", "res": "ALA", "res_id": 45, "name": "N"}, {"x": 5.88, "y": -2.28, "z": 8.14, "elem": "C", "res": "ALA", "res_id": 45, "name": "CA"}, {"x": 5.61, "y": -3.42, "z": 7.17, "elem": "C", "res": "ALA", "res_id": 45, "name": "C"}, {"x": 6.53, "y": -4.25, "z": 6.93, "elem": "O", "res": "ALA", "res_id": 45, "name": "O"}, {"x": 6.12, "y": -2.85, "z": 9.57, "elem": "C", "res": "ALA", "res_id": 45, "name": "CB"}, {"x": 4.41, "y": -3.45, "z": 6.63, "elem": "N", "res": "ASN", "res_id": 46, "name": "N"}, {"x": 3.95, "y": -4.56, "z": 5.77, "elem": "C", "res": "ASN", "res_id": 46, "name": "CA"}, {"x": 3.75, "y": -4.1, "z": 4.35, "elem": "C", "res": "ASN", "res_id": 46, "name": "C"}, {"x": 4.17, "y": -3.02, "z": 3.92, "elem": "O", "res": "ASN", "res_id": 46, "name": "O"}, {"x": 2.71, "y": -5.18, "z": 6.39, "elem": "C", "res": "ASN", "res_id": 46, "name": "CB"}, {"x": 2.98, "y": -5.65, "z": 7.81, "elem": "C", "res": "ASN", "res_id": 46, "name": "CG"}, {"x": 2.42, "y": -5.1, "z": 8.78, "elem": "O", "res": "ASN", "res_id": 46, "name": "OD1"}, {"x": 3.85, "y": -6.65, "z": 7.91, "elem": "N", "res": "ASN", "res_id": 46, "name": "ND2"}, {"x": 3.14, "y": -4.98, "z": 3.64, "elem": "O", "res": "ASN", "res_id": 46, "name": "OXT"}], "sequence": [{"id": 1, "name": "THR"}, {"id": 2, "name": "THR"}, {"id": 3, "name": "CYS"}, {"id": 4, "name": "CYS"}, {"id": 5, "name": "PRO"}, {"id": 6, "name": "SER"}, {"id": 7, "name": "ILE"}, {"id": 8, "name": "VAL"}, {"id": 9, "name": "ALA"}, {"id": 10, "name": "ARG"}, {"id": 11, "name": "SER"}, {"id": 12, "name": "ASN"}, {"id": 13, "name": "PHE"}, {"id": 14, "name": "ASN"}, {"id": 15, "name": "VAL"}, {"id": 16, "name": "CYS"}, {"id": 17, "name": "ARG"}, {"id": 18, "name": "LEU"}, {"id": 19, "name": "PRO"}, {"id": 20, "name": "GLY"}, {"id": 21, "name": "THR"}, {"id": 22, "name": "PRO"}, {"id": 23, "name": "GLU"}, {"id": 24, "name": "ALA"}, {"id": 25, "name": "ILE"}, {"id": 26, "name": "CYS"}, {"id": 27, "name": "ALA"}, {"id": 28, "name": "THR"}, {"id": 29, "name": "TYR"}, {"id": 30, "name": "THR"}, {"id": 31, "name": "GLY"}, {"id": 32, "name": "CYS"}, {"id": 33, "name": "ILE"}, {"id": 34, "name": "ILE"}, {"id": 35, "name": "ILE"}, {"id": 36, "name": "PRO"}, {"id": 37, "name": "GLY"}, {"id": 38, "name": "ALA"}, {"id": 39, "name": "THR"}, {"id": 40, "name": "CYS"}, {"id": 41, "name": "PRO"}, {"id": 42, "name": "GLY"}, {"id": 43, "name": "ASP"}, {"id": 44, "name": "TYR"}, {"id": 45, "name": "ALA"}, {"id": 46, "name": "ASN"}], "binding_residues": [{"name": "ASN 203", "dist": "2.8 \u00c5", "type": "hbond", "x": -2.8, "y": 1.4, "z": 1.2}, {"name": "SER 205", "dist": "3.1 \u00c5", "type": "hbond", "x": -2.2, "y": 1.6, "z": 0.8}, {"name": "TYR 207", "dist": "3.4 \u00c5", "type": "hydrophobic", "x": 2.4, "y": -1.3, "z": 0.7}, {"name": "ARG 210", "dist": "3.6 \u00c5", "type": "electro", "x": -2.6, "y": -1.1, "z": 1.1}, {"name": "GLU 277", "dist": "3.8 \u00c5", "type": "electro", "x": 3.1, "y": 1.2, "z": -0.9}, {"name": "HIS 310", "dist": "3.9 \u00c5", "type": "pi", "x": -1.9, "y": -2.4, "z": 0.5}, {"name": "THR 312", "dist": "3.9 \u00c5", "type": "hydrophobic", "x": 1.8, "y": 2.7, "z": 0.6}, {"name": "LYS 315", "dist": "4.0 \u00c5", "type": "electro", "x": 0.5, "y": -3.2, "z": -1.1}], "glucose_coords": [{"elem": "C", "name": "C1", "x": 1.15, "y": 0.42, "z": 0.22}, {"elem": "C", "name": "C2", "x": 0.45, "y": -0.82, "z": 0.35}, {"elem": "C", "name": "C3", "x": -1.02, "y": -0.65, "z": 0.12}, {"elem": "C", "name": "C4", "x": -1.35, "y": 0.81, "z": 0.24}, {"elem": "C", "name": "C5", "x": -0.32, "y": 1.62, "z": -0.41}, {"elem": "O", "name": "O5", "x": 0.92, "y": 1.25, "z": -0.22}, {"elem": "O", "name": "O1", "x": 2.25, "y": 0.12, "z": -0.45}, {"elem": "O", "name": "O2", "x": 0.72, "y": -1.85, "z": -0.52}, {"elem": "O", "name": "O3", "x": -1.82, "y": -1.65, "z": 0.55}, {"elem": "O", "name": "O4", "x": -2.45, "y": 0.92, "z": -0.52}, {"elem": "C", "name": "C6", "x": -0.52, "y": 3.05, "z": -0.15}, {"elem": "O", "name": "O6", "x": 0.62, "y": 3.75, "z": 0.35}], "ligand": {"name": "D-Glucose (alpha-D-Glucopyranose)", "formula": "C6H12O6", "mw": "180.16 Da", "cutoff": "4.0 \u00c5", "show": true}, "properties": {"Molecular Weight": "4741.5 Da", "Total Atoms": "327 atoms", "Residue Count": "46 amino acids", "Chains": "Chain A", "Disulfide Bridges": "3 S-S covalent bonds", "Secondary Structure": "alpha-helix (43%), beta-sheet (17%), Loop (40%)", "Isoelectric Point (pI)": "8.85"}}};
+    const INITIAL_EMBEDDED_STATE = {"session_name": "MembraneONE", "session_id": "SES-9201", "status": "Active", "model": "AI Research Agent", "active_protocol_key": "binding_site", "protocol_name": "Glucose Binding Pocket & Contact Analysis (4.0 \u00c5)", "workflow_steps": [{"name": "Ligand coordinate localization & chair conformation mapping", "status": "done"}, {"name": "Residue Euclidean distance mapping (4.0 \u00c5 cutoff)", "status": "done"}, {"name": "Hydrogen bond network identification (ASN 203, SER 205)", "status": "done"}, {"name": "Hydrophobic contact clustering (TYR 207, THR 312)", "status": "running"}, {"name": "Electrostatic & salt-bridge classification (ARG 210, GLU 277, LYS 315)", "status": "pending"}, {"name": "3D interaction render & binding affinity dossier compilation", "status": "pending"}], "progress_percent": 65, "time_remaining": "42m remaining", "is_paused": false, "logs": [{"time": "14:20:02", "type": "INFO", "msg": "Polymathix Scientific Intelligence OS initialized."}, {"time": "14:20:03", "type": "SUCCESS", "msg": "Crystallographic coordinates loaded: 1CRN (Crambin hydrophobic fold)."}, {"time": "14:20:05", "type": "AI", "msg": "Ligand docked at active pocket: D-Glucose (C6H12O6, MW=180.16 g/mol, LogP=-3.22)."}, {"time": "14:20:08", "type": "SUCCESS", "msg": "Mapped 8 interacting residues within 4.0 \u00c5 interaction cutoff."}, {"time": "14:20:12", "type": "INFO", "msg": "Key polar contacts: ASN 203 (2.8 \u00c5 H-bond), SER 205 (3.1 \u00c5 H-bond), TYR 207 (3.4 \u00c5 hydrophobic)."}, {"time": "14:20:15", "type": "SUCCESS", "msg": "Ready for multi-representation 3D inspection and geometry export."}], "kpis": {"active_sessions": 8, "connected_tools": 12, "running_jobs": 28, "total_data": "1.4 TB", "system_uptime": "99.8%"}, "connectors": [{"name": "PyMOL", "status": "ok", "text": "Connected", "icon": "\ud83e\uddec"}, {"name": "ChimeraX", "status": "ok", "text": "Connected", "icon": "\ud83d\udd2c"}, {"name": "GROMACS", "status": "run", "text": "Running", "icon": "\u269b"}, {"name": "OpenMM", "status": "ready", "text": "Ready", "icon": "\u25c8"}, {"name": "AutoDock Vina", "status": "ready", "text": "Ready", "icon": "\u2697"}, {"name": "RDKit", "status": "ok", "text": "Connected", "icon": "RD"}, {"name": "ORCA", "status": "off", "text": "Disconnected", "icon": "\u03a9"}, {"name": "MATLAB", "status": "ready", "text": "Ready", "icon": "\u25a3"}, {"name": "Python", "status": "ok", "text": "Connected", "icon": "\ud83d\udc0d"}, {"name": "Blender", "status": "ready", "text": "Ready", "icon": "\u25c9"}], "results": [{"name": "glucose_binding.glb", "type": "model", "meta": "Just now", "icon": "\ud83e\uddec", "path": "assets/polymathix_3d_render.obj"}, {"name": "glucose_2d.png", "type": "image", "meta": "Just now", "icon": "\ud83c\udf6c", "path": "assets/glucose_2d.png"}, {"name": "deep_pca_comparison.png", "type": "plot", "meta": "3 min ago", "icon": "\ud83d\udcc8", "path": "assets/deep_pca_comparison.png"}, {"name": "energy_plot.png", "type": "plot", "meta": "6 min ago", "icon": "\ud83e\uddea", "path": "assets/energy_plot.png"}, {"name": "polymathix_3d_render.obj", "type": "model", "meta": "10 min ago", "icon": "\u25c8", "path": "assets/polymathix_3d_render.obj"}], "pdb_data": {"pdb_name": "PENTAGON RINGS OF WATER MOLECULES IN CRYSTALS OF CRAMBIN", "atom_count": 327, "residue_count": 46, "resolution": "1.50 \u00c5 (Atomic Resolution)", "ca_coords": [{"x": 7.41, "y": 2.83, "z": -2.77, "res": "THR", "id": 1, "sec_struct": "sheet", "b_factor": 9.2}, {"x": 4.3, "y": 1.52, "z": -1.04, "res": "THR", "id": 2, "sec_struct": "sheet", "b_factor": 9.2}, {"x": 4.1, "y": 0.76, "z": 2.68, "res": "CYS", "id": 3, "sec_struct": "sheet", "b_factor": 9.2}, {"x": 1.09, "y": -0.96, "z": 4.3, "res": "CYS", "id": 4, "sec_struct": "sheet", "b_factor": 9.2}, {"x": -0.11, "y": -0.92, "z": 7.9, "res": "PRO", "id": 5, "sec_struct": "loop", "b_factor": 21.0}, {"x": -0.89, "y": -4.64, "z": 8.17, "res": "SER", "id": 6, "sec_struct": "loop", "b_factor": 21.0}, {"x": -0.65, "y": -7.87, "z": 6.15, "res": "ILE", "id": 7, "sec_struct": "helix", "b_factor": 7.5}, {"x": -4.42, "y": -7.74, "z": 5.35, "res": "VAL", "id": 8, "sec_struct": "helix", "b_factor": 7.5}, {"x": -3.96, "y": -4.18, "z": 3.97, "res": "ALA", "id": 9, "sec_struct": "helix", "b_factor": 7.5}, {"x": -1.06, "y": -5.34, "z": 1.73, "res": "ARG", "id": 10, "sec_struct": "helix", "b_factor": 7.5}, {"x": -3.06, "y": -8.37, "z": 0.46, "res": "SER", "id": 11, "sec_struct": "helix", "b_factor": 7.5}, {"x": -6.02, "y": -6.02, "z": -0.36, "res": "ASN", "id": 12, "sec_struct": "helix", "b_factor": 7.5}, {"x": -3.63, "y": -3.59, "z": -2.05, "res": "PHE", "id": 13, "sec_struct": "helix", "b_factor": 7.5}, {"x": -2.23, "y": -6.34, "z": -4.32, "res": "ASN", "id": 14, "sec_struct": "helix", "b_factor": 7.5}, {"x": -5.78, "y": -7.35, "z": -5.37, "res": "VAL", "id": 15, "sec_struct": "helix", "b_factor": 7.5}, {"x": -6.67, "y": -3.67, "z": -5.98, "res": "CYS", "id": 16, "sec_struct": "helix", "b_factor": 7.5}, {"x": -3.67, "y": -3.46, "z": -8.32, "res": "ARG", "id": 17, "sec_struct": "helix", "b_factor": 7.5}, {"x": -4.63, "y": -6.52, "z": -10.43, "res": "LEU", "id": 18, "sec_struct": "helix", "b_factor": 7.5}, {"x": -6.77, "y": -4.57, "z": -12.9, "res": "PRO", "id": 19, "sec_struct": "helix", "b_factor": 7.5}, {"x": -4.19, "y": -1.76, "z": -13.13, "res": "GLY", "id": 20, "sec_struct": "loop", "b_factor": 21.0}, {"x": -5.79, "y": 0.66, "z": -10.62, "res": "THR", "id": 21, "sec_struct": "loop", "b_factor": 21.0}, {"x": -3.42, "y": 3.56, "z": -9.8, "res": "PRO", "id": 22, "sec_struct": "loop", "b_factor": 21.0}, {"x": -1.45, "y": 3.15, "z": -6.61, "res": "GLU", "id": 23, "sec_struct": "helix", "b_factor": 7.5}, {"x": -2.95, "y": 6.37, "z": -5.19, "res": "ALA", "id": 24, "sec_struct": "helix", "b_factor": 7.5}, {"x": -6.49, "y": 4.94, "z": -5.35, "res": "ILE", "id": 25, "sec_struct": "helix", "b_factor": 7.5}, {"x": -5.38, "y": 1.6, "z": -3.92, "res": "CYS", "id": 26, "sec_struct": "helix", "b_factor": 7.5}, {"x": -3.68, "y": 3.55, "z": -1.08, "res": "ALA", "id": 27, "sec_struct": "helix", "b_factor": 7.5}, {"x": -6.87, "y": 5.27, "z": 0.09, "res": "THR", "id": 28, "sec_struct": "helix", "b_factor": 7.5}, {"x": -8.85, "y": 2.09, "z": -0.45, "res": "TYR", "id": 29, "sec_struct": "helix", "b_factor": 7.5}, {"x": -6.57, "y": 0.04, "z": 1.84, "res": "THR", "id": 30, "sec_struct": "helix", "b_factor": 7.5}, {"x": -4.79, "y": 2.39, "z": 4.25, "res": "GLY", "id": 31, "sec_struct": "loop", "b_factor": 21.0}, {"x": -1.42, "y": 1.74, "z": 2.53, "res": "CYS", "id": 32, "sec_struct": "sheet", "b_factor": 9.2}, {"x": 0.72, "y": 4.81, "z": 1.72, "res": "ILE", "id": 33, "sec_struct": "sheet", "b_factor": 9.2}, {"x": 2.99, "y": 5.93, "z": -1.07, "res": "ILE", "id": 34, "sec_struct": "sheet", "b_factor": 9.2}, {"x": 6.37, "y": 7.5, "z": -0.17, "res": "ILE", "id": 35, "sec_struct": "sheet", "b_factor": 9.2}, {"x": 9.07, "y": 8.91, "z": -2.37, "res": "PRO", "id": 36, "sec_struct": "loop", "b_factor": 21.0}, {"x": 11.89, "y": 7.02, "z": -0.59, "res": "GLY", "id": 37, "sec_struct": "loop", "b_factor": 21.0}, {"x": 12.46, "y": 3.29, "z": -0.09, "res": "ALA", "id": 38, "sec_struct": "loop", "b_factor": 21.0}, {"x": 12.38, "y": 2.96, "z": 3.7, "res": "THR", "id": 39, "sec_struct": "loop", "b_factor": 21.0}, {"x": 8.94, "y": 2.36, "z": 5.19, "res": "CYS", "id": 40, "sec_struct": "loop", "b_factor": 21.0}, {"x": 8.36, "y": 3.47, "z": 8.77, "res": "PRO", "id": 41, "sec_struct": "loop", "b_factor": 21.0}, {"x": 7.77, "y": 1.01, "z": 11.58, "res": "GLY", "id": 42, "sec_struct": "loop", "b_factor": 21.0}, {"x": 4.0, "y": 1.62, "z": 11.73, "res": "ASP", "id": 43, "sec_struct": "loop", "b_factor": 21.0}, {"x": 3.7, "y": 0.79, "z": 7.97, "res": "TYR", "id": 44, "sec_struct": "loop", "b_factor": 21.0}, {"x": 5.88, "y": -2.28, "z": 8.14, "res": "ALA", "id": 45, "sec_struct": "loop", "b_factor": 21.0}, {"x": 3.95, "y": -4.56, "z": 5.77, "res": "ASN", "id": 46, "sec_struct": "loop", "b_factor": 21.0}], "atoms": [{"x": 7.49, "y": 4.15, "z": -3.48, "elem": "N", "res": "THR", "res_id": 1, "name": "N"}, {"x": 7.41, "y": 2.83, "z": -2.77, "elem": "C", "res": "THR", "res_id": 1, "name": "CA"}, {"x": 6.12, "y": 2.8, "z": -1.97, "elem": "C", "res": "THR", "res_id": 1, "name": "C"}, {"x": 5.71, "y": 3.87, "z": -1.51, "elem": "O", "res": "THR", "res_id": 1, "name": "O"}, {"x": 8.61, "y": 2.75, "z": -1.77, "elem": "C", "res": "THR", "res_id": 1, "name": "CB"}, {"x": 9.77, "y": 2.88, "z": -2.64, "elem": "O", "res": "THR", "res_id": 1, "name": "OG1"}, {"x": 8.59, "y": 1.6, "z": -0.8, "elem": "C", "res": "THR", "res_id": 1, "name": "CG2"}, {"x": 5.55, "y": 1.6, "z": -1.84, "elem": "N", "res": "THR", "res_id": 2, "name": "N"}, {"x": 4.3, "y": 1.52, "z": -1.04, "elem": "C", "res": "THR", "res_id": 2, "name": "CA"}, {"x": 4.6, "y": 0.83, "z": 0.27, "elem": "C", "res": "THR", "res_id": 2, "name": "C"}, {"x": 5.43, "y": -0.09, "z": 0.34, "elem": "O", "res": "THR", "res_id": 2, "name": "O"}, {"x": 3.17, "y": 0.76, "z": -1.85, "elem": "C", "res": "THR", "res_id": 2, "name": "CB"}, {"x": 3.75, "y": -0.51, "z": -2.18, "elem": "O", "res": "THR", "res_id": 2, "name": "OG1"}, {"x": 2.92, "y": 1.49, "z": -3.21, "elem": "C", "res": "THR", "res_id": 2, "name": "CG2"}, {"x": 3.93, "y": 1.29, "z": 1.31, "elem": "N", "res": "CYS", "res_id": 3, "name": "N"}, {"x": 4.1, "y": 0.76, "z": 2.68, "elem": "C", "res": "CYS", "res_id": 3, "name": "CA"}, {"x": 2.71, "y": 0.48, "z": 3.22, "elem": "C", "res": "CYS", "res_id": 3, "name": "C"}, {"x": 1.83, "y": 1.36, "z": 3.08, "elem": "O", "res": "CYS", "res_id": 3, "name": "O"}, {"x": 4.81, "y": 1.8, "z": 3.58, "elem": "C", "res": "CYS", "res_id": 3, "name": "CB"}, {"x": 6.32, "y": 2.48, "z": 2.91, "elem": "S", "res": "CYS", "res_id": 3, "name": "SG"}, {"x": 2.46, "y": -0.68, "z": 3.82, "elem": "N", "res": "CYS", "res_id": 4, "name": "N"}, {"x": 1.09, "y": -0.96, "z": 4.3, "elem": "C", "res": "CYS", "res_id": 4, "name": "CA"}, {"x": 1.09, "y": -1.16, "z": 5.81, "elem": "C", "res": "CYS", "res_id": 4, "name": "C"}, {"x": 2.1, "y": -1.65, "z": 6.38, "elem": "O", "res": "CYS", "res_id": 4, "name": "O"}, {"x": 0.5, "y": -2.2, "z": 3.57, "elem": "C", "res": "CYS", "res_id": 4, "name": "CB"}, {"x": 0.28, "y": -1.93, "z": 1.8, "elem": "S", "res": "CYS", "res_id": 4, "name": "SG"}, {"x": 0.0, "y": -0.84, "z": 6.46, "elem": "N", "res": "PRO", "res_id": 5, "name": "N"}, {"x": -0.11, "y": -0.92, "z": 7.9, "elem": "C", "res": "PRO", "res_id": 5, "name": "CA"}, {"x": -0.27, "y": -2.28, "z": 8.5, "elem": "C", "res": "PRO", "res_id": 5, "name": "C"}, {"x": -0.07, "y": -2.43, "z": 9.71, "elem": "O", "res": "PRO", "res_id": 5, "name": "O"}, {"x": -1.33, "y": 0.01, "z": 8.24, "elem": "C", "res": "PRO", "res_id": 5, "name": "CB"}, {"x": -2.22, "y": -0.16, "z": 7.01, "elem": "C", "res": "PRO", "res_id": 5, "name": "CG"}, {"x": -1.19, "y": -0.15, "z": 5.85, "elem": "C", "res": "PRO", "res_id": 5, "name": "CD"}, {"x": -0.69, "y": -3.26, "z": 7.69, "elem": "N", "res": "SER", "res_id": 6, "name": "N"}, {"x": -0.89, "y": -4.64, "z": 8.17, "elem": "C", "res": "SER", "res_id": 6, "name": "CA"}, {"x": -0.81, "y": -5.57, "z": 6.98, "elem": "C", "res": "SER", "res_id": 6, "name": "C"}, {"x": -0.83, "y": -5.09, "z": 5.82, "elem": "O", "res": "SER", "res_id": 6, "name": "O"}, {"x": -2.22, "y": -4.83, "z": 8.89, "elem": "C", "res": "SER", "res_id": 6, "name": "CB"}, {"x": -3.29, "y": -4.73, "z": 7.92, "elem": "O", "res": "SER", "res_id": 6, "name": "OG"}, {"x": -0.68, "y": -6.88, "z": 7.25, "elem": "N", "res": "ILE", "res_id": 7, "name": "N"}, {"x": -0.65, "y": -7.87, "z": 6.15, "elem": "C", "res": "ILE", "res_id": 7, "name": "CA"}, {"x": -1.98, "y": -7.86, "z": 5.4, "elem": "C", "res": "ILE", "res_id": 7, "name": "C"}, {"x": -1.89, "y": -7.92, "z": 4.14, "elem": "O", "res": "ILE", "res_id": 7, "name": "O"}, {"x": -0.35, "y": -9.27, "z": 6.82, "elem": "C", "res": "ILE", "res_id": 7, "name": "CB"}, {"x": 1.15, "y": -9.25, "z": 7.2, "elem": "C", "res": "ILE", "res_id": 7, "name": "CG1"}, {"x": -0.75, "y": -10.43, "z": 5.86, "elem": "C", "res": "ILE", "res_id": 7, "name": "CG2"}, {"x": 1.62, "y": -10.47, "z": 8.03, "elem": "C", "res": "ILE", "res_id": 7, "name": "CD1"}, {"x": -3.1, "y": -7.79, "z": 6.05, "elem": "N", "res": "VAL", "res_id": 8, "name": "N"}, {"x": -4.42, "y": -7.74, "z": 5.35, "elem": "C", "res": "VAL", "res_id": 8, "name": "CA"}, {"x": -4.45, "y": -6.57, "z": 4.35, "elem": "C", "res": "VAL", "res_id": 8, "name": "C"}, {"x": -4.9, "y": -6.68, "z": 3.24, "elem": "O", "res": "VAL", "res_id": 8, "name": "O"}, {"x": -5.57, "y": -7.6, "z": 6.37, "elem": "C", "res": "VAL", "res_id": 8, "name": "CB"}, {"x": -6.84, "y": -7.06, "z": 5.76, "elem": "C", "res": "VAL", "res_id": 8, "name": "CG1"}, {"x": -5.8, "y": -8.92, "z": 7.1, "elem": "C", "res": "VAL", "res_id": 8, "name": "CG2"}, {"x": -3.95, "y": -5.4, "z": 4.83, "elem": "N", "res": "ALA", "res_id": 9, "name": "N"}, {"x": -3.96, "y": -4.18, "z": 3.97, "elem": "C", "res": "ALA", "res_id": 9, "name": "CA"}, {"x": -3.12, "y": -4.42, "z": 2.74, "elem": "C", "res": "ALA", "res_id": 9, "name": "C"}, {"x": -3.51, "y": -4.02, "z": 1.64, "elem": "O", "res": "ALA", "res_id": 9, "name": "O"}, {"x": -3.54, "y": -2.97, "z": 4.78, "elem": "C", "res": "ALA", "res_id": 9, "name": "CB"}, {"x": -1.91, "y": -5.04, "z": 2.9, "elem": "N", "res": "ARG", "res_id": 10, "name": "N"}, {"x": -1.06, "y": -5.34, "z": 1.73, "elem": "C", "res": "ARG", "res_id": 10, "name": "CA"}, {"x": -1.76, "y": -6.34, "z": 0.77, "elem": "C", "res": "ARG", "res_id": 10, "name": "C"}, {"x": -1.68, "y": -6.17, "z": -0.46, "elem": "O", "res": "ARG", "res_id": 10, "name": "O"}, {"x": 0.29, "y": -5.93, "z": 2.2, "elem": "C", "res": "ARG", "res_id": 10, "name": "CB"}, {"x": 1.19, "y": -6.34, "z": 1.04, "elem": "C", "res": "ARG", "res_id": 10, "name": "CG"}, {"x": 1.67, "y": -5.25, "z": 0.14, "elem": "C", "res": "ARG", "res_id": 10, "name": "CD"}, {"x": 2.58, "y": -4.38, "z": 0.93, "elem": "N", "res": "ARG", "res_id": 10, "name": "NE"}, {"x": 3.2, "y": -3.34, "z": 0.34, "elem": "C", "res": "ARG", "res_id": 10, "name": "CZ"}, {"x": 2.98, "y": -3.02, "z": -0.95, "elem": "N", "res": "ARG", "res_id": 10, "name": "NH1"}, {"x": 4.04, "y": -2.63, "z": 1.09, "elem": "N", "res": "ARG", "res_id": 10, "name": "NH2"}, {"x": -2.37, "y": -7.37, "z": 1.34, "elem": "N", "res": "SER", "res_id": 11, "name": "N"}, {"x": -3.06, "y": -8.37, "z": 0.46, "elem": "C", "res": "SER", "res_id": 11, "name": "CA"}, {"x": -4.18, "y": -7.64, "z": -0.33, "elem": "C", "res": "SER", "res_id": 11, "name": "C"}, {"x": -4.35, "y": -7.93, "z": -1.55, "elem": "O", "res": "SER", "res_id": 11, "name": "O"}, {"x": -3.65, "y": -9.49, "z": 1.29, "elem": "C", "res": "SER", "res_id": 11, "name": "CB"}, {"x": -2.57, "y": -10.22, "z": 1.9, "elem": "O", "res": "SER", "res_id": 11, "name": "OG"}, {"x": -4.91, "y": -6.77, "z": 0.34, "elem": "N", "res": "ASN", "res_id": 12, "name": "N"}, {"x": -6.02, "y": -6.02, "z": -0.36, "elem": "C", "res": "ASN", "res_id": 12, "name": "CA"}, {"x": -5.45, "y": -5.1, "z": -1.42, "elem": "C", "res": "ASN", "res_id": 12, "name": "C"}, {"x": -6.02, "y": -4.95, "z": -2.49, "elem": "O", "res": "ASN", "res_id": 12, "name": "O"}, {"x": -6.9, "y": -5.27, "z": 0.64, "elem": "C", "res": "ASN", "res_id": 12, "name": "CB"}, {"x": -7.76, "y": -6.22, "z": 1.5, "elem": "C", "res": "ASN", "res_id": 12, "name": "CG"}, {"x": -7.99, "y": -7.34, "z": 1.06, "elem": "O", "res": "ASN", "res_id": 12, "name": "OD1"}, {"x": -8.17, "y": -5.7, "z": 2.66, "elem": "N", "res": "ASN", "res_id": 12, "name": "ND2"}, {"x": -4.3, "y": -4.45, "z": -1.1, "elem": "N", "res": "PHE", "res_id": 13, "name": "N"}, {"x": -3.63, "y": -3.59, "z": -2.05, "elem": "C", "res": "PHE", "res_id": 13, "name": "CA"}, {"x": -3.26, "y": -4.37, "z": -3.31, "elem": "C", "res": "PHE", "res_id": 13, "name": "C"}, {"x": -3.42, "y": -3.88, "z": -4.45, "elem": "O", "res": "PHE", "res_id": 13, "name": "O"}, {"x": -2.38, "y": -2.96, "z": -1.35, "elem": "C", "res": "PHE", "res_id": 13, "name": "CB"}, {"x": -1.68, "y": -1.94, "z": -2.22, "elem": "C", "res": "PHE", "res_id": 13, "name": "CG"}, {"x": -0.65, "y": -2.36, "z": -3.08, "elem": "C", "res": "PHE", "res_id": 13, "name": "CD1"}, {"x": -2.03, "y": -0.58, "z": -2.12, "elem": "C", "res": "PHE", "res_id": 13, "name": "CD2"}, {"x": -0.0, "y": -1.41, "z": -3.91, "elem": "C", "res": "PHE", "res_id": 13, "name": "CE1"}, {"x": -1.38, "y": 0.33, "z": -2.96, "elem": "C", "res": "PHE", "res_id": 13, "name": "CE2"}, {"x": -0.42, "y": -0.11, "z": -3.82, "elem": "C", "res": "PHE", "res_id": 13, "name": "CZ"}, {"x": -2.66, "y": -5.56, "z": -3.12, "elem": "N", "res": "ASN", "res_id": 14, "name": "N"}, {"x": -2.23, "y": -6.34, "z": -4.32, "elem": "C", "res": "ASN", "res_id": 14, "name": "CA"}, {"x": -3.44, "y": -6.74, "z": -5.19, "elem": "C", "res": "ASN", "res_id": 14, "name": "C"}, {"x": -3.32, "y": -6.81, "z": -6.42, "elem": "O", "res": "ASN", "res_id": 14, "name": "O"}, {"x": -1.42, "y": -7.55, "z": -3.87, "elem": "C", "res": "ASN", "res_id": 14, "name": "CB"}, {"x": -0.01, "y": -7.09, "z": -3.38, "elem": "C", "res": "ASN", "res_id": 14, "name": "CG"}, {"x": 0.45, "y": -6.06, "z": -3.78, "elem": "O", "res": "ASN", "res_id": 14, "name": "OD1"}, {"x": 0.56, "y": -7.99, "z": -2.57, "elem": "N", "res": "ASN", "res_id": 14, "name": "ND2"}, {"x": -4.57, "y": -7.02, "z": -4.54, "elem": "N", "res": "VAL", "res_id": 15, "name": "N"}, {"x": -5.78, "y": -7.35, "z": -5.37, "elem": "C", "res": "VAL", "res_id": 15, "name": "CA"}, {"x": -6.26, "y": -6.08, "z": -6.1, "elem": "C", "res": "VAL", "res_id": 15, "name": "C"}, {"x": -6.61, "y": -6.13, "z": -7.3, "elem": "O", "res": "VAL", "res_id": 15, "name": "O"}, {"x": -6.86, "y": -8.0, "z": -4.5, "elem": "C", "res": "VAL", "res_id": 15, "name": "CB"}, {"x": -8.18, "y": -8.12, "z": -5.3, "elem": "C", "res": "VAL", "res_id": 15, "name": "CG1"}, {"x": -6.39, "y": -9.42, "z": -4.1, "elem": "C", "res": "VAL", "res_id": 15, "name": "CG2"}, {"x": -6.24, "y": -4.96, "z": -5.39, "elem": "N", "res": "CYS", "res_id": 16, "name": "N"}, {"x": -6.67, "y": -3.67, "z": -5.98, "elem": "C", "res": "CYS", "res_id": 16, "name": "CA"}, {"x": -5.87, "y": -3.35, "z": -7.22, "elem": "C", "res": "CYS", "res_id": 16, "name": "C"}, {"x": -6.36, "y": -2.8, "z": -8.21, "elem": "O", "res": "CYS", "res_id": 16, "name": "O"}, {"x": -6.52, "y": -2.58, "z": -4.87, "elem": "C", "res": "CYS", "res_id": 16, "name": "CB"}, {"x": -7.0, "y": -0.94, "z": -5.46, "elem": "S", "res": "CYS", "res_id": 16, "name": "SG"}, {"x": -4.56, "y": -3.72, "z": -7.21, "elem": "N", "res": "ARG", "res_id": 17, "name": "N"}, {"x": -3.67, "y": -3.46, "z": -8.32, "elem": "C", "res": "ARG", "res_id": 17, "name": "CA"}, {"x": -3.82, "y": -4.39, "z": -9.52, "elem": "C", "res": "ARG", "res_id": 17, "name": "C"}, {"x": -3.33, "y": -4.05, "z": -10.61, "elem": "O", "res": "ARG", "res_id": 17, "name": "O"}, {"x": -2.19, "y": -3.44, "z": -7.84, "elem": "C", "res": "ARG", "res_id": 17, "name": "CB"}, {"x": -1.84, "y": -2.26, "z": -6.9, "elem": "C", "res": "ARG", "res_id": 17, "name": "CG"}, {"x": -1.61, "y": -1.0, "z": -7.72, "elem": "C", "res": "ARG", "res_id": 17, "name": "CD"}, {"x": -0.35, "y": -1.09, "z": -8.44, "elem": "N", "res": "ARG", "res_id": 17, "name": "NE"}, {"x": -0.02, "y": -0.42, "z": -9.54, "elem": "C", "res": "ARG", "res_id": 17, "name": "CZ"}, {"x": -0.9, "y": 0.4, "z": -10.14, "elem": "N", "res": "ARG", "res_id": 17, "name": "NH1"}, {"x": 1.23, "y": -0.46, "z": -10.01, "elem": "N", "res": "ARG", "res_id": 17, "name": "NH2"}, {"x": -4.51, "y": -5.54, "z": -9.31, "elem": "N", "res": "LEU", "res_id": 18, "name": "N"}, {"x": -4.63, "y": -6.52, "z": -10.43, "elem": "C", "res": "LEU", "res_id": 18, "name": "CA"}, {"x": -5.16, "y": -5.94, "z": -11.73, "elem": "C", "res": "LEU", "res_id": 18, "name": "C"}, {"x": -4.57, "y": -6.2, "z": -12.79, "elem": "O", "res": "LEU", "res_id": 18, "name": "O"}, {"x": -5.36, "y": -7.77, "z": -9.97, "elem": "C", "res": "LEU", "res_id": 18, "name": "CB"}, {"x": -4.6, "y": -8.77, "z": -9.1, "elem": "C", "res": "LEU", "res_id": 18, "name": "CG"}, {"x": -5.65, "y": -9.85, "z": -8.74, "elem": "C", "res": "LEU", "res_id": 18, "name": "CD1"}, {"x": -3.43, "y": -9.34, "z": -9.88, "elem": "C", "res": "LEU", "res_id": 18, "name": "CD2"}, {"x": -6.23, "y": -5.16, "z": -11.65, "elem": "N", "res": "PRO", "res_id": 19, "name": "N"}, {"x": -6.77, "y": -4.57, "z": -12.9, "elem": "C", "res": "PRO", "res_id": 19, "name": "CA"}, {"x": -5.99, "y": -3.41, "z": -13.43, "elem": "C", "res": "PRO", "res_id": 19, "name": "C"}, {"x": -6.3, "y": -2.91, "z": -14.53, "elem": "O", "res": "PRO", "res_id": 19, "name": "O"}, {"x": -8.2, "y": -4.18, "z": -12.58, "elem": "C", "res": "PRO", "res_id": 19, "name": "CB"}, {"x": -8.34, "y": -4.26, "z": -11.1, "elem": "C", "res": "PRO", "res_id": 19, "name": "CG"}, {"x": -7.14, "y": -5.01, "z": -10.52, "elem": "C", "res": "PRO", "res_id": 19, "name": "CD"}, {"x": -5.0, "y": -2.9, "z": -12.67, "elem": "N", "res": "GLY", "res_id": 20, "name": "N"}, {"x": -4.19, "y": -1.76, "z": -13.13, "elem": "C", "res": "GLY", "res_id": 20, "name": "CA"}, {"x": -4.55, "y": -0.47, "z": -12.39, "elem": "C", "res": "GLY", "res_id": 20, "name": "C"}, {"x": -4.03, "y": 0.56, "z": -12.84, "elem": "O", "res": "GLY", "res_id": 20, "name": "O"}, {"x": -5.38, "y": -0.51, "z": -11.37, "elem": "N", "res": "THR", "res_id": 21, "name": "N"}, {"x": -5.79, "y": 0.66, "z": -10.62, "elem": "C", "res": "THR", "res_id": 21, "name": "CA"}, {"x": -4.54, "y": 1.45, "z": -10.15, "elem": "C", "res": "THR", "res_id": 21, "name": "C"}, {"x": -3.61, "y": 0.81, "z": -9.63, "elem": "O", "res": "THR", "res_id": 21, "name": "O"}, {"x": -6.57, "y": 0.24, "z": -9.33, "elem": "C", "res": "THR", "res_id": 21, "name": "CB"}, {"x": -7.51, "y": -0.81, "z": -9.73, "elem": "O", "res": "THR", "res_id": 21, "name": "OG1"}, {"x": -7.3, "y": 1.4, "z": -8.66, "elem": "C", "res": "THR", "res_id": 21, "name": "CG2"}, {"x": -4.59, "y": 2.75, "z": -10.28, "elem": "N", "res": "PRO", "res_id": 22, "name": "N"}, {"x": -3.42, "y": 3.56, "z": -9.8, "elem": "C", "res": "PRO", "res_id": 22, "name": "CA"}, {"x": -3.16, "y": 3.28, "z": -8.33, "elem": "C", "res": "PRO", "res_id": 22, "name": "C"}, {"x": -4.08, "y": 3.11, "z": -7.49, "elem": "O", "res": "PRO", "res_id": 22, "name": "O"}, {"x": -3.86, "y": 5.02, "z": -10.03, "elem": "C", "res": "PRO", "res_id": 22, "name": "CB"}, {"x": -4.88, "y": 4.94, "z": -11.1, "elem": "C", "res": "PRO", "res_id": 22, "name": "CG"}, {"x": -5.6, "y": 3.62, "z": -10.92, "elem": "C", "res": "PRO", "res_id": 22, "name": "CD"}, {"x": -1.83, "y": 3.35, "z": -8.03, "elem": "N", "res": "GLU", "res_id": 23, "name": "N"}, {"x": -1.45, "y": 3.15, "z": -6.61, "elem": "C", "res": "GLU", "res_id": 23, "name": "CA"}, {"x": -2.13, "y": 4.12, "z": -5.7, "elem": "C", "res": "GLU", "res_id": 23, "name": "C"}, {"x": -2.52, "y": 3.73, "z": -4.57, "elem": "O", "res": "GLU", "res_id": 23, "name": "O"}, {"x": 0.09, "y": 3.33, "z": -6.45, "elem": "C", "res": "GLU", "res_id": 23, "name": "CB"}, {"x": 0.88, "y": 2.14, "z": -7.04, "elem": "C", "res": "GLU", "res_id": 23, "name": "CG"}, {"x": 2.38, "y": 2.22, "z": -6.72, "elem": "C", "res": "GLU", "res_id": 23, "name": "CD"}, {"x": 2.86, "y": 3.27, "z": -6.43, "elem": "O", "res": "GLU", "res_id": 23, "name": "OE1"}, {"x": 2.98, "y": 1.12, "z": -6.82, "elem": "O", "res": "GLU", "res_id": 23, "name": "OE2"}, {"x": -2.35, "y": 5.38, "z": -6.14, "elem": "N", "res": "ALA", "res_id": 24, "name": "N"}, {"x": -2.95, "y": 6.37, "z": -5.19, "elem": "C", "res": "ALA", "res_id": 24, "name": "CA"}, {"x": -4.35, "y": 5.99, "z": -4.76, "elem": "C", "res": "ALA", "res_id": 24, "name": "C"}, {"x": -4.78, "y": 6.22, "z": -3.61, "elem": "O", "res": "ALA", "res_id": 24, "name": "O"}, {"x": -2.96, "y": 7.74, "z": -5.86, "elem": "C", "res": "ALA", "res_id": 24, "name": "CB"}, {"x": -5.12, "y": 5.37, "z": -5.7, "elem": "N", "res": "ILE", "res_id": 25, "name": "N"}, {"x": -6.49, "y": 4.94, "z": -5.35, "elem": "C", "res": "ILE", "res_id": 25, "name": "CA"}, {"x": -6.48, "y": 3.69, "z": -4.46, "elem": "C", "res": "ILE", "res_id": 25, "name": "C"}, {"x": -7.25, "y": 3.57, "z": -3.53, "elem": "O", "res": "ILE", "res_id": 25, "name": "O"}, {"x": -7.36, "y": 4.69, "z": -6.65, "elem": "C", "res": "ILE", "res_id": 25, "name": "CB"}, {"x": -7.75, "y": 6.1, "z": -7.24, "elem": "C", "res": "ILE", "res_id": 25, "name": "CG1"}, {"x": -8.66, "y": 3.91, "z": -6.3, "elem": "C", "res": "ILE", "res_id": 25, "name": "CG2"}, {"x": -8.8, "y": 6.81, "z": -6.35, "elem": "C", "res": "ILE", "res_id": 25, "name": "CD1"}, {"x": -5.53, "y": 2.81, "z": -4.79, "elem": "N", "res": "CYS", "res_id": 26, "name": "N"}, {"x": -5.38, "y": 1.6, "z": -3.92, "elem": "C", "res": "CYS", "res_id": 26, "name": "CA"}, {"x": -4.93, "y": 1.99, "z": -2.51, "elem": "C", "res": "CYS", "res_id": 26, "name": "C"}, {"x": -5.33, "y": 1.3, "z": -1.56, "elem": "O", "res": "CYS", "res_id": 26, "name": "O"}, {"x": -4.52, "y": 0.57, "z": -4.57, "elem": "C", "res": "CYS", "res_id": 26, "name": "CB"}, {"x": -5.21, "y": -0.16, "z": -6.09, "elem": "S", "res": "CYS", "res_id": 26, "name": "SG"}, {"x": -4.15, "y": 3.06, "z": -2.41, "elem": "N", "res": "ALA", "res_id": 27, "name": "N"}, {"x": -3.68, "y": 3.55, "z": -1.08, "elem": "C", "res": "ALA", "res_id": 27, "name": "CA"}, {"x": -4.86, "y": 3.96, "z": -0.23, "elem": "C", "res": "ALA", "res_id": 27, "name": "C"}, {"x": -5.03, "y": 3.47, "z": 0.92, "elem": "O", "res": "ALA", "res_id": 27, "name": "O"}, {"x": -2.68, "y": 4.66, "z": -1.28, "elem": "C", "res": "ALA", "res_id": 27, "name": "CB"}, {"x": -5.73, "y": 4.85, "z": -0.75, "elem": "N", "res": "THR", "res_id": 28, "name": "N"}, {"x": -6.87, "y": 5.27, "z": 0.09, "elem": "C", "res": "THR", "res_id": 28, "name": "CA"}, {"x": -7.89, "y": 4.18, "z": 0.33, "elem": "C", "res": "THR", "res_id": 28, "name": "C"}, {"x": -8.61, "y": 4.16, "z": 1.36, "elem": "O", "res": "THR", "res_id": 28, "name": "O"}, {"x": -7.57, "y": 6.57, "z": -0.49, "elem": "C", "res": "THR", "res_id": 28, "name": "CB"}, {"x": -7.9, "y": 6.27, "z": -1.88, "elem": "O", "res": "THR", "res_id": 28, "name": "OG1"}, {"x": -6.65, "y": 7.79, "z": -0.41, "elem": "C", "res": "THR", "res_id": 28, "name": "CG2"}, {"x": -7.94, "y": 3.24, "z": -0.6, "elem": "N", "res": "TYR", "res_id": 29, "name": "N"}, {"x": -8.85, "y": 2.09, "z": -0.45, "elem": "C", "res": "TYR", "res_id": 29, "name": "CA"}, {"x": -8.44, "y": 1.17, "z": 0.71, "elem": "C", "res": "TYR", "res_id": 29, "name": "C"}, {"x": -9.27, "y": 0.68, "z": 1.44, "elem": "O", "res": "TYR", "res_id": 29, "name": "O"}, {"x": -8.81, "y": 1.28, "z": -1.79, "elem": "C", "res": "TYR", "res_id": 29, "name": "CB"}, {"x": -9.76, "y": 0.09, "z": -1.75, "elem": "C", "res": "TYR", "res_id": 29, "name": "CG"}, {"x": -11.11, "y": 0.39, "z": -1.46, "elem": "C", "res": "TYR", "res_id": 29, "name": "CD1"}, {"x": -9.37, "y": -1.2, "z": -2.01, "elem": "C", "res": "TYR", "res_id": 29, "name": "CD2"}, {"x": -12.06, "y": -0.62, "z": -1.43, "elem": "C", "res": "TYR", "res_id": 29, "name": "CE1"}, {"x": -10.36, "y": -2.25, "z": -1.95, "elem": "C", "res": "TYR", "res_id": 29, "name": "CE2"}, {"x": -11.64, "y": -1.92, "z": -1.68, "elem": "C", "res": "TYR", "res_id": 29, "name": "CZ"}, {"x": -12.66, "y": -2.89, "z": -1.65, "elem": "O", "res": "TYR", "res_id": 29, "name": "OH"}, {"x": -7.09, "y": 1.03, "z": 0.89, "elem": "N", "res": "THR", "res_id": 30, "name": "N"}, {"x": -6.57, "y": 0.04, "z": 1.84, "elem": "C", "res": "THR", "res_id": 30, "name": "CA"}, {"x": -5.95, "y": 0.55, "z": 3.12, "elem": "C", "res": "THR", "res_id": 30, "name": "C"}, {"x": -5.79, "y": -0.24, "z": 4.08, "elem": "O", "res": "THR", "res_id": 30, "name": "O"}, {"x": -5.48, "y": -0.85, "z": 1.12, "elem": "C", "res": "THR", "res_id": 30, "name": "CB"}, {"x": -4.44, "y": 0.08, "z": 0.72, "elem": "O", "res": "THR", "res_id": 30, "name": "OG1"}, {"x": -6.07, "y": -1.63, "z": -0.07, "elem": "C", "res": "THR", "res_id": 30, "name": "CG2"}, {"x": -5.58, "y": 1.81, "z": 3.13, "elem": "N", "res": "GLY", "res_id": 31, "name": "N"}, {"x": -4.79, "y": 2.39, "z": 4.25, "elem": "C", "res": "GLY", "res_id": 31, "name": "CA"}, {"x": -3.31, "y": 2.29, "z": 4.0, "elem": "C", "res": "GLY", "res_id": 31, "name": "C"}, {"x": -2.52, "y": 2.8, "z": 4.85, "elem": "O", "res": "GLY", "res_id": 31, "name": "O"}, {"x": -2.85, "y": 1.68, "z": 2.88, "elem": "N", "res": "CYS", "res_id": 32, "name": "N"}, {"x": -1.42, "y": 1.74, "z": 2.53, "elem": "C", "res": "CYS", "res_id": 32, "name": "CA"}, {"x": -1.06, "y": 3.19, "z": 2.1, "elem": "C", "res": "CYS", "res_id": 32, "name": "C"}, {"x": -1.98, "y": 4.0, "z": 1.84, "elem": "O", "res": "CYS", "res_id": 32, "name": "O"}, {"x": -1.06, "y": 0.74, "z": 1.42, "elem": "C", "res": "CYS", "res_id": 32, "name": "CB"}, {"x": -1.51, "y": -0.96, "z": 1.77, "elem": "S", "res": "CYS", "res_id": 32, "name": "SG"}, {"x": 0.23, "y": 3.46, "z": 2.07, "elem": "N", "res": "ILE", "res_id": 33, "name": "N"}, {"x": 0.72, "y": 4.81, "z": 1.72, "elem": "C", "res": "ILE", "res_id": 33, "name": "CA"}, {"x": 1.79, "y": 4.71, "z": 0.64, "elem": "C", "res": "ILE", "res_id": 33, "name": "C"}, {"x": 2.41, "y": 3.63, "z": 0.44, "elem": "O", "res": "ILE", "res_id": 33, "name": "O"}, {"x": 1.23, "y": 5.58, "z": 2.98, "elem": "C", "res": "ILE", "res_id": 33, "name": "CB"}, {"x": 2.5, "y": 4.85, "z": 3.56, "elem": "C", "res": "ILE", "res_id": 33, "name": "CG1"}, {"x": 0.12, "y": 5.74, "z": 4.03, "elem": "C", "res": "ILE", "res_id": 33, "name": "CG2"}, {"x": 3.17, "y": 5.73, "z": 4.67, "elem": "C", "res": "ILE", "res_id": 33, "name": "CD1"}, {"x": 1.93, "y": 5.82, "z": -0.07, "elem": "N", "res": "ILE", "res_id": 34, "name": "N"}, {"x": 2.99, "y": 5.93, "z": -1.07, "elem": "C", "res": "ILE", "res_id": 34, "name": "CA"}, {"x": 4.03, "y": 6.97, "z": -0.55, "elem": "C", "res": "ILE", "res_id": 34, "name": "C"}, {"x": 3.61, "y": 8.06, "z": -0.16, "elem": "O", "res": "ILE", "res_id": 34, "name": "O"}, {"x": 2.43, "y": 6.41, "z": -2.43, "elem": "C", "res": "ILE", "res_id": 34, "name": "CB"}, {"x": 1.35, "y": 5.39, "z": -2.94, "elem": "C", "res": "ILE", "res_id": 34, "name": "CG1"}, {"x": 3.57, "y": 6.57, "z": -3.48, "elem": "C", "res": "ILE", "res_id": 34, "name": "CG2"}, {"x": 0.59, "y": 6.07, "z": -4.17, "elem": "C", "res": "ILE", "res_id": 34, "name": "CD1"}, {"x": 5.3, "y": 6.54, "z": -0.57, "elem": "N", "res": "ILE", "res_id": 35, "name": "N"}, {"x": 6.37, "y": 7.5, "z": -0.17, "elem": "C", "res": "ILE", "res_id": 35, "name": "CA"}, {"x": 7.35, "y": 7.6, "z": -1.29, "elem": "C", "res": "ILE", "res_id": 35, "name": "C"}, {"x": 7.54, "y": 6.71, "z": -2.14, "elem": "O", "res": "ILE", "res_id": 35, "name": "O"}, {"x": 7.06, "y": 7.04, "z": 1.18, "elem": "C", "res": "ILE", "res_id": 35, "name": "CB"}, {"x": 7.8, "y": 5.7, "z": 0.96, "elem": "C", "res": "ILE", "res_id": 35, "name": "CG1"}, {"x": 6.03, "y": 7.02, "z": 2.33, "elem": "C", "res": "ILE", "res_id": 35, "name": "CG2"}, {"x": 8.74, "y": 5.26, "z": 2.11, "elem": "C", "res": "ILE", "res_id": 35, "name": "CD1"}, {"x": 8.1, "y": 8.72, "z": -1.3, "elem": "N", "res": "PRO", "res_id": 36, "name": "N"}, {"x": 9.07, "y": 8.91, "z": -2.37, "elem": "C", "res": "PRO", "res_id": 36, "name": "CA"}, {"x": 10.36, "y": 8.09, "z": -2.16, "elem": "C", "res": "PRO", "res_id": 36, "name": "C"}, {"x": 11.03, "y": 7.79, "z": -3.16, "elem": "O", "res": "PRO", "res_id": 36, "name": "O"}, {"x": 9.38, "y": 10.41, "z": -2.32, "elem": "C", "res": "PRO", "res_id": 36, "name": "CB"}, {"x": 8.68, "y": 10.99, "z": -1.2, "elem": "C", "res": "PRO", "res_id": 36, "name": "CG"}, {"x": 7.81, "y": 9.95, "z": -0.51, "elem": "C", "res": "PRO", "res_id": 36, "name": "CD"}, {"x": 10.61, "y": 7.78, "z": -0.89, "elem": "N", "res": "GLY", "res_id": 37, "name": "N"}, {"x": 11.89, "y": 7.02, "z": -0.59, "elem": "C", "res": "GLY", "res_id": 37, "name": "CA"}, {"x": 11.58, "y": 5.53, "z": -0.68, "elem": "C", "res": "GLY", "res_id": 37, "name": "C"}, {"x": 10.58, "y": 5.07, "z": -1.23, "elem": "O", "res": "GLY", "res_id": 37, "name": "O"}, {"x": 12.49, "y": 4.75, "z": -0.08, "elem": "N", "res": "ALA", "res_id": 38, "name": "N"}, {"x": 12.46, "y": 3.29, "z": -0.09, "elem": "C", "res": "ALA", "res_id": 38, "name": "CA"}, {"x": 12.38, "y": 2.68, "z": 1.29, "elem": "C", "res": "ALA", "res_id": 38, "name": "C"}, {"x": 12.31, "y": 1.44, "z": 1.33, "elem": "O", "res": "ALA", "res_id": 38, "name": "O"}, {"x": 13.69, "y": 2.75, "z": -0.83, "elem": "C", "res": "ALA", "res_id": 38, "name": "CB"}, {"x": 12.33, "y": 3.48, "z": 2.33, "elem": "N", "res": "THR", "res_id": 39, "name": "N"}, {"x": 12.38, "y": 2.96, "z": 3.7, "elem": "C", "res": "THR", "res_id": 39, "name": "CA"}, {"x": 11.05, "y": 3.24, "z": 4.41, "elem": "C", "res": "THR", "res_id": 39, "name": "C"}, {"x": 10.8, "y": 4.37, "z": 4.84, "elem": "O", "res": "THR", "res_id": 39, "name": "O"}, {"x": 13.57, "y": 3.65, "z": 4.49, "elem": "C", "res": "THR", "res_id": 39, "name": "CB"}, {"x": 14.72, "y": 3.45, "z": 3.6, "elem": "O", "res": "THR", "res_id": 39, "name": "OG1"}, {"x": 13.78, "y": 2.98, "z": 5.85, "elem": "C", "res": "THR", "res_id": 39, "name": "CG2"}, {"x": 10.27, "y": 2.16, "z": 4.53, "elem": "N", "res": "CYS", "res_id": 40, "name": "N"}, {"x": 8.94, "y": 2.36, "z": 5.19, "elem": "C", "res": "CYS", "res_id": 40, "name": "CA"}, {"x": 9.12, "y": 2.5, "z": 6.68, "elem": "C", "res": "CYS", "res_id": 40, "name": "C"}, {"x": 9.97, "y": 1.77, "z": 7.25, "elem": "O", "res": "CYS", "res_id": 40, "name": "O"}, {"x": 8.02, "y": 1.17, "z": 4.89, "elem": "C", "res": "CYS", "res_id": 40, "name": "CB"}, {"x": 7.64, "y": 0.98, "z": 3.13, "elem": "S", "res": "CYS", "res_id": 40, "name": "SG"}, {"x": 8.32, "y": 3.32, "z": 7.32, "elem": "N", "res": "PRO", "res_id": 41, "name": "N"}, {"x": 8.36, "y": 3.47, "z": 8.77, "elem": "C", "res": "PRO", "res_id": 41, "name": "CA"}, {"x": 7.83, "y": 2.26, "z": 9.49, "elem": "C", "res": "PRO", "res_id": 41, "name": "C"}, {"x": 7.09, "y": 1.42, "z": 8.93, "elem": "O", "res": "PRO", "res_id": 41, "name": "O"}, {"x": 7.52, "y": 4.71, "z": 9.04, "elem": "C", "res": "PRO", "res_id": 41, "name": "CB"}, {"x": 6.54, "y": 4.74, "z": 7.89, "elem": "C", "res": "PRO", "res_id": 41, "name": "CG"}, {"x": 7.3, "y": 4.2, "z": 6.67, "elem": "C", "res": "PRO", "res_id": 41, "name": "CD"}, {"x": 8.17, "y": 2.17, "z": 10.78, "elem": "N", "res": "GLY", "res_id": 42, "name": "N"}, {"x": 7.77, "y": 1.01, "z": 11.58, "elem": "C", "res": "GLY", "res_id": 42, "name": "CA"}, {"x": 6.31, "y": 0.74, "z": 11.76, "elem": "C", "res": "GLY", "res_id": 42, "name": "C"}, {"x": 5.87, "y": -0.4, "z": 12.06, "elem": "O", "res": "GLY", "res_id": 42, "name": "O"}, {"x": 5.48, "y": 1.8, "z": 11.61, "elem": "N", "res": "ASP", "res_id": 43, "name": "N"}, {"x": 4.0, "y": 1.62, "z": 11.73, "elem": "C", "res": "ASP", "res_id": 43, "name": "CA"}, {"x": 3.38, "y": 1.28, "z": 10.36, "elem": "C", "res": "ASP", "res_id": 43, "name": "C"}, {"x": 2.16, "y": 1.09, "z": 10.32, "elem": "O", "res": "ASP", "res_id": 43, "name": "O"}, {"x": 3.37, "y": 2.79, "z": 12.47, "elem": "C", "res": "ASP", "res_id": 43, "name": "CB"}, {"x": 3.58, "y": 4.14, "z": 11.85, "elem": "C", "res": "ASP", "res_id": 43, "name": "CG"}, {"x": 4.55, "y": 4.35, "z": 11.1, "elem": "O", "res": "ASP", "res_id": 43, "name": "OD1"}, {"x": 2.71, "y": 5.01, "z": 12.16, "elem": "O", "res": "ASP", "res_id": 43, "name": "OD2"}, {"x": 4.16, "y": 1.22, "z": 9.32, "elem": "N", "res": "TYR", "res_id": 44, "name": "N"}, {"x": 3.7, "y": 0.79, "z": 7.97, "elem": "C", "res": "TYR", "res_id": 44, "name": "CA"}, {"x": 4.71, "y": -0.26, "z": 7.5, "elem": "C", "res": "TYR", "res_id": 44, "name": "C"}, {"x": 5.37, "y": -0.09, "z": 6.46, "elem": "O", "res": "TYR", "res_id": 44, "name": "O"}, {"x": 3.64, "y": 1.96, "z": 6.96, "elem": "C", "res": "TYR", "res_id": 44, "name": "CB"}, {"x": 2.44, "y": 2.87, "z": 7.29, "elem": "C", "res": "TYR", "res_id": 44, "name": "CG"}, {"x": 2.56, "y": 3.9, "z": 8.22, "elem": "C", "res": "TYR", "res_id": 44, "name": "CD1"}, {"x": 1.21, "y": 2.67, "z": 6.65, "elem": "C", "res": "TYR", "res_id": 44, "name": "CD2"}, {"x": 1.48, "y": 4.72, "z": 8.5, "elem": "C", "res": "TYR", "res_id": 44, "name": "CE1"}, {"x": 0.12, "y": 3.48, "z": 6.94, "elem": "C", "res": "TYR", "res_id": 44, "name": "CE2"}, {"x": 0.24, "y": 4.51, "z": 7.89, "elem": "C", "res": "TYR", "res_id": 44, "name": "CZ"}, {"x": -0.82, "y": 5.31, "z": 8.16, "elem": "O", "res": "TYR", "res_id": 44, "name": "OH"}, {"x": 4.78, "y": -1.31, "z": 8.31, "elem": "N", "res": "ALA", "res_id": 45, "name": "N"}, {"x": 5.88, "y": -2.28, "z": 8.14, "elem": "C", "res": "ALA", "res_id": 45, "name": "CA"}, {"x": 5.61, "y": -3.42, "z": 7.17, "elem": "C", "res": "ALA", "res_id": 45, "name": "C"}, {"x": 6.53, "y": -4.25, "z": 6.93, "elem": "O", "res": "ALA", "res_id": 45, "name": "O"}, {"x": 6.12, "y": -2.85, "z": 9.57, "elem": "C", "res": "ALA", "res_id": 45, "name": "CB"}, {"x": 4.41, "y": -3.45, "z": 6.63, "elem": "N", "res": "ASN", "res_id": 46, "name": "N"}, {"x": 3.95, "y": -4.56, "z": 5.77, "elem": "C", "res": "ASN", "res_id": 46, "name": "CA"}, {"x": 3.75, "y": -4.1, "z": 4.35, "elem": "C", "res": "ASN", "res_id": 46, "name": "C"}, {"x": 4.17, "y": -3.02, "z": 3.92, "elem": "O", "res": "ASN", "res_id": 46, "name": "O"}, {"x": 2.71, "y": -5.18, "z": 6.39, "elem": "C", "res": "ASN", "res_id": 46, "name": "CB"}, {"x": 2.98, "y": -5.65, "z": 7.81, "elem": "C", "res": "ASN", "res_id": 46, "name": "CG"}, {"x": 2.42, "y": -5.1, "z": 8.78, "elem": "O", "res": "ASN", "res_id": 46, "name": "OD1"}, {"x": 3.85, "y": -6.65, "z": 7.91, "elem": "N", "res": "ASN", "res_id": 46, "name": "ND2"}, {"x": 3.14, "y": -4.98, "z": 3.64, "elem": "O", "res": "ASN", "res_id": 46, "name": "OXT"}], "sequence": [{"id": 1, "name": "THR"}, {"id": 2, "name": "THR"}, {"id": 3, "name": "CYS"}, {"id": 4, "name": "CYS"}, {"id": 5, "name": "PRO"}, {"id": 6, "name": "SER"}, {"id": 7, "name": "ILE"}, {"id": 8, "name": "VAL"}, {"id": 9, "name": "ALA"}, {"id": 10, "name": "ARG"}, {"id": 11, "name": "SER"}, {"id": 12, "name": "ASN"}, {"id": 13, "name": "PHE"}, {"id": 14, "name": "ASN"}, {"id": 15, "name": "VAL"}, {"id": 16, "name": "CYS"}, {"id": 17, "name": "ARG"}, {"id": 18, "name": "LEU"}, {"id": 19, "name": "PRO"}, {"id": 20, "name": "GLY"}, {"id": 21, "name": "THR"}, {"id": 22, "name": "PRO"}, {"id": 23, "name": "GLU"}, {"id": 24, "name": "ALA"}, {"id": 25, "name": "ILE"}, {"id": 26, "name": "CYS"}, {"id": 27, "name": "ALA"}, {"id": 28, "name": "THR"}, {"id": 29, "name": "TYR"}, {"id": 30, "name": "THR"}, {"id": 31, "name": "GLY"}, {"id": 32, "name": "CYS"}, {"id": 33, "name": "ILE"}, {"id": 34, "name": "ILE"}, {"id": 35, "name": "ILE"}, {"id": 36, "name": "PRO"}, {"id": 37, "name": "GLY"}, {"id": 38, "name": "ALA"}, {"id": 39, "name": "THR"}, {"id": 40, "name": "CYS"}, {"id": 41, "name": "PRO"}, {"id": 42, "name": "GLY"}, {"id": 43, "name": "ASP"}, {"id": 44, "name": "TYR"}, {"id": 45, "name": "ALA"}, {"id": 46, "name": "ASN"}], "helices": [{"start": 7, "end": 19}, {"start": 23, "end": 30}], "sheets": [{"start": 1, "end": 4}, {"start": 32, "end": 35}], "ssbonds": [{"res1": 3, "res2": 40, "x1": 6.32, "y1": 2.48, "z1": 2.91, "x2": 7.64, "y2": 0.98, "z2": 3.13}, {"res1": 4, "res2": 32, "x1": 0.28, "y1": -1.93, "z1": 1.8, "x2": -1.51, "y2": -0.96, "z2": 1.77}, {"res1": 16, "res2": 26, "x1": -7.0, "y1": -0.94, "z1": -5.46, "x2": -5.21, "y2": -0.16, "z2": -6.09}], "hydration_waters": [{"x": -3.71, "y": -4.45, "z": -17.62, "elem": "O", "name": "HOH 1"}, {"x": 2.97, "y": 17.5, "z": 9.53, "elem": "O", "name": "HOH 2"}, {"x": 8.45, "y": -6.8, "z": -15.9, "elem": "O", "name": "HOH 3"}, {"x": 15.9, "y": 3.01, "z": -11.02, "elem": "O", "name": "HOH 4"}, {"x": 15.79, "y": 2.66, "z": -12.08, "elem": "O", "name": "HOH 5"}, {"x": -15.82, "y": -4.59, "z": -11.11, "elem": "O", "name": "HOH 6"}, {"x": 1.2, "y": -3.07, "z": -20.25, "elem": "O", "name": "HOH 7"}, {"x": -5.39, "y": -15.95, "z": -5.68, "elem": "O", "name": "HOH 8"}, {"x": 15.64, "y": -4.31, "z": -5.61, "elem": "O", "name": "HOH 9"}, {"x": 11.76, "y": 8.18, "z": 13.84, "elem": "O", "name": "HOH 10"}, {"x": 6.14, "y": -16.37, "z": 9.05, "elem": "O", "name": "HOH 11"}, {"x": 18.88, "y": -3.22, "z": -4.8, "elem": "O", "name": "HOH 12"}, {"x": 9.6, "y": -17.63, "z": 4.9, "elem": "O", "name": "HOH 13"}, {"x": -13.32, "y": -7.03, "z": 6.75, "elem": "O", "name": "HOH 14"}, {"x": 2.14, "y": 15.28, "z": -7.17, "elem": "O", "name": "HOH 15"}, {"x": 1.21, "y": 11.13, "z": -14.82, "elem": "O", "name": "HOH 16"}, {"x": -12.05, "y": -13.79, "z": -5.14, "elem": "O", "name": "HOH 17"}, {"x": 4.64, "y": 17.85, "z": -9.72, "elem": "O", "name": "HOH 18"}, {"x": -10.43, "y": -13.99, "z": 3.9, "elem": "O", "name": "HOH 19"}, {"x": -1.84, "y": -13.98, "z": -12.84, "elem": "O", "name": "HOH 20"}, {"x": 18.93, "y": -1.25, "z": 5.53, "elem": "O", "name": "HOH 21"}, {"x": -5.94, "y": -13.63, "z": 14.01, "elem": "O", "name": "HOH 22"}, {"x": 0.87, "y": 6.56, "z": -17.56, "elem": "O", "name": "HOH 23"}, {"x": -1.89, "y": 16.92, "z": -12.06, "elem": "O", "name": "HOH 24"}, {"x": 13.3, "y": -13.07, "z": -7.44, "elem": "O", "name": "HOH 25"}, {"x": -8.6, "y": 6.61, "z": 16.08, "elem": "O", "name": "HOH 26"}, {"x": -1.59, "y": 16.97, "z": -10.02, "elem": "O", "name": "HOH 27"}, {"x": -1.64, "y": 20.39, "z": 3.51, "elem": "O", "name": "HOH 28"}, {"x": -14.02, "y": 10.27, "z": -11.79, "elem": "O", "name": "HOH 29"}, {"x": -9.49, "y": -0.57, "z": -13.52, "elem": "O", "name": "HOH 30"}, {"x": 15.28, "y": 12.59, "z": 5.22, "elem": "O", "name": "HOH 31"}, {"x": -8.22, "y": 4.37, "z": -16.65, "elem": "O", "name": "HOH 32"}, {"x": 20.89, "y": -0.51, "z": 1.22, "elem": "O", "name": "HOH 33"}, {"x": 2.77, "y": -3.32, "z": -19.81, "elem": "O", "name": "HOH 34"}, {"x": -7.68, "y": -16.78, "z": 1.37, "elem": "O", "name": "HOH 35"}, {"x": -7.69, "y": -9.41, "z": -15.0, "elem": "O", "name": "HOH 36"}, {"x": -8.32, "y": 2.49, "z": 18.79, "elem": "O", "name": "HOH 37"}, {"x": -1.51, "y": 17.88, "z": 0.02, "elem": "O", "name": "HOH 38"}, {"x": 10.7, "y": -6.54, "z": 13.84, "elem": "O", "name": "HOH 39"}, {"x": -11.13, "y": -13.27, "z": 3.87, "elem": "O", "name": "HOH 40"}, {"x": 1.6, "y": -20.31, "z": 1.61, "elem": "O", "name": "HOH 41"}, {"x": -0.88, "y": -0.17, "z": -18.79, "elem": "O", "name": "HOH 42"}, {"x": 10.55, "y": 1.3, "z": 17.77, "elem": "O", "name": "HOH 43"}, {"x": 7.57, "y": -13.43, "z": -6.43, "elem": "O", "name": "HOH 44"}, {"x": 5.52, "y": -5.31, "z": 15.27, "elem": "O", "name": "HOH 45"}, {"x": -10.31, "y": 0.91, "z": -17.57, "elem": "O", "name": "HOH 46"}, {"x": 1.29, "y": -12.96, "z": -14.47, "elem": "O", "name": "HOH 47"}, {"x": -17.38, "y": -5.62, "z": -9.72, "elem": "O", "name": "HOH 48"}], "binding_residues": [{"name": "ASN 203", "dist": "2.8 \u00c5", "type": "hbond", "x": -2.8, "y": 1.4, "z": 1.2}, {"name": "SER 205", "dist": "3.1 \u00c5", "type": "hbond", "x": -2.2, "y": 1.6, "z": 0.8}, {"name": "TYR 207", "dist": "3.4 \u00c5", "type": "hydrophobic", "x": 2.4, "y": -1.3, "z": 0.7}, {"name": "ARG 210", "dist": "3.6 \u00c5", "type": "electro", "x": -2.6, "y": -1.1, "z": 1.1}, {"name": "GLU 277", "dist": "3.8 \u00c5", "type": "electro", "x": 3.1, "y": 1.2, "z": -0.9}, {"name": "HIS 310", "dist": "3.9 \u00c5", "type": "pi", "x": -1.9, "y": -2.4, "z": 0.5}, {"name": "THR 312", "dist": "3.9 \u00c5", "type": "hydrophobic", "x": 1.8, "y": 2.7, "z": 0.6}, {"name": "LYS 315", "dist": "4.0 \u00c5", "type": "electro", "x": 0.5, "y": -3.2, "z": -1.1}], "glucose_coords": [{"elem": "C", "name": "C1", "x": 1.15, "y": 0.42, "z": 0.22}, {"elem": "C", "name": "C2", "x": 0.45, "y": -0.82, "z": 0.35}, {"elem": "C", "name": "C3", "x": -1.02, "y": -0.65, "z": 0.12}, {"elem": "C", "name": "C4", "x": -1.35, "y": 0.81, "z": 0.24}, {"elem": "C", "name": "C5", "x": -0.32, "y": 1.62, "z": -0.41}, {"elem": "O", "name": "O5", "x": 0.92, "y": 1.25, "z": -0.22}, {"elem": "O", "name": "O1", "x": 2.25, "y": 0.12, "z": -0.45}, {"elem": "O", "name": "O2", "x": 0.72, "y": -1.85, "z": -0.52}, {"elem": "O", "name": "O3", "x": -1.82, "y": -1.65, "z": 0.55}, {"elem": "O", "name": "O4", "x": -2.45, "y": 0.92, "z": -0.52}, {"elem": "C", "name": "C6", "x": -0.52, "y": 3.05, "z": -0.15}, {"elem": "O", "name": "O6", "x": 0.62, "y": 3.75, "z": 0.35}], "ligand": {"name": "D-Glucose (alpha-D-Glucopyranose)", "formula": "C6H12O6", "mw": "180.16 Da", "cutoff": "4.0 \u00c5", "show": true}, "properties": {"Molecular Weight": "4741.5 Da", "Total Atoms": "327 atoms", "Residue Count": "46 amino acids", "Chains": "Chain A", "Disulfide Bridges": "3 S-S covalent bonds", "Secondary Structure": "alpha-helix (43%), beta-sheet (17%), Loop (40%)", "Isoelectric Point (pI)": "8.85"}}};
     if(typeof updateStateFromPython === 'function') {
         updateStateFromPython(INITIAL_EMBEDDED_STATE);
     }

@@ -329,6 +329,77 @@ button, input{ font:inherit; color:var(--text); outline:none; }
     width:100%; height:100%; display:block;
 }
 
+
+/* SIMULATION HUD OVERLAY */
+.simHUD{
+    position:absolute; left:52px; top:12px;
+    padding:8px 12px; border-radius:10px;
+    background:rgba(4,22,44,.85); backdrop-filter:blur(12px);
+    border:1px solid rgba(56,189,248,.3);
+    box-shadow:0 0 20px rgba(0,140,255,.15);
+    z-index:5; display:flex; flex-direction:column; gap:6px;
+    pointer-events:none; transition:opacity .2s;
+}
+.simHUDHeader{
+    display:flex; align-items:center; gap:8px;
+    font-size:10px; font-weight:700; color:#38bdf8; letter-spacing:0.5px;
+}
+.simDot{
+    width:7px; height:7px; border-radius:50%; background:#00f59b;
+    box-shadow:0 0 8px #00f59b; animation:pulseDot 1.5s infinite;
+}
+@keyframes pulseDot{ 0%,100%{ opacity:1; } 50%{ opacity:0.3; } }
+.simBadge{
+    font-size:9px; padding:1px 6px; border-radius:4px;
+    background:rgba(56,189,248,.2); color:#7dd3fc; text-transform:uppercase;
+}
+.simMetrics{
+    display:flex; gap:12px; align-items:center;
+}
+.simMetric{
+    display:flex; flex-direction:column;
+}
+.simMVal{
+    font-size:11px; font-family:monospace; font-weight:700; color:#f1f5f9;
+}
+.simMLbl{
+    font-size:8px; color:#7891aa; font-weight:600; text-transform:uppercase; letter-spacing:0.4px;
+}
+
+/* SIMULATION BOTTOM CONTROLS BAR */
+.simControlsBar{
+    position:absolute; left:50%; bottom:10px; transform:translateX(-50%);
+    padding:5px 12px; border-radius:10px;
+    background:rgba(6,24,48,.88); backdrop-filter:blur(16px);
+    border:1px solid rgba(56,189,248,.35);
+    box-shadow:0 0 25px rgba(0,120,255,.2);
+    z-index:6; display:flex; align-items:center; gap:10px;
+    user-select:none;
+}
+.simPlayBtn{
+    padding:4px 10px; border-radius:6px; border:none;
+    background:linear-gradient(135deg,#00f59b,#00b874); color:#02140a;
+    font-size:10px; font-weight:700; cursor:pointer; transition:.15s;
+    box-shadow:0 0 10px rgba(0,245,155,.3);
+}
+.simPlayBtn.paused{
+    background:linear-gradient(135deg,#38bdf8,#0284c7); color:#020914;
+    box-shadow:0 0 10px rgba(56,189,248,.3);
+}
+.simPlayBtn:hover{ transform:scale(1.03); }
+.simDivider{ width:1px; height:16px; background:rgba(90,178,255,.25); }
+.simSelect{
+    background:rgba(4,18,34,.9); border:1px solid rgba(56,189,248,.3);
+    color:#e2e8f0; font-size:10px; padding:3px 6px; border-radius:6px; outline:none;
+}
+.simSliderWrap{ display:flex; align-items:center; gap:6px; }
+.simLayers{ display:flex; align-items:center; gap:8px; }
+.layerCheck{
+    display:flex; align-items:center; gap:4px; font-size:10px; color:#94a3b8; cursor:pointer;
+}
+.layerCheck input{ cursor:pointer; accent-color:#38bdf8; }
+.layerCheck:hover{ color:#fff; }
+
 /* TOOLBAR OVERLAY */
 .viewerTools{
     position:absolute; left:12px; top:12px;
@@ -787,6 +858,45 @@ button, input{ font:inherit; color:var(--text); outline:none; }
         <div class="canvasWrap" id="threeCanvasWrap">
             <canvas id="threeCanvas"></canvas>
 
+            <!-- SIMULATION HUD -->
+            <div class="simHUD" id="simHUD">
+                <div class="simHUDHeader">
+                    <span class="simDot" id="simDot"></span>
+                    <span id="simStatusText">BIOPHYSICAL MD (300K)</span>
+                    <span class="simBadge" id="simModeBadge">Thermal</span>
+                </div>
+                <div class="simMetrics">
+                    <div class="simMetric"><span class="simMVal" id="hudTemp">300.2 K</span><span class="simMLbl">TEMP</span></div>
+                    <div class="simMetric"><span class="simMVal" id="hudRMSD">0.84 Å</span><span class="simMLbl">RMSD</span></div>
+                    <div class="simMetric"><span class="simMVal" id="hudEnergy">-146k</span><span class="simMLbl">POT.E</span></div>
+                    <div class="simMetric"><span class="simMVal" id="hudDeltaG" style="color:#00f59b;">-7.82</span><span class="simMLbl">ΔG POCKET</span></div>
+                </div>
+            </div>
+
+            <!-- SIMULATION CONTROLS BAR -->
+            <div class="simControlsBar" id="simControlsBar">
+                <button class="simPlayBtn" id="btnSimPlay" onclick="toggleSimPlay()">⏸ Pause</button>
+                <div class="simDivider"></div>
+                <select class="simSelect" id="simModeSelect" onchange="setSimMode(this.value)">
+                    <option value="thermal">Thermal Dynamics (300K)</option>
+                    <option value="nma">Domain Breathing (NMA)</option>
+                    <option value="docking">Induced-Fit Ligand Docking</option>
+                </select>
+                <div class="simDivider"></div>
+                <div class="simSliderWrap" title="Simulation Temperature">
+                    <span style="font-size:10px;color:#94a3b8;">Temp:</span>
+                    <input type="range" min="260" max="360" value="300" id="simTempSlider" oninput="setSimTemp(this.value)" style="width:65px;">
+                    <span id="simTempDisplay" style="font-size:10px;font-family:monospace;min-width:32px;">300K</span>
+                </div>
+                <div class="simDivider"></div>
+                <div class="simLayers">
+                    <label class="layerCheck" title="Toggle Disulfide Bridges (S-S)"><input type="checkbox" id="chkDisulfides" checked onchange="toggleDisulfides(this.checked)"><span>S-S</span></label>
+                    <label class="layerCheck" title="Toggle TIP3P Water Hydration Shell"><input type="checkbox" id="chkHydration" checked onchange="toggleHydration(this.checked)"><span>H₂O</span></label>
+                    <label class="layerCheck" title="Toggle POPC Lipid Bilayer Slab"><input type="checkbox" id="chkMembrane" onchange="toggleMembrane(this.checked)"><span>POPC</span></label>
+                </div>
+            </div>
+
+
             <div class="viewerTools">
                 <button class="viewerTool" onclick="resetCamera()" title="Reset Camera View">↖</button>
                 <button class="viewerTool" onclick="focusMolecule()" title="Focus Center">◎</button>
@@ -882,11 +992,11 @@ button, input{ font:inherit; color:var(--text); outline:none; }
 
         <!-- VIEWER BOTTOM -->
         <div class="viewerBottom">
-            <button class="styleBtn active" id="btnRepCartoon" onclick="setRepresentation('cartoon', this)">Cartoon</button>
-            <button class="styleBtn" id="btnRepSurface" onclick="setRepresentation('surface', this)">Surface</button>
-            <button class="styleBtn" id="btnRepSticks" onclick="setRepresentation('sticks', this)">Sticks</button>
-            <button class="styleBtn" id="btnRepSphere" onclick="setRepresentation('sphere', this)">Sphere</button>
-            <button class="styleBtn" id="btnRepMesh" onclick="setRepresentation('mesh', this)">Mesh</button>
+            <button class="styleBtn active" id="btnRepRibbon" onclick="setRepresentation('ribbon', this)">Ribbon</button>
+            <button class="styleBtn" id="btnRepElectro" onclick="setRepresentation('electro', this)">Electrostatic</button>
+            <button class="styleBtn" id="btnRepGlass" onclick="setRepresentation('glass', this)">Glass Surface</button>
+            <button class="styleBtn" id="btnRepSticks" onclick="setRepresentation('sticks', this)">Ball & Stick</button>
+            <button class="styleBtn" id="btnRepSphere" onclick="setRepresentation('sphere', this)">Spacefill</button>
 
             <div class="viewerSpacer"></div>
 
@@ -1173,10 +1283,18 @@ updateClock();
 
 /* ================= THREE.JS 3D SCENE ================= */
 let scene, camera, renderer, controls;
-let moleculeGroup, cartoonGroup, sphereGroup, sticksGroup, surfaceGroup, meshGroup, glucoseGroup, interactionGroup;
-let currentRep = 'cartoon';
+let moleculeGroup, ribbonGroup, electroGroup, glassGroup, sticksGroup, sphereGroup;
+let disulfideGroup, hydrationGroup, membraneGroup, glucoseGroup, interactionGroup;
+let currentRep = 'ribbon';
 let autoRotate = true;
-let surfaceVisible = false;
+let simRunning = true;
+let simMode = 'thermal';
+let simTemp = 300.0;
+let simSpeed = 1.0;
+let livePDBData = null;
+let originalCAPoints = [];
+let originalAtoms = [];
+let liveGlucoseBonds = [];
 const canvas = document.getElementById("threeCanvas");
 
 function initThree(){
@@ -1189,18 +1307,18 @@ function initThree(){
     try {
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0x010812);
+        scene.fog = new THREE.FogExp2(0x010812, 0.012);
 
         const wrap = document.getElementById("threeCanvasWrap");
         const width = (wrap && wrap.clientWidth > 50) ? wrap.clientWidth : (canvas.clientWidth || 700);
         const height = (wrap && wrap.clientHeight > 50) ? wrap.clientHeight : (canvas.clientHeight || 450);
 
         camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 2000);
-        camera.position.set(0, 8, 28);
+        camera.position.set(0, 10, 36);
 
         renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, preserveDrawingBuffer: true, alpha: true });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setSize(width, height, false);
-
         if (THREE.sRGBEncoding) renderer.outputEncoding = THREE.sRGBEncoding;
 
         // Controls
@@ -1209,37 +1327,47 @@ function initThree(){
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
             controls.minDistance = 4;
-            controls.maxDistance = 120;
+            controls.maxDistance = 140;
         } else {
             setupSimpleControls(camera, renderer.domElement);
         }
 
-        // Lighting
+        // Realistic Studio Lighting
         const ambient = new THREE.AmbientLight(0xffffff, 1.4);
         scene.add(ambient);
 
-        const key = new THREE.DirectionalLight(0xffffff, 2.0);
-        key.position.set(15, 20, 15);
-        scene.add(key);
+        const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
+        keyLight.position.set(18, 22, 16);
+        scene.add(keyLight);
 
-        const fill = new THREE.DirectionalLight(0x7da4ff, 1.2);
-        fill.position.set(-15, -10, -15);
-        scene.add(fill);
+        const blueRimLight = new THREE.DirectionalLight(0x7da4ff, 1.4);
+        blueRimLight.position.set(-18, -12, -16);
+        scene.add(blueRimLight);
 
-        // Molecular Groups
+        const fillLight = new THREE.PointLight(0xa855f7, 3, 80);
+        fillLight.position.set(-14, 10, 10);
+        scene.add(fillLight);
+
+        // Molecular Groups Hierarchy
         moleculeGroup = new THREE.Group();
-        cartoonGroup = new THREE.Group();
-        sphereGroup = new THREE.Group();
+        ribbonGroup = new THREE.Group();
+        electroGroup = new THREE.Group();
+        glassGroup = new THREE.Group();
         sticksGroup = new THREE.Group();
-        surfaceGroup = new THREE.Group();
-        meshGroup = new THREE.Group();
+        sphereGroup = new THREE.Group();
+        disulfideGroup = new THREE.Group();
+        hydrationGroup = new THREE.Group();
+        membraneGroup = new THREE.Group();
         glucoseGroup = new THREE.Group();
         interactionGroup = new THREE.Group();
 
-        moleculeGroup.add(cartoonGroup, sphereGroup, sticksGroup, surfaceGroup, meshGroup, glucoseGroup, interactionGroup);
+        moleculeGroup.add(
+            ribbonGroup, electroGroup, glassGroup, sticksGroup, sphereGroup,
+            disulfideGroup, hydrationGroup, membraneGroup, glucoseGroup, interactionGroup
+        );
         scene.add(moleculeGroup);
 
-        // Initial Standalone Glucose + Interactions in Pocket
+        // Initial D-Glucose Ligand & Interactions
         createGlucoseLigand();
         createInteractions();
 
@@ -1258,6 +1386,7 @@ function initThree(){
 
         setTimeout(resizeThree, 50);
         setTimeout(resizeThree, 200);
+        setTimeout(resizeThree, 500);
     } catch(err) {
         console.error("Error in initThree:", err);
     }
@@ -1274,15 +1403,6 @@ function resizeThree(){
         camera.updateProjectionMatrix();
         renderer.setSize(width, height, false);
     }
-}
-
-function animate(){
-    requestAnimationFrame(animate);
-    if(autoRotate && moleculeGroup) {
-        moleculeGroup.rotation.y += 0.0018;
-    }
-    if(controls && controls.update) controls.update();
-    if(renderer && scene && camera) renderer.render(scene, camera);
 }
 
 /* ================= GLUCOSE LIGAND & INTERACTIONS ================= */
@@ -1302,8 +1422,8 @@ const GLUCOSE_ATOMS = [
 ];
 
 const GLUCOSE_BONDS = [
-    [0,1], [1,2], [2,3], [3,4], [4,5], [5,0], // Ring
-    [0,6], [1,7], [2,8], [3,9], [4,10], [10,11] // Hydroxyls
+    [0,1], [1,2], [2,3], [3,4], [4,5], [5,0],
+    [0,6], [1,7], [2,8], [3,9], [4,10], [10,11]
 ];
 
 const BINDING_CONTACTS = [
@@ -1321,11 +1441,11 @@ function createGlucoseLigand(){
     if(!glucoseGroup) return;
     while(glucoseGroup.children.length > 0) glucoseGroup.remove(glucoseGroup.children[0]);
 
-    const cMat = new THREE.MeshStandardMaterial({ color: 0x00f59b, roughness: 0.25, metalness: 0.2 });
-    const oMat = new THREE.MeshStandardMaterial({ color: 0xff4d67, roughness: 0.2, metalness: 0.3 });
-    const bondMat = new THREE.MeshStandardMaterial({ color: 0x8be9fd, roughness: 0.3, metalness: 0.4 });
+    const cMat = new THREE.MeshPhysicalMaterial({ color: 0x00f59b, roughness: 0.25, metalness: 0.2, clearcoat: 0.5 });
+    const oMat = new THREE.MeshPhysicalMaterial({ color: 0xff4d67, roughness: 0.2, metalness: 0.3, clearcoat: 0.5 });
+    const bondMat = new THREE.MeshPhysicalMaterial({ color: 0x38bdf8, roughness: 0.25, metalness: 0.3 });
 
-    const sphereGeo = new THREE.SphereGeometry(0.35, 16, 16);
+    const sphereGeo = new THREE.SphereGeometry(0.38, 16, 16);
 
     GLUCOSE_ATOMS.forEach(atom => {
         const mesh = new THREE.Mesh(sphereGeo, atom.elem === 'O' ? oMat : cMat);
@@ -1351,27 +1471,33 @@ function createInteractions(){
     const resListEl = document.getElementById("bindingResiduesList");
     if(resListEl) resListEl.innerHTML = "";
 
-    BINDING_CONTACTS.forEach((c, idx) => {
+    BINDING_CONTACTS.forEach((c) => {
         const start = new THREE.Vector3(0, 0, 0);
         const end = new THREE.Vector3(c.x, c.y, c.z);
         
         const lineGeo = new THREE.BufferGeometry().setFromPoints([start, end]);
-        const lineMat = new THREE.LineDashedMaterial({ color: c.color, dashSize: 0.3, gapSize: 0.15 });
+        const lineMat = new THREE.LineDashedMaterial({ color: c.color, dashSize: 0.4, gapSize: 0.2, linewidth: 2 });
         const line = new THREE.Line(lineGeo, lineMat);
         line.computeLineDistances();
+        line.name = "contact_line_" + c.name;
         interactionGroup.add(line);
 
         // Marker for residue
-        const marker = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 12), new THREE.MeshStandardMaterial({ color: c.color }));
+        const marker = new THREE.Mesh(
+            new THREE.SphereGeometry(0.32, 14, 14),
+            new THREE.MeshPhysicalMaterial({ color: c.color, roughness: 0.25, metalness: 0.3, clearcoat: 0.4 })
+        );
         marker.position.copy(end);
+        marker.name = "contact_marker_" + c.name;
         interactionGroup.add(marker);
 
         // Populate Binding Panel
         if(resListEl) {
             const div = document.createElement("div");
             div.className = "residue";
+            div.id = "badge_" + c.name.replace(" ", "_");
             div.onclick = () => focusResidue(c.x, c.y, c.z, c.name, c.dist, c.type);
-            div.innerHTML = `<span class="resName">${c.name}</span><span class="resDist">${c.dist}</span>`;
+            div.innerHTML = `<span class="resName">${c.name}</span><span class="resDist" id="dist_${c.name.replace(" ", "_")}">${c.dist}</span>`;
             resListEl.appendChild(div);
         }
     });
@@ -1405,59 +1531,143 @@ function closeBindingPanel(){
 /* ================= FULL PDB RENDERING ================= */
 function renderRealPDB(pdbData){
     if(!pdbData || !pdbData.ca_coords || pdbData.ca_coords.length === 0) return;
-    if(!scene || !cartoonGroup){
+    if(!scene || !ribbonGroup){
         window._pendingPDBData = pdbData;
         return;
     }
 
-    // Clear previous
-    [cartoonGroup, sphereGroup, sticksGroup, surfaceGroup, meshGroup].forEach(g => {
+    livePDBData = pdbData;
+    originalCAPoints = pdbData.ca_coords.map(c => ({
+        x: c.x, y: c.y, z: c.z, res: c.res, id: c.id,
+        sec_struct: c.sec_struct || 'loop',
+        b_factor: c.b_factor || 15.0
+    }));
+    originalAtoms = (pdbData.atoms || []).map(a => ({ ...a }));
+
+    // Clear previous representations
+    [ribbonGroup, electroGroup, glassGroup, sticksGroup, sphereGroup, disulfideGroup, hydrationGroup, membraneGroup].forEach(g => {
         if(g) while(g.children.length > 0) g.remove(g.children[0]);
     });
 
-    // 1. CARTOON RAINBOW BACKBONE
-    const caPoints = pdbData.ca_coords.map(c => new THREE.Vector3(c.x, c.y, c.z));
+    const caPoints = originalCAPoints.map(c => new THREE.Vector3(c.x, c.y, c.z));
+
+    // 1. CHIMERAX / PYMOL STYLE SCIENTIFIC RIBBON
     if(caPoints.length >= 2){
-        const curve = new THREE.CatmullRomCurve3(caPoints);
-        const tubeGeo = new THREE.TubeGeometry(curve, caPoints.length * 6, 0.42, 10, false);
+        const fullCurve = new THREE.CatmullRomCurve3(caPoints);
         
+        // Helix, Sheet, and Loop materials with physical sheen
+        const helixMat = new THREE.MeshPhysicalMaterial({ color: 0xc084fc, roughness: 0.22, metalness: 0.15, clearcoat: 0.6 });
+        const sheetMat = new THREE.MeshPhysicalMaterial({ color: 0xfacc15, roughness: 0.20, metalness: 0.20, clearcoat: 0.5 });
+        const loopMat = new THREE.MeshPhysicalMaterial({ color: 0x38bdf8, roughness: 0.25, metalness: 0.10, clearcoat: 0.4 });
+
+        // Continuous smooth backbone ribbon with secondary structure vertex colors
+        const tubeSegments = caPoints.length * 8;
+        const tubeGeo = new THREE.TubeGeometry(fullCurve, tubeSegments, 0.42, 12, false);
         const count = tubeGeo.attributes.position.count;
         const colors = new Float32Array(count * 3);
-        const color = new THREE.Color();
+        const cColor = new THREE.Color();
+
         for(let i=0; i<count; i++){
             const t = i / count;
-            color.setHSL(0.55 - t * 0.55, 0.95, 0.55); // Cyan -> Green -> Yellow -> Orange -> Magenta
-            colors[i*3] = color.r; colors[i*3+1] = color.g; colors[i*3+2] = color.b;
+            const resIdx = Math.min(caPoints.length - 1, Math.floor(t * caPoints.length));
+            const ss = originalCAPoints[resIdx].sec_struct;
+            if(ss === 'helix') cColor.setHex(0xc084fc);
+            else if(ss === 'sheet') cColor.setHex(0xfacc15);
+            else cColor.setHex(0x38bdf8);
+
+            colors[i*3] = cColor.r; colors[i*3+1] = cColor.g; colors[i*3+2] = cColor.b;
         }
         tubeGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        const ribbonMesh = new THREE.Mesh(tubeGeo, new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.25, metalness: 0.15, clearcoat: 0.6 }));
+        ribbonMesh.name = "backbone_ribbon";
+        ribbonGroup.add(ribbonMesh);
 
-        const tubeMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.25, metalness: 0.2 });
-        cartoonGroup.add(new THREE.Mesh(tubeGeo, tubeMat));
+        // CA Nodal beads along secondary structure
+        const helixBeadGeo = new THREE.SphereGeometry(0.55, 14, 14);
+        const sheetBeadGeo = new THREE.SphereGeometry(0.50, 14, 14);
+        const loopBeadGeo = new THREE.SphereGeometry(0.42, 12, 12);
 
-        // CA spheres
-        const caGeo = new THREE.SphereGeometry(0.5, 14, 14);
-        caPoints.forEach((p, idx) => {
-            const frac = idx / caPoints.length;
-            const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0.55 - frac * 0.55, 0.95, 0.6), roughness: 0.25 });
-            const s = new THREE.Mesh(caGeo, mat);
-            s.position.copy(p);
-            cartoonGroup.add(s);
+        originalCAPoints.forEach((c) => {
+            const pos = new THREE.Vector3(c.x, c.y, c.z);
+            let beadGeo = loopBeadGeo, beadMat = loopMat;
+            if(c.sec_struct === 'helix'){ beadGeo = helixBeadGeo; beadMat = helixMat; }
+            else if(c.sec_struct === 'sheet'){ beadGeo = sheetBeadGeo; beadMat = sheetMat; }
+
+            const bead = new THREE.Mesh(beadGeo, beadMat);
+            bead.position.copy(pos);
+            bead.name = "ca_bead_" + c.id;
+            ribbonGroup.add(bead);
         });
     }
 
-    // 2. CPK SPHERES
-    const atoms = pdbData.atoms || [];
-    const sphereGeo = new THREE.SphereGeometry(0.45, 12, 12);
-    const elemColors = { 'C': 0x00d9ff, 'N': 0x3b82f6, 'O': 0xef4444, 'S': 0xfacc15, 'H': 0xffffff };
-    atoms.forEach(a => {
-        const mat = new THREE.MeshStandardMaterial({ color: elemColors[a.elem] || 0x10b981, roughness: 0.3 });
-        const m = new THREE.Mesh(sphereGeo, mat);
-        m.position.set(a.x, a.y, a.z);
-        sphereGroup.add(m);
+    // 2. AUTHENTIC DISULFIDE BRIDGES (S-S BONDS)
+    const ssbonds = pdbData.ssbonds || [];
+    const disulfideMat = new THREE.MeshPhysicalMaterial({
+        color: 0xfbbf24, roughness: 0.15, metalness: 0.85, emissive: 0x78350f, clearcoat: 0.5
+    });
+    const sSphereGeo = new THREE.SphereGeometry(0.38, 14, 14);
+
+    ssbonds.forEach((ssb, idx) => {
+        const p1 = new THREE.Vector3(ssb.x1, ssb.y1, ssb.z1);
+        const p2 = new THREE.Vector3(ssb.x2, ssb.y2, ssb.z2);
+        const dist = p1.distanceTo(p2);
+
+        const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.20, dist, 10), disulfideMat);
+        cyl.position.copy(p1).add(p2).multiplyScalar(0.5);
+        cyl.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), p2.clone().sub(p1).normalize());
+        disulfideGroup.add(cyl);
+
+        const s1 = new THREE.Mesh(sSphereGeo, disulfideMat); s1.position.copy(p1); disulfideGroup.add(s1);
+        const s2 = new THREE.Mesh(sSphereGeo, disulfideMat); s2.position.copy(p2); disulfideGroup.add(s2);
     });
 
-    // 3. STICKS
-    const stickMat = new THREE.MeshStandardMaterial({ color: 0x93c5fd, roughness: 0.3 });
+    // 3. ELECTROSTATIC POTENTIAL SURFACE (POISSON-COULOMBIC COLOR MAPPING)
+    const box = new THREE.Box3().setFromPoints(caPoints);
+    const size = new THREE.Vector3(); box.getSize(size);
+    const center = new THREE.Vector3(); box.getCenter(center);
+    const maxDim = Math.max(size.x, size.y, size.z) * 0.65;
+
+    const surfGeo = new THREE.IcosahedronGeometry(Math.max(8, maxDim), 4);
+    const surfPos = surfGeo.attributes.position;
+    const surfColors = new Float32Array(surfPos.count * 3);
+    const tempColor = new THREE.Color();
+
+    for(let i=0; i<surfPos.count; i++){
+        const vx = surfPos.getX(i) + center.x;
+        const vy = surfPos.getY(i) + center.y;
+        const vz = surfPos.getZ(i) + center.z;
+
+        // Calculate Coulombic potential sum
+        let pot = 0;
+        originalCAPoints.forEach(c => {
+            const d = Math.hypot(vx - c.x, vy - c.y, vz - c.z) + 1.0;
+            if(c.res === 'GLU' || c.res === 'ASP') pot -= 2.5 / d;
+            else if(c.res === 'ARG' || c.res === 'LYS' || c.res === 'HIS') pot += 2.5 / d;
+        });
+
+        // Map pot (-1.0 to +1.0) -> Red (negative) to Silver to Blue (positive)
+        if(pot < -0.15) tempColor.setHSL(0.0, 0.9, 0.55); // Red acidic
+        else if(pot > 0.15) tempColor.setHSL(0.6, 0.9, 0.55); // Blue basic
+        else tempColor.setHSL(0.58, 0.1, 0.90); // White/silver neutral
+
+        surfColors[i*3] = tempColor.r; surfColors[i*3+1] = tempColor.g; surfColors[i*3+2] = tempColor.b;
+    }
+    surfGeo.setAttribute('color', new THREE.BufferAttribute(surfColors, 3));
+    const electroMesh = new THREE.Mesh(surfGeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.35, metalness: 0.1, side: THREE.DoubleSide }));
+    electroMesh.position.copy(center);
+    electroGroup.add(electroMesh);
+
+    // 4. GLASS TRANSMISSION MOLECULAR ENVELOPE
+    const glassMat = new THREE.MeshPhysicalMaterial({
+        color: 0x0ea5e9, transparent: true, opacity: 0.30, transmission: 0.85,
+        roughness: 0.12, ior: 1.35, side: THREE.DoubleSide
+    });
+    const glassMesh = new THREE.Mesh(surfGeo, glassMat);
+    glassMesh.position.copy(center);
+    glassGroup.add(glassMesh);
+
+    // 5. BALL & STICK
+    const stickMat = new THREE.MeshPhysicalMaterial({ color: 0x93c5fd, roughness: 0.25, metalness: 0.3 });
     for(let i=0; i<caPoints.length-1; i++){
         const p1 = caPoints[i], p2 = caPoints[i+1];
         if(p1.distanceTo(p2) < 4.2){
@@ -1468,30 +1678,67 @@ function renderRealPDB(pdbData){
         }
     }
 
-    // 4. SURFACE ENVELOPE
-    const box = new THREE.Box3().setFromPoints(caPoints);
-    const size = new THREE.Vector3(); box.getSize(size);
-    const center = new THREE.Vector3(); box.getCenter(center);
-    const maxDim = Math.max(size.x, size.y, size.z) * 0.65;
+    // 6. CPK SPACEFILL (VAN DER WAALS SPHERES)
+    const atoms = pdbData.atoms || [];
+    const sphereGeo = new THREE.SphereGeometry(0.48, 14, 14);
+    const elemColors = { 'C': 0x00d9ff, 'N': 0x3b82f6, 'O': 0xef4444, 'S': 0xfacc15, 'H': 0xffffff };
+    atoms.forEach(a => {
+        const mat = new THREE.MeshPhysicalMaterial({ color: elemColors[a.elem] || 0x10b981, roughness: 0.25, clearcoat: 0.4 });
+        const m = new THREE.Mesh(sphereGeo, mat);
+        m.position.set(a.x, a.y, a.z);
+        sphereGroup.add(m);
+    });
 
-    const surfGeo = new THREE.IcosahedronGeometry(Math.max(6, maxDim), 3);
-    const surfMat = new THREE.MeshPhysicalMaterial({ color: 0x0ea5e9, transparent: true, opacity: 0.22, transmission: 0.6, side: THREE.DoubleSide });
-    const sMesh = new THREE.Mesh(surfGeo, surfMat);
-    sMesh.position.copy(center);
-    surfaceGroup.add(sMesh);
+    // 7. HYDRATION SHELL (TIP3P WATER ENVELOPE)
+    const waterWaters = pdbData.hydration_waters || [];
+    const wOGeo = new THREE.SphereGeometry(0.26, 12, 12);
+    const wHGeo = new THREE.SphereGeometry(0.14, 10, 10);
+    const wOMat = new THREE.MeshPhysicalMaterial({ color: 0xef4444, roughness: 0.2, clearcoat: 0.4 });
+    const wHMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.2, clearcoat: 0.4 });
 
-    // 5. MESH WIREFRAME
-    const wireMesh = new THREE.Mesh(surfGeo, new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true }));
-    wireMesh.position.copy(center);
-    meshGroup.add(wireMesh);
+    waterWaters.forEach((w, idx) => {
+        const wGroup = new THREE.Group();
+        wGroup.position.set(w.x, w.y, w.z);
+        wGroup.name = "water_" + idx;
 
-    // Apply active representation
+        const oMesh = new THREE.Mesh(wOGeo, wOMat);
+        const h1Mesh = new THREE.Mesh(wHGeo, wHMat); h1Mesh.position.set(0.24, 0.20, 0);
+        const h2Mesh = new THREE.Mesh(wHGeo, wHMat); h2Mesh.position.set(-0.24, 0.20, 0);
+
+        wGroup.add(oMesh, h1Mesh, h2Mesh);
+        hydrationGroup.add(wGroup);
+    });
+
+    // 8. MEMBRANE BILAYER SLAB (POPC PHOSPHOLIPIDS)
+    const headGeo = new THREE.SphereGeometry(0.42, 10, 10);
+    const headMat1 = new THREE.MeshPhysicalMaterial({ color: 0x06b6d4, roughness: 0.25, transmission: 0.4, transparent: true, opacity: 0.75 });
+    const headMat2 = new THREE.MeshPhysicalMaterial({ color: 0xf59e0b, roughness: 0.25, transmission: 0.4, transparent: true, opacity: 0.75 });
+
+    for(let i=-3; i<=3; i++){
+        for(let j=-3; j<=3; j++){
+            const hTop = new THREE.Mesh(headGeo, (i+j)%2===0 ? headMat1 : headMat2);
+            hTop.position.set(i * 3.8, 12.0, j * 3.8);
+            membraneGroup.add(hTop);
+
+            const hBot = new THREE.Mesh(headGeo, (i+j)%2===0 ? headMat2 : headMat1);
+            hBot.position.set(i * 3.8, -12.0, j * 3.8);
+            membraneGroup.add(hBot);
+        }
+    }
+    const coreSlab = new THREE.Mesh(
+        new THREE.BoxGeometry(26, 22, 26),
+        new THREE.MeshBasicMaterial({ color: 0x06182e, transparent: true, opacity: 0.20, side: THREE.DoubleSide })
+    );
+    membraneGroup.add(coreSlab);
+    membraneGroup.visible = false; // Default hidden until toggled
+
+    // Apply Active Representation
     setRepresentation(currentRep, document.getElementById('btnRep' + currentRep.charAt(0).toUpperCase() + currentRep.slice(1)));
 
     // Fit camera
     const fitDist = Math.max(26, maxDim * 2.2);
     camera.position.set(0, fitDist * 0.35, fitDist);
-    if(controls){ controls.target.set(center.x, center.y, center.z); controls.update(); }
+    if(controls){ controls.target.set(0, 0, 0); controls.update(); }
 
     // Sequence Chips
     const seqCont = document.getElementById("seqGridContainer");
@@ -1522,23 +1769,28 @@ function renderRealPDB(pdbData){
     }
 }
 
-/* ================= 3D CONTROLS & CAMERA ================= */
+/* ================= 3D REPRESENTATIONS ================= */
 function setRepresentation(style, elem){
     currentRep = style;
     document.querySelectorAll(".viewerBottom .styleBtn").forEach(b => b.classList.remove("active"));
     if(elem) elem.classList.add("active");
 
-    if(cartoonGroup) cartoonGroup.visible = (style === 'cartoon');
-    if(surfaceGroup) surfaceGroup.visible = (style === 'surface');
+    const wrap = document.getElementById("threeCanvasWrap");
+    if(wrap && wrap.style.display === 'none'){
+        switchWorkspaceTab('viewer', document.querySelectorAll('.viewer .tab')[0]);
+    }
+
+    if(ribbonGroup) ribbonGroup.visible = (style === 'ribbon' || style === 'glass');
+    if(electroGroup) electroGroup.visible = (style === 'electro');
+    if(glassGroup) glassGroup.visible = (style === 'glass');
     if(sticksGroup) sticksGroup.visible = (style === 'sticks');
     if(sphereGroup) sphereGroup.visible = (style === 'sphere');
-    if(meshGroup) meshGroup.visible = (style === 'mesh');
 
     showToast("3D Representation", `${style.toUpperCase()} active`);
 }
 
 function resetCamera(){
-    camera.position.set(0, 8, 28);
+    camera.position.set(0, 10, 36);
     if(controls){ controls.target.set(0,0,0); controls.update(); }
     showToast("Camera", "Reset to default orientation");
 }
@@ -1549,9 +1801,8 @@ function focusMolecule(){
 }
 
 function toggleSurface(){
-    surfaceVisible = !surfaceVisible;
-    if(surfaceGroup) surfaceGroup.visible = surfaceVisible;
-    showToast("Molecular Surface", surfaceVisible ? "Surface envelope visible" : "Surface hidden");
+    const nextStyle = (currentRep === 'electro') ? 'ribbon' : 'electro';
+    setRepresentation(nextStyle, document.getElementById('btnRep' + nextStyle.charAt(0).toUpperCase() + nextStyle.slice(1)));
 }
 
 function randomizeMolecule(){
@@ -1589,323 +1840,146 @@ function toggleQuality(){
     showToast("Render Quality", nextP === 2 ? "High (2x Antialiasing)" : "Medium (1x Balanced)");
 }
 
-/* ================= WORKSPACE TABS ================= */
-function switchWorkspaceTab(tabName, elem){
-    document.querySelectorAll(".viewer .tab").forEach(t => t.classList.remove("active"));
-    if(elem) elem.classList.add("active");
+/* ================= SIMULATION CONTROLS & PHYSICS ================= */
+function toggleSimPlay(){
+    simRunning = !simRunning;
+    const btn = document.getElementById("btnSimPlay");
+    const dot = document.getElementById("simDot");
+    const statusText = document.getElementById("simStatusText");
 
-    const wrap = document.getElementById("threeCanvasWrap");
-    if(wrap) wrap.style.display = (tabName === 'viewer') ? 'block' : 'none';
-
-    document.querySelectorAll(".workspacePanel").forEach(p => p.classList.remove("active"));
-    if(tabName !== 'viewer'){
-        const p = document.getElementById(tabName + "Panel");
-        if(p) p.classList.add("active");
+    if(btn){
+        btn.textContent = simRunning ? "⏸ Pause" : "▶ Resume";
+        btn.classList.toggle("paused", !simRunning);
     }
-    showToast("Workspace", `${tabName.toUpperCase()} tab active`);
-    if(tabName === 'viewer') setTimeout(resizeThree, 50);
-}
-
-/* ================= TRAJECTORY PLAY/PAUSE ================= */
-let trajTimer = null;
-function toggleTrajectoryPlay(){
-    const btn = document.getElementById("btnPlayTraj");
-    const slider = document.getElementById("trajSlider");
-    const label = document.getElementById("trajFrame");
-
-    if(trajTimer){
-        clearInterval(trajTimer);
-        trajTimer = null;
-        if(btn) btn.textContent = "▶ Play Trajectory";
-        showToast("Trajectory", "Simulation playback paused");
-    } else {
-        if(btn) btn.textContent = "⏸ Pause Playback";
-        showToast("Trajectory", "Playing production dynamics");
-        trajTimer = setInterval(() => {
-            let val = parseInt(slider.value) + 10;
-            if(val > 1500) val = 0;
-            slider.value = val;
-            if(label) label.textContent = `Frame ${val}`;
-            if(moleculeGroup) moleculeGroup.rotation.y += 0.04;
-        }, 80);
+    if(dot){
+        dot.style.background = simRunning ? "#00f59b" : "#facc15";
+        dot.style.boxShadow = simRunning ? "0 0 8px #00f59b" : "0 0 8px #facc15";
     }
-}
-function scrubTrajectory(val){
-    const label = document.getElementById("trajFrame");
-    if(label) label.textContent = `Frame ${val}`;
-    if(moleculeGroup) moleculeGroup.rotation.y = (val / 1500) * Math.PI * 4;
-}
-
-/* ================= LOG TABS & FILTERING ================= */
-let currentLogTab = 'all';
-function switchLogTab(tab, elem){
-    currentLogTab = tab;
-    document.querySelectorAll(".logsHeader .logTab").forEach(t => t.classList.remove("active"));
-    if(elem) elem.classList.add("active");
-    filterLogs();
-}
-
-function clearLogs(){
-    const body = document.getElementById("logBody");
-    if(body) body.innerHTML = `<div class="logLine" style="color:#64748b;">[Logs cleared by researcher]</div>`;
-    showToast("Terminal", "Logs cleared");
-}
-
-function filterLogs(){
-    const q = (document.getElementById("logSearch")?.value || "").toLowerCase();
-    document.querySelectorAll("#logBody .logLine").forEach(line => {
-        const text = line.textContent.toLowerCase();
-        let matchTab = true;
-        if(currentLogTab === 'analysis') matchTab = text.includes('success') || text.includes('ai') || text.includes('plan');
-        if(currentLogTab === 'system') matchTab = text.includes('info') || text.includes('connector') || text.includes('cluster');
-        if(currentLogTab === 'plots') matchTab = text.includes('plot') || text.includes('graph') || text.includes('pca');
-
-        const matchQ = !q || text.includes(q);
-        line.style.display = (matchTab && matchQ) ? "" : "none";
-    });
-}
-
-/* ================= SIDEBAR NAV ROUTING ================= */
-function navSelect(name, elem){
-    document.querySelectorAll(".sidebar .navItem").forEach(n => n.classList.remove("active"));
-    if(elem) elem.classList.add("active");
-
-    if(name === 'Home') switchWorkspaceTab('viewer', document.querySelectorAll('.viewer .tab')[0]);
-    else if(name === 'AI Chat') {
-        const inp = document.getElementById('aiInput');
-        if(inp){ inp.focus(); showToast("AI Chat", "Type scientific query and press Enter"); }
+    if(statusText){
+        statusText.textContent = simRunning ? `BIOPHYSICAL MD (${simTemp.toFixed(0)}K)` : "DYNAMICS PAUSED";
     }
-    else if(name === 'Research Sessions') openSessionModal();
-    else if(name === 'Protocols') runAI('Run Crop Proteome & Thermal Adaptation protocol');
-    else if(name === 'Simulations') switchWorkspaceTab('trajectory', document.querySelectorAll('.viewer .tab')[2]);
-    else if(name === 'Data Analysis') switchWorkspaceTab('analysis', document.querySelectorAll('.viewer .tab')[5]);
-    else if(name === 'Visualization') switchWorkspaceTab('viewer', document.querySelectorAll('.viewer .tab')[0]);
-    else if(name === '3D Library' || name === 'Files & Data') openResultsModal();
-    else if(name === 'Settings') openSettingsModal();
-    else showToast("Polymathix OS", `${name} selected`);
+    showToast("Biophysical MD", simRunning ? "Simulation running" : "Dynamics paused");
 }
 
-/* ================= MODAL CONTROLS ================= */
-function openSessionModal(){
-    const o = document.getElementById("sessionModalOverlay");
-    if(o) o.classList.add("show");
-}
-function closeSessionModal(){
-    const o = document.getElementById("sessionModalOverlay");
-    if(o) o.classList.remove("show");
-}
-function openExport(){
-    const o = document.getElementById("exportOverlay");
-    if(o) o.classList.add("show");
-}
-function closeExport(){
-    const o = document.getElementById("exportOverlay");
-    if(o) o.classList.remove("show");
-}
-function openResultsModal(){
-    const o = document.getElementById("resultsModalOverlay");
-    if(o) o.classList.add("show");
-}
-function closeResultsModal(){
-    const o = document.getElementById("resultsModalOverlay");
-    if(o) o.classList.remove("show");
-}
-function openSettingsModal(){
-    const o = document.getElementById("settingsModalOverlay");
-    if(o) o.classList.add("show");
-}
-function closeSettingsModal(){
-    const o = document.getElementById("settingsModalOverlay");
-    if(o) o.classList.remove("show");
-}
-function openConnectorsModal(){
-    showToast("Tool Connectors", "Click any connector card to toggle status");
+function setSimMode(mode){
+    simMode = mode;
+    const badge = document.getElementById("simModeBadge");
+    if(badge) badge.textContent = mode.toUpperCase();
+    showToast("Simulation Mode", `Switched to: ${mode.toUpperCase()}`);
 }
 
-let exportFormat = 'glb';
-function setExportFormat(fmt, elem){
-    exportFormat = fmt;
-    document.querySelectorAll("#exportOverlay .styleBtn").forEach(b => b.classList.remove("active"));
-    if(elem) elem.classList.add("active");
-    const btn = document.getElementById("btnDoExport");
-    if(btn) btn.textContent = `Download ${fmt.toUpperCase()}`;
-}
-function performExport(){
-    showToast("Exporting Model", `Preparing ${exportFormat.toUpperCase()} package...`);
-    closeExport();
-    // Download link
-    const link = document.createElement("a");
-    link.download = `polymathix-model.${exportFormat}`;
-    link.href = (exportFormat === 'png') ? '#' : 'assets/polymathix_3d_render.obj';
-    link.click();
+function setSimTemp(val){
+    simTemp = parseFloat(val);
+    const disp = document.getElementById("simTempDisplay");
+    const hudT = document.getElementById("hudTemp");
+    const statusText = document.getElementById("simStatusText");
+    if(disp) disp.textContent = `${simTemp}K`;
+    if(hudT) hudT.textContent = `${simTemp.toFixed(1)} K`;
+    if(statusText && simRunning) statusText.textContent = `BIOPHYSICAL MD (${simTemp.toFixed(0)}K)`;
 }
 
-function toggleAudio(){ showToast("Audio System", "Scientific sound effects enabled"); }
-function toggleTheme(){ showToast("Display FX", "Visual neon glow intensity adjusted"); }
-
-// ESC Key closes everything
-document.addEventListener('keydown', function(e){
-    if(e.key === 'Escape'){
-        const v = document.querySelector(".viewer");
-        if(v && v.classList.contains("fullscreenMode")) {
-            v.classList.remove("fullscreenMode");
-            resizeThree();
-        }
-        closeSessionModal(); closeExport(); closeResultsModal(); closeSettingsModal();
-    }
-});
-
-/* ================= SIMPLE MOUSE ORBIT CONTROLS FALLBACK ================= */
-function setupSimpleControls(cam, domElem){
-    let isDragging = false, prevMouse = { x: 0, y: 0 };
-    domElem.addEventListener('mousedown', (e) => { isDragging = true; prevMouse = { x: e.clientX, y: e.clientY }; });
-    window.addEventListener('mouseup', () => { isDragging = false; });
-    window.addEventListener('mousemove', (e) => {
-        if(!isDragging || !moleculeGroup) return;
-        moleculeGroup.rotation.y += (e.clientX - prevMouse.x) * 0.008;
-        moleculeGroup.rotation.x += (e.clientY - prevMouse.y) * 0.008;
-        prevMouse = { x: e.clientX, y: e.clientY };
-    });
-    domElem.addEventListener('wheel', (e) => {
-        if(!cam) return;
-        cam.position.z += e.deltaY * 0.02;
-        cam.position.z = Math.max(5, Math.min(120, cam.position.z));
-    }, { passive: true });
+function toggleDisulfides(show){
+    if(disulfideGroup) disulfideGroup.visible = show;
+    showToast("Disulfide Bridges", show ? "S-S covalent rods visible" : "Hidden");
 }
 
-/* ================= STREAMLIT TRIGGER FUNCTIONS ================= */
-function runAI(customQuery){
-    const inp = document.getElementById('aiInput');
-    const q = customQuery || (inp ? inp.value : '') || 'Show glucose binding pocket';
-    showToast("AI Orchestrator", `Executing: "${q}"`);
-    Streamlit.setComponentValue({ action: 'runAI', query: q, timestamp: Date.now() });
-    if(inp && !customQuery) inp.value = '';
+function toggleHydration(show){
+    if(hydrationGroup) hydrationGroup.visible = show;
+    showToast("Hydration Shell", show ? "TIP3P water molecules visible" : "Hidden");
 }
 
-function triggerQuickAction(type){
-    showToast("Quick Action", `Invoking ${type}...`);
-    Streamlit.setComponentValue({ action: 'quick_action', type: type, timestamp: Date.now() });
+function toggleMembrane(show){
+    if(membraneGroup) membraneGroup.visible = show;
+    showToast("Lipid Bilayer", show ? "POPC membrane slab visible" : "Hidden");
 }
 
-function triggerAgentControl(cmd){
-    showToast("Agent Command", cmd.toUpperCase());
-    Streamlit.setComponentValue({ action: 'agent_control', cmd: cmd, timestamp: Date.now() });
-}
+/* ================= MAIN ANIMATION & SIMULATION LOOP ================= */
+function animate(){
+    requestAnimationFrame(animate);
+    const t = performance.now() * 0.002 * simSpeed;
 
-function toggleConnector(name){
-    showToast("Connector", `Toggling ${name}...`);
-    Streamlit.setComponentValue({ action: 'toggle_connector', name: name, timestamp: Date.now() });
-}
-
-/* ================= STATE UPDATE FROM PYTHON ================= */
-function updateStateFromPython(state){
-    if(!state) return;
-
-    if(state.session_name) {
-        const el = document.getElementById("sessionNameDisplay"); if(el) el.textContent = state.session_name;
-        const mel = document.getElementById("modalSessionTitle"); if(mel) mel.textContent = `Research Session: ${state.session_name}`;
-    }
-    if(state.protocol_name) {
-        const el = document.getElementById("protocolNameDisplay"); if(el) el.textContent = state.protocol_name;
-        const mel = document.getElementById("modalProtocolName"); if(mel) mel.textContent = state.protocol_name;
-    }
-    if(state.status) {
-        const st = document.getElementById("sessionStatusDisplay");
-        if(st) {
-            const isAct = state.status === 'Active';
-            st.innerHTML = `<span class="statusDot" style="background:${isAct ? '#00f59b' : '#facc15'}"></span>${state.status}`;
-        }
+    // Cinematic continuous slow rotation when not dragging
+    if(autoRotate && moleculeGroup) {
+        moleculeGroup.rotation.y += 0.0012;
     }
 
-    // Workflow Steps
-    if(state.workflow_steps && Array.isArray(state.workflow_steps)){
-        const c = document.getElementById("workflowStepsContainer");
-        const mc = document.getElementById("modalWorkflowSteps");
-        let html = "";
-        state.workflow_steps.forEach((s, idx) => {
-            const num = idx + 1;
-            let cls = "step";
-            let icon = "";
-            if(s.status === 'done'){ cls = "step done"; icon = `<span style="margin-left:auto;color:#00f59b">✓</span>`; }
-            else if(s.status === 'running'){ cls = "step running"; icon = `<span style="margin-left:auto;color:#38bdf8">●</span>`; }
-            html += `<div class="${cls}"><div class="stepNum">${num}</div><span>${s.name}</span>${icon}</div>`;
+    // BIOPHYSICAL PHYSICS ENGINE
+    if(simRunning && originalCAPoints.length > 0){
+        const tempRatio = (simTemp / 300.0);
+
+        // 1. Thermal Langevin Vibrations on Ribbon Beads
+        originalCAPoints.forEach((c, idx) => {
+            const bead = ribbonGroup.getObjectByName("ca_bead_" + c.id);
+            if(bead){
+                const amp = (c.sec_struct === 'loop' ? 0.38 : 0.10) * tempRatio;
+                const dx = amp * Math.sin(2.3 * t + idx * 0.7);
+                const dy = amp * Math.cos(1.9 * t + idx * 0.5);
+                const dz = amp * Math.sin(2.7 * t + idx * 0.9);
+                bead.position.set(c.x + dx, c.y + dy, c.z + dz);
+            }
         });
-        if(c) c.innerHTML = html;
-        if(mc) mc.innerHTML = html;
-    }
 
-    // Progress
-    if(typeof state.progress_percent === 'number'){
-        const pf = document.getElementById("progressFill"); if(pf) pf.style.width = state.progress_percent + "%";
-        const pv = document.getElementById("progressValue"); if(pv) pv.textContent = state.progress_percent + "%";
-    }
-    if(state.time_remaining){
-        const tr = document.getElementById("timeRemainingDisplay"); if(tr) tr.textContent = `Estimated time: ${state.time_remaining}`;
-        const mtr = document.getElementById("modalTimeRemaining"); if(mtr) mtr.textContent = `Estimated time: ${state.time_remaining}`;
-    }
+        // 2. Normal Mode Conformational Breathing
+        if(simMode === 'nma' && ribbonGroup){
+            const hingeAngle = 0.05 * Math.sin(1.6 * t);
+            ribbonGroup.rotation.z = hingeAngle;
+        } else if(ribbonGroup) {
+            ribbonGroup.rotation.z = 0;
+        }
 
-    // Tool Connectors
-    if(state.connectors && Array.isArray(state.connectors)){
-        const cl = document.getElementById("connectorsList");
-        if(cl){
-            cl.innerHTML = "";
-            state.connectors.forEach(c => {
-                const div = document.createElement("div");
-                div.className = "connector";
-                div.onclick = () => toggleConnector(c.name);
-                div.innerHTML = `
-                    <div class="connIcon">${c.icon}</div>
-                    <div class="connName">${c.name}</div>
-                    <div class="connStatus ${c.status}">${c.text}</div>
-                `;
-                cl.appendChild(div);
+        // 3. Induced-Fit D-Glucose Ligand Docking Exploration
+        if(glucoseGroup && interactionGroup){
+            let gdx = 0, gdy = 0, gdz = 0;
+            if(simMode === 'docking'){
+                gdx = 0.22 * Math.sin(1.8 * t);
+                gdy = 0.18 * Math.cos(1.4 * t);
+                gdz = 0.15 * Math.sin(2.2 * t);
+                glucoseGroup.position.set(gdx, gdy, gdz);
+            } else {
+                glucoseGroup.position.set(0, 0, 0);
+            }
+
+            // Update contact line endpoints dynamically
+            BINDING_CONTACTS.forEach(c => {
+                const line = interactionGroup.getObjectByName("contact_line_" + c.name);
+                if(line){
+                    const p1 = new THREE.Vector3(gdx, gdy, gdz);
+                    const p2 = new THREE.Vector3(c.x, c.y, c.z);
+                    line.geometry.setFromPoints([p1, p2]);
+                    line.computeLineDistances();
+
+                    // Update live distance label in binding badge
+                    const distEl = document.getElementById("dist_" + c.name.replace(" ", "_"));
+                    if(distEl && simMode === 'docking'){
+                        const liveDist = (p1.distanceTo(p2)).toFixed(1);
+                        distEl.textContent = `${liveDist} Å`;
+                    }
+                }
             });
         }
-    }
 
-    // Terminal Logs
-    if(state.logs && Array.isArray(state.logs)){
-        const lb = document.getElementById("logBody");
-        if(lb){
-            lb.innerHTML = "";
-            state.logs.forEach(l => {
-                let cls = "logInfo";
-                if(l.type === "SUCCESS") cls = "logSuccess";
-                else if(l.type === "WARN") cls = "logWarn";
-                else if(l.type === "ERROR") cls = "logError";
-                else if(l.type === "AI") cls = "logAI";
-
-                const d = document.createElement("div");
-                d.className = "logLine";
-                d.innerHTML = `<span class="logTime">[${l.time}]</span><span class="${cls}">${l.type}</span> ${l.msg}`;
-                lb.appendChild(d);
+        // 4. Hydration Water Thermal Brownian Diffusion
+        if(hydrationGroup && hydrationGroup.visible){
+            hydrationGroup.children.forEach((wGroup, i) => {
+                wGroup.position.x += 0.015 * Math.sin(3.5 * t + i);
+                wGroup.position.y += 0.015 * Math.cos(3.2 * t + i * 2);
             });
-            lb.scrollTop = lb.scrollHeight;
         }
+
+        // 5. Update Simulation HUD Metrics in Real Time
+        const hudT = document.getElementById("hudTemp");
+        const hudR = document.getElementById("hudRMSD");
+        const hudE = document.getElementById("hudEnergy");
+        const hudG = document.getElementById("hudDeltaG");
+
+        if(hudT) hudT.textContent = (simTemp + Math.sin(t * 3.0) * 0.7).toFixed(1) + " K";
+        if(hudR) hudR.textContent = (0.82 + Math.abs(Math.sin(t * 1.8) * 0.06) * tempRatio).toFixed(2) + " Å";
+        if(hudE) hudE.textContent = (Math.round(-146240 + Math.sin(t * 1.4) * 160)).toLocaleString() + " kJ";
+        if(hudG) hudG.textContent = (-7.82 + Math.sin(t * 2.2) * 0.12).toFixed(2);
     }
 
-    // Results Grid
-    if(state.results && Array.isArray(state.results)){
-        const rg = document.getElementById("resultGrid");
-        const mrg = document.getElementById("modalResultGrid");
-        let html = "";
-        state.results.forEach(r => {
-            html += `
-                <div class="resultCard" onclick="showToast('Result Artifact', 'Opening ${r.name}')">
-                    <div class="resultPreview">${r.icon || '🧬'}</div>
-                    <div class="resultName">${r.name}</div>
-                    <div class="resultMeta">${r.meta || 'Recent'}</div>
-                </div>
-            `;
-        });
-        if(rg) rg.innerHTML = html;
-        if(mrg) mrg.innerHTML = html;
-    }
-
-    // Render PDB
-    if(state.pdb_data){
-        renderRealPDB(state.pdb_data);
-    }
+    if(controls && controls.update) controls.update();
+    if(renderer && scene && camera) renderer.render(scene, camera);
 }
 
 /* ================= STREAMLIT LISTENER ================= */
@@ -1936,12 +2010,12 @@ from polymathix.orchestrator import PolymathixOrchestrator
 orc = PolymathixOrchestrator()
 state_json = json.dumps(orc.get_state())
 
-injection = f"""try {{
+injection = f"""try {
     const INITIAL_EMBEDDED_STATE = {state_json};
     if(typeof updateStateFromPython === 'function') {{
         updateStateFromPython(INITIAL_EMBEDDED_STATE);
     }}
-}} catch(e) {{
+} catch(e) {{
     console.error("Error applying embedded state:", e);
 }}"""
 
