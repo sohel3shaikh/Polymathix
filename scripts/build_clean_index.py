@@ -12,9 +12,19 @@ html_code = """<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>POLYMATHIX — AI for Scientific Discovery</title>
 
-<!-- Three.js v0.128 Clean CDNs -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<!-- Local Fast Bundle + CDN Fallback -->
+<script src="js/three.min.js"></script>
+<script>
+if(typeof THREE === 'undefined'){
+    document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\\/script>');
+}
+</script>
+<script src="js/OrbitControls.js"></script>
+<script>
+if(typeof THREE !== 'undefined' && typeof THREE.OrbitControls === 'undefined'){
+    document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"><\\/script>');
+}
+</script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/OBJExporter.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/STLExporter.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/GLTFExporter.js"></script>
@@ -1171,68 +1181,86 @@ const canvas = document.getElementById("threeCanvas");
 
 function initThree(){
     if(!canvas) return;
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x010812);
-
-    const wrap = document.getElementById("threeCanvasWrap");
-    const width = (wrap && wrap.clientWidth > 50) ? wrap.clientWidth : 700;
-    const height = (wrap && wrap.clientHeight > 50) ? wrap.clientHeight : 450;
-
-    camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 2000);
-    camera.position.set(0, 8, 28);
-
-    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, preserveDrawingBuffer: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(width, height, false);
-
-    if (THREE.sRGBEncoding) renderer.outputEncoding = THREE.sRGBEncoding;
-
-    // Controls
-    if (typeof THREE.OrbitControls === 'function') {
-        controls = new THREE.OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.minDistance = 4;
-        controls.maxDistance = 120;
-    } else {
-        setupSimpleControls(camera, renderer.domElement);
+    if(typeof THREE === 'undefined'){
+        console.warn('Three.js library loading... retrying in 100ms');
+        setTimeout(initThree, 100);
+        return;
     }
+    try {
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x010812);
 
-    // Lighting
-    const ambient = new THREE.AmbientLight(0x7da4ff, 1.8);
-    scene.add(ambient);
+        const wrap = document.getElementById("threeCanvasWrap");
+        const width = (wrap && wrap.clientWidth > 50) ? wrap.clientWidth : (canvas.clientWidth || 700);
+        const height = (wrap && wrap.clientHeight > 50) ? wrap.clientHeight : (canvas.clientHeight || 450);
 
-    const key = new THREE.DirectionalLight(0x90e0ef, 2.5);
-    key.position.set(12, 18, 14);
-    scene.add(key);
+        camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 2000);
+        camera.position.set(0, 8, 28);
 
-    const fill = new THREE.PointLight(0xa855f7, 4, 100);
-    fill.position.set(-16, -6, 12);
-    scene.add(fill);
+        renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, preserveDrawingBuffer: true, alpha: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(width, height, false);
 
-    // Molecular Groups
-    moleculeGroup = new THREE.Group();
-    cartoonGroup = new THREE.Group();
-    sphereGroup = new THREE.Group();
-    sticksGroup = new THREE.Group();
-    surfaceGroup = new THREE.Group();
-    meshGroup = new THREE.Group();
-    glucoseGroup = new THREE.Group();
-    interactionGroup = new THREE.Group();
+        if (THREE.sRGBEncoding) renderer.outputEncoding = THREE.sRGBEncoding;
 
-    moleculeGroup.add(cartoonGroup, sphereGroup, sticksGroup, surfaceGroup, meshGroup, glucoseGroup, interactionGroup);
-    scene.add(moleculeGroup);
+        // Controls
+        if (typeof THREE.OrbitControls === 'function') {
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 4;
+            controls.maxDistance = 120;
+        } else {
+            setupSimpleControls(camera, renderer.domElement);
+        }
 
-    // Initial Standalone Glucose + Interactions in Pocket
-    createGlucoseLigand();
-    createInteractions();
+        // Lighting
+        const ambient = new THREE.AmbientLight(0xffffff, 1.4);
+        scene.add(ambient);
 
-    window.addEventListener("resize", resizeThree);
-    if(window.ResizeObserver && wrap) {
-        new ResizeObserver(resizeThree).observe(wrap);
+        const key = new THREE.DirectionalLight(0xffffff, 2.0);
+        key.position.set(15, 20, 15);
+        scene.add(key);
+
+        const fill = new THREE.DirectionalLight(0x7da4ff, 1.2);
+        fill.position.set(-15, -10, -15);
+        scene.add(fill);
+
+        // Molecular Groups
+        moleculeGroup = new THREE.Group();
+        cartoonGroup = new THREE.Group();
+        sphereGroup = new THREE.Group();
+        sticksGroup = new THREE.Group();
+        surfaceGroup = new THREE.Group();
+        meshGroup = new THREE.Group();
+        glucoseGroup = new THREE.Group();
+        interactionGroup = new THREE.Group();
+
+        moleculeGroup.add(cartoonGroup, sphereGroup, sticksGroup, surfaceGroup, meshGroup, glucoseGroup, interactionGroup);
+        scene.add(moleculeGroup);
+
+        // Initial Standalone Glucose + Interactions in Pocket
+        createGlucoseLigand();
+        createInteractions();
+
+        window.addEventListener("resize", resizeThree);
+        if(window.ResizeObserver && wrap) {
+            new ResizeObserver(resizeThree).observe(wrap);
+        }
+
+        animate();
+
+        // Process any queued PDB data
+        if(window._pendingPDBData) {
+            renderRealPDB(window._pendingPDBData);
+            window._pendingPDBData = null;
+        }
+
+        setTimeout(resizeThree, 50);
+        setTimeout(resizeThree, 200);
+    } catch(err) {
+        console.error("Error in initThree:", err);
     }
-
-    animate();
 }
 
 function resizeThree(){
@@ -1377,6 +1405,10 @@ function closeBindingPanel(){
 /* ================= FULL PDB RENDERING ================= */
 function renderRealPDB(pdbData){
     if(!pdbData || !pdbData.ca_coords || pdbData.ca_coords.length === 0) return;
+    if(!scene || !cartoonGroup){
+        window._pendingPDBData = pdbData;
+        return;
+    }
 
     // Clear previous
     [cartoonGroup, sphereGroup, sticksGroup, surfaceGroup, meshGroup].forEach(g => {
@@ -1457,7 +1489,8 @@ function renderRealPDB(pdbData){
     setRepresentation(currentRep, document.getElementById('btnRep' + currentRep.charAt(0).toUpperCase() + currentRep.slice(1)));
 
     // Fit camera
-    camera.position.set(0, maxDim * 0.7, maxDim * 2.1);
+    const fitDist = Math.max(26, maxDim * 2.2);
+    camera.position.set(0, fitDist * 0.35, fitDist);
     if(controls){ controls.target.set(center.x, center.y, center.z); controls.update(); }
 
     // Sequence Chips
@@ -1885,8 +1918,13 @@ window.addEventListener('message', function(event) {
 });
 
 /* ================= INITIALIZE ON LOAD ================= */
+try {
+    initThree();
+} catch(e) {
+    console.error("Error in initThree:", e);
+}
+
 /* __INJECT_INITIAL_STATE__ */
-initThree();
 
 </script>
 </body>
@@ -1898,9 +1936,13 @@ from polymathix.orchestrator import PolymathixOrchestrator
 orc = PolymathixOrchestrator()
 state_json = json.dumps(orc.get_state())
 
-injection = f"""const INITIAL_EMBEDDED_STATE = {state_json};
-if(typeof updateStateFromPython === 'function') {{
-    updateStateFromPython(INITIAL_EMBEDDED_STATE);
+injection = f"""try {{
+    const INITIAL_EMBEDDED_STATE = {state_json};
+    if(typeof updateStateFromPython === 'function') {{
+        updateStateFromPython(INITIAL_EMBEDDED_STATE);
+    }}
+}} catch(e) {{
+    console.error("Error applying embedded state:", e);
 }}"""
 
 html_code = html_code.replace("/* __INJECT_INITIAL_STATE__ */", injection)
