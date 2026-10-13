@@ -1,4 +1,4 @@
-with open(r"C:\Users\sohel\Downloads\GitHub T1\Polymathix\polymathix_ui\frontend\index.html", "r", encoding="utf-8") as f:
+with open(os.path.join(ROOT_DIR, "polymathix_ui", "frontend", "index.html"), "r", encoding="utf-8") as f:
     html = f.read()
 
 ids_to_check = [

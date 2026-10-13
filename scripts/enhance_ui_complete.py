@@ -1,7 +1,7 @@
 import os
 import re
 
-html_path = r"C:\Users\sohel\Downloads\GitHub T1\Polymathix\polymathix_ui\frontend\index.html"
+html_path = os.path.join(ROOT_DIR, "polymathix_ui", "frontend", "index.html")
 
 with open(html_path, "r", encoding="utf-8") as f:
     html = f.read()
