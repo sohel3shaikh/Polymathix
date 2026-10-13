@@ -9,13 +9,13 @@
 <script src="js/three.min.js"></script>
 <script>
 if(typeof THREE === 'undefined'){
-    document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\\/script>');
+    document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\/script>');
 }
 </script>
 <script src="js/OrbitControls.js"></script>
 <script>
 if(typeof THREE !== 'undefined' && typeof THREE.OrbitControls === 'undefined'){
-    document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"><\\/script>');
+    document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"><\/script>');
 }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/OBJExporter.js"></script>
@@ -1600,7 +1600,7 @@ function renderRealPDB(pdbData){
     });
     const sSphereGeo = new THREE.SphereGeometry(0.38, 14, 14);
 
-    ssbonds.forEach((ssb, idx) => {
+    ssbonds.forEach((ssb) => {
         const p1 = new THREE.Vector3(ssb.x1, ssb.y1, ssb.z1);
         const p2 = new THREE.Vector3(ssb.x2, ssb.y2, ssb.z2);
         const dist = p1.distanceTo(p2);
@@ -1638,7 +1638,7 @@ function renderRealPDB(pdbData){
             else if(c.res === 'ARG' || c.res === 'LYS' || c.res === 'HIS') pot += 2.5 / d;
         });
 
-        // Map pot (-1.0 to +1.0) -> Red (negative) to Silver to Blue (positive)
+        // Map pot (-1.0 to +1.0) -> Red (acidic) to Silver to Blue (basic)
         if(pot < -0.15) tempColor.setHSL(0.0, 0.9, 0.55); // Red acidic
         else if(pot > 0.15) tempColor.setHSL(0.6, 0.9, 0.55); // Blue basic
         else tempColor.setHSL(0.58, 0.1, 0.90); // White/silver neutral
@@ -1762,11 +1762,20 @@ function renderRealPDB(pdbData){
     }
 }
 
-/* ================= 3D REPRESENTATIONS ================= */
+/* ================= 3D REPRESENTATIONS & CAMERA ================= */
 function setRepresentation(style, elem){
+    // Map legacy alias names if passed
+    if(style === 'cartoon') style = 'ribbon';
+    if(style === 'surface') style = 'electro';
+    if(style === 'mesh') style = 'glass';
+
     currentRep = style;
     document.querySelectorAll(".viewerBottom .styleBtn").forEach(b => b.classList.remove("active"));
     if(elem) elem.classList.add("active");
+    else {
+        const btn = document.getElementById('btnRep' + style.charAt(0).toUpperCase() + style.slice(1));
+        if(btn) btn.classList.add("active");
+    }
 
     const wrap = document.getElementById("threeCanvasWrap");
     if(wrap && wrap.style.display === 'none'){
@@ -1973,6 +1982,325 @@ function animate(){
 
     if(controls && controls.update) controls.update();
     if(renderer && scene && camera) renderer.render(scene, camera);
+}
+
+/* ================= WORKSPACE TABS ================= */
+function switchWorkspaceTab(tabName, elem){
+    document.querySelectorAll(".viewer .tab").forEach(t => t.classList.remove("active"));
+    if(elem) elem.classList.add("active");
+
+    const wrap = document.getElementById("threeCanvasWrap");
+    if(wrap) wrap.style.display = (tabName === 'viewer') ? 'block' : 'none';
+
+    document.querySelectorAll(".workspacePanel").forEach(p => p.classList.remove("active"));
+    if(tabName !== 'viewer'){
+        const p = document.getElementById(tabName + "Panel");
+        if(p) p.classList.add("active");
+    }
+    showToast("Workspace", `${tabName.toUpperCase()} tab active`);
+    if(tabName === 'viewer') setTimeout(resizeThree, 50);
+}
+
+/* ================= TRAJECTORY PLAY/PAUSE ================= */
+let trajTimer = null;
+function toggleTrajectoryPlay(){
+    const btn = document.getElementById("btnPlayTraj");
+    const slider = document.getElementById("trajSlider");
+    const label = document.getElementById("trajFrame");
+
+    if(trajTimer){
+        clearInterval(trajTimer);
+        trajTimer = null;
+        if(btn) btn.textContent = "▶ Play Trajectory";
+        showToast("Trajectory", "Simulation playback paused");
+    } else {
+        if(btn) btn.textContent = "⏸ Pause Playback";
+        showToast("Trajectory", "Playing production dynamics");
+        trajTimer = setInterval(() => {
+            let val = parseInt(slider.value) + 10;
+            if(val > 1500) val = 0;
+            slider.value = val;
+            if(label) label.textContent = `Frame ${val}`;
+            if(moleculeGroup) moleculeGroup.rotation.y += 0.04;
+        }, 80);
+    }
+}
+function scrubTrajectory(val){
+    const label = document.getElementById("trajFrame");
+    if(label) label.textContent = `Frame ${val}`;
+    if(moleculeGroup) moleculeGroup.rotation.y = (val / 1500) * Math.PI * 4;
+}
+
+/* ================= LOG TABS & FILTERING ================= */
+let currentLogTab = 'all';
+function switchLogTab(tab, elem){
+    currentLogTab = tab;
+    document.querySelectorAll(".logsHeader .logTab").forEach(t => t.classList.remove("active"));
+    if(elem) elem.classList.add("active");
+    filterLogs();
+}
+
+function clearLogs(){
+    const body = document.getElementById("logBody");
+    if(body) body.innerHTML = `<div class="logLine" style="color:#64748b;">[Logs cleared by researcher]</div>`;
+    showToast("Terminal", "Logs cleared");
+}
+
+function filterLogs(){
+    const q = (document.getElementById("logSearch")?.value || "").toLowerCase();
+    document.querySelectorAll("#logBody .logLine").forEach(line => {
+        const text = line.textContent.toLowerCase();
+        let matchTab = true;
+        if(currentLogTab === 'analysis') matchTab = text.includes('success') || text.includes('ai') || text.includes('plan');
+        if(currentLogTab === 'system') matchTab = text.includes('info') || text.includes('connector') || text.includes('cluster');
+        if(currentLogTab === 'plots') matchTab = text.includes('plot') || text.includes('graph') || text.includes('pca');
+
+        const matchQ = !q || text.includes(q);
+        line.style.display = (matchTab && matchQ) ? "" : "none";
+    });
+}
+
+/* ================= SIDEBAR NAV ROUTING ================= */
+function navSelect(name, elem){
+    document.querySelectorAll(".sidebar .navItem").forEach(n => n.classList.remove("active"));
+    if(elem) elem.classList.add("active");
+
+    if(name === 'Home') switchWorkspaceTab('viewer', document.querySelectorAll('.viewer .tab')[0]);
+    else if(name === 'AI Chat') {
+        const inp = document.getElementById('aiInput');
+        if(inp){ inp.focus(); showToast("AI Chat", "Type scientific query and press Enter"); }
+    }
+    else if(name === 'Research Sessions') openSessionModal();
+    else if(name === 'Protocols') runAI('Run Crop Proteome & Thermal Adaptation protocol');
+    else if(name === 'Simulations') switchWorkspaceTab('trajectory', document.querySelectorAll('.viewer .tab')[2]);
+    else if(name === 'Data Analysis') switchWorkspaceTab('analysis', document.querySelectorAll('.viewer .tab')[5]);
+    else if(name === 'Visualization') switchWorkspaceTab('viewer', document.querySelectorAll('.viewer .tab')[0]);
+    else if(name === '3D Library' || name === 'Files & Data') openResultsModal();
+    else if(name === 'Settings') openSettingsModal();
+    else showToast("Polymathix OS", `${name} selected`);
+}
+
+/* ================= MODAL CONTROLS ================= */
+function openSessionModal(){
+    const o = document.getElementById("sessionModalOverlay");
+    if(o) o.classList.add("show");
+}
+function closeSessionModal(){
+    const o = document.getElementById("sessionModalOverlay");
+    if(o) o.classList.remove("show");
+}
+function openExport(){
+    const o = document.getElementById("exportOverlay");
+    if(o) o.classList.add("show");
+}
+function closeExport(){
+    const o = document.getElementById("exportOverlay");
+    if(o) o.classList.remove("show");
+}
+function openResultsModal(){
+    const o = document.getElementById("resultsModalOverlay");
+    if(o) o.classList.add("show");
+}
+function closeResultsModal(){
+    const o = document.getElementById("resultsModalOverlay");
+    if(o) o.classList.remove("show");
+}
+function openSettingsModal(){
+    const o = document.getElementById("settingsModalOverlay");
+    if(o) o.classList.add("show");
+}
+function closeSettingsModal(){
+    const o = document.getElementById("settingsModalOverlay");
+    if(o) o.classList.remove("show");
+}
+function openConnectorsModal(){
+    showToast("Tool Connectors", "Click any connector card to toggle status");
+}
+
+let exportFormat = 'glb';
+function setExportFormat(fmt, elem){
+    exportFormat = fmt;
+    document.querySelectorAll("#exportOverlay .styleBtn").forEach(b => b.classList.remove("active"));
+    if(elem) elem.classList.add("active");
+    const btn = document.getElementById("btnDoExport");
+    if(btn) btn.textContent = `Download ${fmt.toUpperCase()}`;
+}
+function performExport(){
+    showToast("Exporting Model", `Preparing ${exportFormat.toUpperCase()} package...`);
+    closeExport();
+    // Download link
+    const link = document.createElement("a");
+    link.download = `polymathix-model.${exportFormat}`;
+    link.href = (exportFormat === 'png') ? '#' : 'assets/polymathix_3d_render.obj';
+    link.click();
+}
+
+function toggleAudio(){ showToast("Audio System", "Scientific sound effects enabled"); }
+function toggleTheme(){ showToast("Display FX", "Visual neon glow intensity adjusted"); }
+
+// ESC Key closes everything
+document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){
+        const v = document.querySelector(".viewer");
+        if(v && v.classList.contains("fullscreenMode")) {
+            v.classList.remove("fullscreenMode");
+            resizeThree();
+        }
+        closeSessionModal(); closeExport(); closeResultsModal(); closeSettingsModal();
+    }
+});
+
+/* ================= SIMPLE MOUSE ORBIT CONTROLS FALLBACK ================= */
+function setupSimpleControls(cam, domElem){
+    let isDragging = false, prevMouse = { x: 0, y: 0 };
+    domElem.addEventListener('mousedown', (e) => { isDragging = true; prevMouse = { x: e.clientX, y: e.clientY }; });
+    window.addEventListener('mouseup', () => { isDragging = false; });
+    window.addEventListener('mousemove', (e) => {
+        if(!isDragging || !moleculeGroup) return;
+        moleculeGroup.rotation.y += (e.clientX - prevMouse.x) * 0.008;
+        moleculeGroup.rotation.x += (e.clientY - prevMouse.y) * 0.008;
+        prevMouse = { x: e.clientX, y: e.clientY };
+    });
+    domElem.addEventListener('wheel', (e) => {
+        if(!cam) return;
+        cam.position.z += e.deltaY * 0.02;
+        cam.position.z = Math.max(5, Math.min(120, cam.position.z));
+    }, { passive: true });
+}
+
+/* ================= STREAMLIT TRIGGER FUNCTIONS ================= */
+function runAI(customQuery){
+    const inp = document.getElementById('aiInput');
+    const q = customQuery || (inp ? inp.value : '') || 'Show glucose binding pocket';
+    showToast("AI Orchestrator", `Executing: "${q}"`);
+    Streamlit.setComponentValue({ action: 'runAI', query: q, timestamp: Date.now() });
+    if(inp && !customQuery) inp.value = '';
+}
+
+function triggerQuickAction(type){
+    showToast("Quick Action", `Invoking ${type}...`);
+    Streamlit.setComponentValue({ action: 'quick_action', type: type, timestamp: Date.now() });
+}
+
+function triggerAgentControl(cmd){
+    showToast("Agent Command", cmd.toUpperCase());
+    Streamlit.setComponentValue({ action: 'agent_control', cmd: cmd, timestamp: Date.now() });
+}
+
+function toggleConnector(name){
+    showToast("Connector", `Toggling ${name}...`);
+    Streamlit.setComponentValue({ action: 'toggle_connector', name: name, timestamp: Date.now() });
+}
+
+/* ================= STATE UPDATE FROM PYTHON ================= */
+function updateStateFromPython(state){
+    if(!state) return;
+
+    if(state.session_name) {
+        const el = document.getElementById("sessionNameDisplay"); if(el) el.textContent = state.session_name;
+        const mel = document.getElementById("modalSessionTitle"); if(mel) mel.textContent = `Research Session: ${state.session_name}`;
+    }
+    if(state.protocol_name) {
+        const el = document.getElementById("protocolNameDisplay"); if(el) el.textContent = state.protocol_name;
+        const mel = document.getElementById("modalProtocolName"); if(mel) mel.textContent = state.protocol_name;
+    }
+    if(state.status) {
+        const st = document.getElementById("sessionStatusDisplay");
+        if(st) {
+            const isAct = state.status === 'Active';
+            st.innerHTML = `<span class="statusDot" style="background:${isAct ? '#00f59b' : '#facc15'}"></span>${state.status}`;
+        }
+    }
+
+    // Workflow Steps
+    if(state.workflow_steps && Array.isArray(state.workflow_steps)){
+        const c = document.getElementById("workflowStepsContainer");
+        const mc = document.getElementById("modalWorkflowSteps");
+        let html = "";
+        state.workflow_steps.forEach((s, idx) => {
+            const num = idx + 1;
+            let cls = "step";
+            let icon = "";
+            if(s.status === 'done'){ cls = "step done"; icon = `<span style="margin-left:auto;color:#00f59b">✓</span>`; }
+            else if(s.status === 'running'){ cls = "step running"; icon = `<span style="margin-left:auto;color:#38bdf8">●</span>`; }
+            html += `<div class="${cls}"><div class="stepNum">${num}</div><span>${s.name}</span>${icon}</div>`;
+        });
+        if(c) c.innerHTML = html;
+        if(mc) mc.innerHTML = html;
+    }
+
+    // Progress
+    if(typeof state.progress_percent === 'number'){
+        const pf = document.getElementById("progressFill"); if(pf) pf.style.width = state.progress_percent + "%";
+        const pv = document.getElementById("progressValue"); if(pv) pv.textContent = state.progress_percent + "%";
+    }
+    if(state.time_remaining){
+        const tr = document.getElementById("timeRemainingDisplay"); if(tr) tr.textContent = `Estimated time: ${state.time_remaining}`;
+        const mtr = document.getElementById("modalTimeRemaining"); if(mtr) mtr.textContent = `Estimated time: ${state.time_remaining}`;
+    }
+
+    // Tool Connectors
+    if(state.connectors && Array.isArray(state.connectors)){
+        const cl = document.getElementById("connectorsList");
+        if(cl){
+            cl.innerHTML = "";
+            state.connectors.forEach(c => {
+                const div = document.createElement("div");
+                div.className = "connector";
+                div.onclick = () => toggleConnector(c.name);
+                div.innerHTML = `
+                    <div class="connIcon">${c.icon}</div>
+                    <div class="connName">${c.name}</div>
+                    <div class="connStatus ${c.status}">${c.text}</div>
+                `;
+                cl.appendChild(div);
+            });
+        }
+    }
+
+    // Terminal Logs
+    if(state.logs && Array.isArray(state.logs)){
+        const lb = document.getElementById("logBody");
+        if(lb){
+            lb.innerHTML = "";
+            state.logs.forEach(l => {
+                let cls = "logInfo";
+                if(l.type === "SUCCESS") cls = "logSuccess";
+                else if(l.type === "WARN") cls = "logWarn";
+                else if(l.type === "ERROR") cls = "logError";
+                else if(l.type === "AI") cls = "logAI";
+
+                const d = document.createElement("div");
+                d.className = "logLine";
+                d.innerHTML = `<span class="logTime">[${l.time}]</span><span class="${cls}">${l.type}</span> ${l.msg}`;
+                lb.appendChild(d);
+            });
+            lb.scrollTop = lb.scrollHeight;
+        }
+    }
+
+    // Results Grid
+    if(state.results && Array.isArray(state.results)){
+        const rg = document.getElementById("resultGrid");
+        const mrg = document.getElementById("modalResultGrid");
+        let html = "";
+        state.results.forEach(r => {
+            html += `
+                <div class="resultCard" onclick="showToast('Result Artifact', 'Opening ${r.name}')">
+                    <div class="resultPreview">${r.icon || '🧬'}</div>
+                    <div class="resultName">${r.name}</div>
+                    <div class="resultMeta">${r.meta || 'Recent'}</div>
+                </div>
+            `;
+        });
+        if(rg) rg.innerHTML = html;
+        if(mrg) mrg.innerHTML = html;
+    }
+
+    // Render PDB
+    if(state.pdb_data){
+        renderRealPDB(state.pdb_data);
+    }
 }
 
 /* ================= STREAMLIT LISTENER ================= */

@@ -111,14 +111,40 @@ def t9_frontend_index_integrity():
     assert os.path.exists(index_path), "index.html missing"
     with open(index_path, "r", encoding="utf-8") as f:
         html = f.read()
-    required = [
+
+    # Core UI DOM Elements
+    required_dom = [
         "aiInput", "sessionNameDisplay", "protocolNameDisplay", "sessionStatusDisplay",
         "progressFill", "progressValue", "timeRemainingDisplay", "logBody", "resultGrid",
-        "threeCanvasWrap", "sequencePanel", "trajectoryPanel", "surfacesPanel",
-        "propertiesPanel", "analysisPanel", "renderRealPDB", "updateStateFromPython"
+        "threeCanvasWrap", "threeCanvas", "sequencePanel", "trajectoryPanel", "surfacesPanel",
+        "propertiesPanel", "analysisPanel", "bindingPanel", "bindingResiduesList",
+        "sessionModalOverlay", "exportOverlay", "resultsModalOverlay", "settingsModalOverlay",
+        "simHUD", "simControlsBar", "btnSimPlay", "simModeSelect", "simTempSlider",
+        "chkDisulfides", "chkHydration", "chkMembrane"
     ]
-    for req in required:
-        assert req in html, f"Missing {req} in index.html"
+    for dom_id in required_dom:
+        assert f'id="{dom_id}"' in html or f"id='{dom_id}'" in html, f"Missing DOM id='{dom_id}' in index.html"
+
+    # Core JavaScript Functions (all 51 essential functions)
+    required_funcs = [
+        "initThree", "resizeThree", "animate", "renderRealPDB", "setRepresentation",
+        "resetCamera", "focusMolecule", "toggleSurface", "randomizeMolecule", "takeSnapshot",
+        "toggleViewerFullscreen", "toggleQuality", "createGlucoseLigand", "createInteractions",
+        "focusResidue", "focusBindingPocket", "closeBindingPanel",
+        "toggleSimPlay", "setSimMode", "setSimTemp", "toggleDisulfides", "toggleHydration", "toggleMembrane",
+        "switchWorkspaceTab", "toggleTrajectoryPlay", "scrubTrajectory",
+        "switchLogTab", "clearLogs", "filterLogs", "navSelect",
+        "openSessionModal", "closeSessionModal", "openExport", "closeExport",
+        "openResultsModal", "closeResultsModal", "openSettingsModal", "closeSettingsModal",
+        "openConnectorsModal", "setExportFormat", "performExport",
+        "toggleAudio", "toggleTheme", "setupSimpleControls",
+        "runAI", "triggerQuickAction", "triggerAgentControl", "toggleConnector",
+        "updateStateFromPython", "showToast", "updateClock"
+    ]
+    import re
+    actual_funcs = set(re.findall(r'function\s+([a-zA-Z0-9_]+)\s*\(', html))
+    for func in required_funcs:
+        assert func in actual_funcs, f"Missing function declaration: function {func}() in index.html"
 
 def t10_streamlit_app_compilation():
     app_path = os.path.join(ROOT_DIR, "app.py")
