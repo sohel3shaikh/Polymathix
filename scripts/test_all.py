@@ -112,7 +112,7 @@ def t9_frontend_index_integrity():
     with open(index_path, "r", encoding="utf-8") as f:
         html = f.read()
 
-    # Core UI DOM Elements
+    # Core UI DOM Elements (Full pack of views & layer toggles)
     required_dom = [
         "aiInput", "sessionNameDisplay", "protocolNameDisplay", "sessionStatusDisplay",
         "progressFill", "progressValue", "timeRemainingDisplay", "logBody", "resultGrid",
@@ -120,18 +120,22 @@ def t9_frontend_index_integrity():
         "propertiesPanel", "analysisPanel", "bindingPanel", "bindingResiduesList",
         "sessionModalOverlay", "exportOverlay", "resultsModalOverlay", "settingsModalOverlay",
         "simHUD", "simControlsBar", "btnSimPlay", "simModeSelect", "simTempSlider",
-        "chkDisulfides", "chkHydration", "chkMembrane"
+        "chkDisulfides", "chkHydration", "chkMembrane", "chkLigand", "chkCavity",
+        "viewModeSelect", "btnRepRibbon", "btnRepCartoon", "btnRepSurface", "btnRepElectro",
+        "btnRepHydrophobic", "btnRepGlass", "btnRepMesh", "btnRepSticks", "btnRepLicorice",
+        "btnRepSphere", "btnRepBfactor", "btnRepBackbone"
     ]
     for dom_id in required_dom:
         assert f'id="{dom_id}"' in html or f"id='{dom_id}'" in html, f"Missing DOM id='{dom_id}' in index.html"
 
-    # Core JavaScript Functions (all 51 essential functions)
+    # Core JavaScript Functions (all 53 essential functions)
     required_funcs = [
         "initThree", "resizeThree", "animate", "renderRealPDB", "setRepresentation",
         "resetCamera", "focusMolecule", "toggleSurface", "randomizeMolecule", "takeSnapshot",
         "toggleViewerFullscreen", "toggleQuality", "createGlucoseLigand", "createInteractions",
         "focusResidue", "focusBindingPocket", "closeBindingPanel",
         "toggleSimPlay", "setSimMode", "setSimTemp", "toggleDisulfides", "toggleHydration", "toggleMembrane",
+        "toggleLigand", "toggleCavity",
         "switchWorkspaceTab", "toggleTrajectoryPlay", "scrubTrajectory",
         "switchLogTab", "clearLogs", "filterLogs", "navSelect",
         "openSessionModal", "closeSessionModal", "openExport", "closeExport",

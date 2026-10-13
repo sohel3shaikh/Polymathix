@@ -477,19 +477,34 @@ button, input{ font:inherit; color:var(--text); outline:none; }
 
 /* VIEWER BOTTOM BAR */
 .viewerBottom{
-    display:flex; align-items:center; gap:6px; padding:6px 12px;
+    display:flex; align-items:center; gap:5px; padding:6px 12px;
     border-top:1px solid rgba(90,170,255,.12);
+    overflow-x:auto; flex-wrap:nowrap;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(56,189,248,.3) transparent;
+}
+.viewerBottom::-webkit-scrollbar{ height:4px; }
+.viewerBottom::-webkit-scrollbar-thumb{ background:rgba(56,189,248,.3); border-radius:4px; }
+.styleBtnGroup{
+    display:flex; align-items:center; gap:4px; flex-shrink:0;
 }
 .styleBtn{
-    padding:5px 10px; border-radius:8px; font-size:10px; cursor:pointer;
+    padding:4px 8px; border-radius:7px; font-size:10px; cursor:pointer;
     border:1px solid rgba(90,178,255,.2); background:rgba(10,31,57,.6);
-    transition:.15s; user-select:none;
+    transition:.15s; user-select:none; white-space:nowrap; flex-shrink:0;
 }
-.styleBtn:hover{ border-color:#38bdf8; color:#fff; }
+.styleBtn:hover{ border-color:#38bdf8; color:#fff; background:rgba(14,46,80,.8); }
 .styleBtn.active{
     background:linear-gradient(135deg,#168cff,#684dff);
-    color:#fff; border-color:transparent; font-weight:600;
+    color:#fff; border-color:transparent; font-weight:700;
+    box-shadow:0 0 10px rgba(56,189,248,.4);
 }
+.viewSelectDropdown{
+    background:rgba(4,18,34,.92); border:1px solid rgba(56,189,248,.35);
+    color:#38bdf8; font-size:10px; font-weight:600; padding:4px 8px; border-radius:7px;
+    outline:none; cursor:pointer; margin-right:4px; flex-shrink:0;
+}
+
 .viewerSpacer{ flex:1; }
 
 .controlBtn{
@@ -874,11 +889,12 @@ button, input{ font:inherit; color:var(--text); outline:none; }
                     <option value="thermal">Thermal Dynamics (300K)</option>
                     <option value="nma">Domain Breathing (NMA)</option>
                     <option value="docking">Induced-Fit Ligand Docking</option>
+                    <option value="unfold">Thermal Denaturation (350K)</option>
                 </select>
                 <div class="simDivider"></div>
                 <div class="simSliderWrap" title="Simulation Temperature">
                     <span style="font-size:10px;color:#94a3b8;">Temp:</span>
-                    <input type="range" min="260" max="360" value="300" id="simTempSlider" oninput="setSimTemp(this.value)" style="width:65px;">
+                    <input type="range" min="260" max="380" value="300" id="simTempSlider" oninput="setSimTemp(this.value)" style="width:65px;">
                     <span id="simTempDisplay" style="font-size:10px;font-family:monospace;min-width:32px;">300K</span>
                 </div>
                 <div class="simDivider"></div>
@@ -886,6 +902,8 @@ button, input{ font:inherit; color:var(--text); outline:none; }
                     <label class="layerCheck" title="Toggle Disulfide Bridges (S-S)"><input type="checkbox" id="chkDisulfides" checked onchange="toggleDisulfides(this.checked)"><span>S-S</span></label>
                     <label class="layerCheck" title="Toggle TIP3P Water Hydration Shell"><input type="checkbox" id="chkHydration" checked onchange="toggleHydration(this.checked)"><span>H₂O</span></label>
                     <label class="layerCheck" title="Toggle POPC Lipid Bilayer Slab"><input type="checkbox" id="chkMembrane" onchange="toggleMembrane(this.checked)"><span>POPC</span></label>
+                    <label class="layerCheck" title="Toggle D-Glucose Ligand & Contacts"><input type="checkbox" id="chkLigand" checked onchange="toggleLigand(this.checked)"><span>Ligand</span></label>
+                    <label class="layerCheck" title="Toggle Active Pocket Cavity Mesh"><input type="checkbox" id="chkCavity" checked onchange="toggleCavity(this.checked)"><span>Cavity</span></label>
                 </div>
             </div>
 
@@ -950,15 +968,32 @@ button, input{ font:inherit; color:var(--text); outline:none; }
         </div>
 
         <div class="workspacePanel" id="surfacesPanel">
-            <div style="font-size:13px;font-weight:700;color:#38bdf8;">Molecular Potential & Surfaces</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
-                <div style="padding:12px;background:rgba(10,31,57,0.6);border-radius:8px;border:1px solid rgba(56,189,248,0.2);cursor:pointer;" onclick="toggleSurface()">
-                    <div style="font-weight:600;color:#38bdf8;font-size:11px;">Solvent Accessible Surface (SASA)</div>
-                    <div style="font-size:10px;color:#94a3b8;margin-top:4px;">Rolling probe radius: 1.4 Å | Analytical Conolly algorithm</div>
+            <div style="font-size:13px;font-weight:700;color:#38bdf8;">Molecular Potential & Physical Surfaces (Full Suite)</div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Click any surface mode to switch active 3D visualization</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:12px;">
+                <div style="padding:12px;background:rgba(10,31,57,0.6);border-radius:8px;border:1px solid rgba(56,189,248,0.2);cursor:pointer;" onclick="setRepresentation('surface')">
+                    <div style="font-weight:700;color:#06b6d4;font-size:11px;">Solvent Accessible Surface (SASA)</div>
+                    <div style="font-size:10px;color:#94a3b8;margin-top:4px;">Conolly analytical rolling probe (1.4 Å) solvent boundary</div>
                 </div>
-                <div style="padding:12px;background:rgba(10,31,57,0.6);border-radius:8px;border:1px solid rgba(56,189,248,0.2);cursor:pointer;" onclick="showToast('Surface','Electrostatic Coulombic potential mapped')">
-                    <div style="font-weight:600;color:#ff4d67;font-size:11px;">Poisson-Boltzmann Electrostatics</div>
-                    <div style="font-size:10px;color:#94a3b8;margin-top:4px;">Coulombic continuum charge distribution (-10 to +10 kT/e)</div>
+                <div style="padding:12px;background:rgba(10,31,57,0.6);border-radius:8px;border:1px solid rgba(56,189,248,0.2);cursor:pointer;" onclick="setRepresentation('electro')">
+                    <div style="font-weight:700;color:#ff4d67;font-size:11px;">Poisson-Boltzmann Electrostatics</div>
+                    <div style="font-size:10px;color:#94a3b8;margin-top:4px;">Coulombic charge continuum (-10 to +10 kT/e: Red -, Blue +)</div>
+                </div>
+                <div style="padding:12px;background:rgba(10,31,57,0.6);border-radius:8px;border:1px solid rgba(56,189,248,0.2);cursor:pointer;" onclick="setRepresentation('hydrophobic')">
+                    <div style="font-weight:700;color:#f97316;font-size:11px;">Kyte-Doolittle Hydrophobic Lipophilicity</div>
+                    <div style="font-size:10px;color:#94a3b8;margin-top:4px;">Hydropathy potential mapping (Orange lipophilic, Blue polar)</div>
+                </div>
+                <div style="padding:12px;background:rgba(10,31,57,0.6);border-radius:8px;border:1px solid rgba(56,189,248,0.2);cursor:pointer;" onclick="setRepresentation('glass')">
+                    <div style="font-weight:700;color:#38bdf8;font-size:11px;">PBR Dielectric Glass Transmission</div>
+                    <div style="font-size:10px;color:#94a3b8;margin-top:4px;">Optical transmission & refraction envelope (IOR 1.35)</div>
+                </div>
+                <div style="padding:12px;background:rgba(10,31,57,0.6);border-radius:8px;border:1px solid rgba(56,189,248,0.2);cursor:pointer;" onclick="setRepresentation('mesh')">
+                    <div style="font-weight:700;color:#c084fc;font-size:11px;">Polygon Contour Wireframe Mesh</div>
+                    <div style="font-size:10px;color:#94a3b8;margin-top:4px;">Triangulated geometric molecular volume contour cage</div>
+                </div>
+                <div style="padding:12px;background:rgba(10,31,57,0.6);border-radius:8px;border:1px solid rgba(56,189,248,0.2);cursor:pointer;" onclick="focusBindingPocket();toggleCavity(true);">
+                    <div style="font-weight:700;color:#facc15;font-size:11px;">Active Binding Cavity Volume (4.0 Å)</div>
+                    <div style="font-size:10px;color:#94a3b8;margin-top:4px;">Ligand-binding pocket cavity boundary & contact mesh</div>
                 </div>
             </div>
         </div>
@@ -985,11 +1020,35 @@ button, input{ font:inherit; color:var(--text); outline:none; }
 
         <!-- VIEWER BOTTOM -->
         <div class="viewerBottom">
-            <button class="styleBtn active" id="btnRepRibbon" onclick="setRepresentation('ribbon', this)">Ribbon</button>
-            <button class="styleBtn" id="btnRepElectro" onclick="setRepresentation('electro', this)">Electrostatic</button>
-            <button class="styleBtn" id="btnRepGlass" onclick="setRepresentation('glass', this)">Glass Surface</button>
-            <button class="styleBtn" id="btnRepSticks" onclick="setRepresentation('sticks', this)">Ball & Stick</button>
-            <button class="styleBtn" id="btnRepSphere" onclick="setRepresentation('sphere', this)">Spacefill</button>
+            <select class="viewSelectDropdown" id="viewModeSelect" onchange="setRepresentation(this.value)">
+                <option value="ribbon">Ribbon (Secondary Structure)</option>
+                <option value="cartoon">Cartoon (PyMOL Style)</option>
+                <option value="surface">Surface (SASA Analytical)</option>
+                <option value="electro">Electrostatic (Poisson-Boltzmann)</option>
+                <option value="hydrophobic">Hydrophobic (Kyte-Doolittle)</option>
+                <option value="glass">Glass (Optical Transmission)</option>
+                <option value="mesh">Mesh (Polygon Wireframe)</option>
+                <option value="sticks">Ball & Stick (Dual Radius)</option>
+                <option value="licorice">Licorice (Covalent Sticks)</option>
+                <option value="sphere">Spacefill (Van der Waals CPK)</option>
+                <option value="bfactor">B-Factor / pLDDT (Confidence)</option>
+                <option value="backbone">Backbone Trace (C-Alpha Spline)</option>
+            </select>
+
+            <div class="styleBtnGroup">
+                <button class="styleBtn active" id="btnRepRibbon" onclick="setRepresentation('ribbon', this)">Ribbon</button>
+                <button class="styleBtn" id="btnRepCartoon" onclick="setRepresentation('cartoon', this)">Cartoon</button>
+                <button class="styleBtn" id="btnRepSurface" onclick="setRepresentation('surface', this)">Surface</button>
+                <button class="styleBtn" id="btnRepElectro" onclick="setRepresentation('electro', this)">Electrostatic</button>
+                <button class="styleBtn" id="btnRepHydrophobic" onclick="setRepresentation('hydrophobic', this)">Hydrophobic</button>
+                <button class="styleBtn" id="btnRepGlass" onclick="setRepresentation('glass', this)">Glass</button>
+                <button class="styleBtn" id="btnRepMesh" onclick="setRepresentation('mesh', this)">Mesh</button>
+                <button class="styleBtn" id="btnRepSticks" onclick="setRepresentation('sticks', this)">Ball & Stick</button>
+                <button class="styleBtn" id="btnRepLicorice" onclick="setRepresentation('licorice', this)">Licorice</button>
+                <button class="styleBtn" id="btnRepSphere" onclick="setRepresentation('sphere', this)">Spacefill</button>
+                <button class="styleBtn" id="btnRepBfactor" onclick="setRepresentation('bfactor', this)">B-Factor</button>
+                <button class="styleBtn" id="btnRepBackbone" onclick="setRepresentation('backbone', this)">Backbone</button>
+            </div>
 
             <div class="viewerSpacer"></div>
 
@@ -1276,8 +1335,9 @@ updateClock();
 
 /* ================= THREE.JS 3D SCENE ================= */
 let scene, camera, renderer, controls;
-let moleculeGroup, ribbonGroup, electroGroup, glassGroup, sticksGroup, sphereGroup;
-let disulfideGroup, hydrationGroup, membraneGroup, glucoseGroup, interactionGroup;
+let moleculeGroup, ribbonGroup, cartoonGroup, surfaceGroup, electroGroup, hydrophobicGroup, glassGroup, meshGroup;
+let sticksGroup, licoriceGroup, sphereGroup, bfactorGroup, backboneGroup;
+let disulfideGroup, hydrationGroup, membraneGroup, glucoseGroup, interactionGroup, cavityGroup;
 let currentRep = 'ribbon';
 let autoRotate = true;
 let simRunning = true;
@@ -1341,22 +1401,33 @@ function initThree(){
         fillLight.position.set(-14, 10, 10);
         scene.add(fillLight);
 
-        // Molecular Groups Hierarchy
+        // Molecular Groups Hierarchy - FULL PACK OF 12 REPRESENTATIONS + 6 OVERLAYS
         moleculeGroup = new THREE.Group();
         ribbonGroup = new THREE.Group();
+        cartoonGroup = new THREE.Group();
+        surfaceGroup = new THREE.Group();
         electroGroup = new THREE.Group();
+        hydrophobicGroup = new THREE.Group();
         glassGroup = new THREE.Group();
+        meshGroup = new THREE.Group();
         sticksGroup = new THREE.Group();
+        licoriceGroup = new THREE.Group();
         sphereGroup = new THREE.Group();
+        bfactorGroup = new THREE.Group();
+        backboneGroup = new THREE.Group();
+
         disulfideGroup = new THREE.Group();
         hydrationGroup = new THREE.Group();
         membraneGroup = new THREE.Group();
         glucoseGroup = new THREE.Group();
         interactionGroup = new THREE.Group();
+        cavityGroup = new THREE.Group();
 
         moleculeGroup.add(
-            ribbonGroup, electroGroup, glassGroup, sticksGroup, sphereGroup,
-            disulfideGroup, hydrationGroup, membraneGroup, glucoseGroup, interactionGroup
+            ribbonGroup, cartoonGroup, surfaceGroup, electroGroup, hydrophobicGroup,
+            glassGroup, meshGroup, sticksGroup, licoriceGroup, sphereGroup,
+            bfactorGroup, backboneGroup, disulfideGroup, hydrationGroup, membraneGroup,
+            glucoseGroup, interactionGroup, cavityGroup
         );
         scene.add(moleculeGroup);
 
@@ -1494,6 +1565,17 @@ function createInteractions(){
             resListEl.appendChild(div);
         }
     });
+
+    // Binding Cavity Mesh (Gold Cage)
+    if(cavityGroup){
+        while(cavityGroup.children.length > 0) cavityGroup.remove(cavityGroup.children[0]);
+        const cavGeo = new THREE.IcosahedronGeometry(4.2, 2);
+        const cavMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b, wireframe: true, transparent: true, opacity: 0.40 });
+        const cavMesh = new THREE.Mesh(cavGeo, cavMat);
+        cavMesh.position.set(0, 0, 0);
+        cavMesh.name = "binding_cavity_cage";
+        cavityGroup.add(cavMesh);
+    }
 }
 
 function focusResidue(x, y, z, name, dist, type){
@@ -1521,7 +1603,7 @@ function closeBindingPanel(){
     if(bp) bp.style.display = "none";
 }
 
-/* ================= FULL PDB RENDERING ================= */
+/* ================= FULL PDB RENDERING (ALL 12 REPRESENTATIONS) ================= */
 function renderRealPDB(pdbData){
     if(!pdbData || !pdbData.ca_coords || pdbData.ca_coords.length === 0) return;
     if(!scene || !ribbonGroup){
@@ -1537,25 +1619,25 @@ function renderRealPDB(pdbData){
     }));
     originalAtoms = (pdbData.atoms || []).map(a => ({ ...a }));
 
-    // Clear previous representations
-    [ribbonGroup, electroGroup, glassGroup, sticksGroup, sphereGroup, disulfideGroup, hydrationGroup, membraneGroup].forEach(g => {
+    // Clear all representation & layer groups
+    [
+        ribbonGroup, cartoonGroup, surfaceGroup, electroGroup, hydrophobicGroup,
+        glassGroup, meshGroup, sticksGroup, licoriceGroup, sphereGroup,
+        bfactorGroup, backboneGroup, disulfideGroup, hydrationGroup, membraneGroup
+    ].forEach(g => {
         if(g) while(g.children.length > 0) g.remove(g.children[0]);
     });
 
     const caPoints = originalCAPoints.map(c => new THREE.Vector3(c.x, c.y, c.z));
+    const box = new THREE.Box3().setFromPoints(caPoints);
+    const size = new THREE.Vector3(); box.getSize(size);
+    const center = new THREE.Vector3(); box.getCenter(center);
+    const maxDim = Math.max(size.x, size.y, size.z) * 0.65;
 
-    // 1. CHIMERAX / PYMOL STYLE SCIENTIFIC RIBBON
+    // 1. RIBBON REPRESENTATION (Continuous secondary structure tube + beads)
     if(caPoints.length >= 2){
         const fullCurve = new THREE.CatmullRomCurve3(caPoints);
-        
-        // Helix, Sheet, and Loop materials with physical sheen
-        const helixMat = new THREE.MeshPhysicalMaterial({ color: 0xc084fc, roughness: 0.22, metalness: 0.15, clearcoat: 0.6 });
-        const sheetMat = new THREE.MeshPhysicalMaterial({ color: 0xfacc15, roughness: 0.20, metalness: 0.20, clearcoat: 0.5 });
-        const loopMat = new THREE.MeshPhysicalMaterial({ color: 0x38bdf8, roughness: 0.25, metalness: 0.10, clearcoat: 0.4 });
-
-        // Continuous smooth backbone ribbon with secondary structure vertex colors
-        const tubeSegments = caPoints.length * 8;
-        const tubeGeo = new THREE.TubeGeometry(fullCurve, tubeSegments, 0.42, 12, false);
+        const tubeGeo = new THREE.TubeGeometry(fullCurve, caPoints.length * 8, 0.42, 12, false);
         const count = tubeGeo.attributes.position.count;
         const colors = new Float32Array(count * 3);
         const cColor = new THREE.Color();
@@ -1575,25 +1657,241 @@ function renderRealPDB(pdbData){
         ribbonMesh.name = "backbone_ribbon";
         ribbonGroup.add(ribbonMesh);
 
-        // CA Nodal beads along secondary structure
-        const helixBeadGeo = new THREE.SphereGeometry(0.55, 14, 14);
-        const sheetBeadGeo = new THREE.SphereGeometry(0.50, 14, 14);
-        const loopBeadGeo = new THREE.SphereGeometry(0.42, 12, 12);
+        // CA Nodal beads
+        const helixMat = new THREE.MeshPhysicalMaterial({ color: 0xc084fc, roughness: 0.22, metalness: 0.15, clearcoat: 0.6 });
+        const sheetMat = new THREE.MeshPhysicalMaterial({ color: 0xfacc15, roughness: 0.20, metalness: 0.20, clearcoat: 0.5 });
+        const loopMat = new THREE.MeshPhysicalMaterial({ color: 0x38bdf8, roughness: 0.25, metalness: 0.10, clearcoat: 0.4 });
+        const hGeo = new THREE.SphereGeometry(0.55, 14, 14);
+        const sGeo = new THREE.SphereGeometry(0.50, 14, 14);
+        const lGeo = new THREE.SphereGeometry(0.42, 12, 12);
 
         originalCAPoints.forEach((c) => {
-            const pos = new THREE.Vector3(c.x, c.y, c.z);
-            let beadGeo = loopBeadGeo, beadMat = loopMat;
-            if(c.sec_struct === 'helix'){ beadGeo = helixBeadGeo; beadMat = helixMat; }
-            else if(c.sec_struct === 'sheet'){ beadGeo = sheetBeadGeo; beadMat = sheetMat; }
+            let bGeo = lGeo, bMat = loopMat;
+            if(c.sec_struct === 'helix'){ bGeo = hGeo; bMat = helixMat; }
+            else if(c.sec_struct === 'sheet'){ bGeo = sGeo; bMat = sheetMat; }
 
-            const bead = new THREE.Mesh(beadGeo, beadMat);
-            bead.position.copy(pos);
+            const bead = new THREE.Mesh(bGeo, bMat);
+            bead.position.set(c.x, c.y, c.z);
             bead.name = "ca_bead_" + c.id;
             ribbonGroup.add(bead);
         });
     }
 
-    // 2. AUTHENTIC DISULFIDE BRIDGES (S-S BONDS)
+    // 2. CARTOON REPRESENTATION (PyMOL Style Helical Ribbon + Arrow Sheets + Loops)
+    if(caPoints.length >= 2){
+        const fullCurve = new THREE.CatmullRomCurve3(caPoints);
+        const cartoonTube = new THREE.TubeGeometry(fullCurve, caPoints.length * 6, 0.58, 8, false);
+        const count = cartoonTube.attributes.position.count;
+        const cColors = new Float32Array(count * 3);
+        const col = new THREE.Color();
+        for(let i=0; i<count; i++){
+            const t = i / count;
+            const resIdx = Math.min(caPoints.length - 1, Math.floor(t * caPoints.length));
+            const ss = originalCAPoints[resIdx].sec_struct;
+            if(ss === 'helix') col.setHex(0xa855f7);
+            else if(ss === 'sheet') col.setHex(0xeab308);
+            else col.setHex(0x0284c7);
+            cColors[i*3] = col.r; cColors[i*3+1] = col.g; cColors[i*3+2] = col.b;
+        }
+        cartoonTube.setAttribute('color', new THREE.BufferAttribute(cColors, 3));
+        const cMesh = new THREE.Mesh(cartoonTube, new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.2, metalness: 0.2, clearcoat: 0.7 }));
+        cartoonGroup.add(cMesh);
+
+        // Helical cylinders along helices
+        const cylMat = new THREE.MeshPhysicalMaterial({ color: 0xa855f7, roughness: 0.25, clearcoat: 0.6 });
+        for(let i=0; i<caPoints.length-1; i++){
+            if(originalCAPoints[i].sec_struct === 'helix' && originalCAPoints[i+1].sec_struct === 'helix'){
+                const p1 = caPoints[i], p2 = caPoints[i+1];
+                const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.48, p1.distanceTo(p2), 10), cylMat);
+                cyl.position.copy(p1).add(p2).multiplyScalar(0.5);
+                cyl.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), p2.clone().sub(p1).normalize());
+                cartoonGroup.add(cyl);
+            }
+        }
+    }
+
+    // 3. GAUSSIAN / SOLVENT-ACCESSIBLE SURFACE (SASA)
+    const surfGeo = new THREE.IcosahedronGeometry(Math.max(8, maxDim), 4);
+    const surfaceMesh = new THREE.Mesh(
+        surfGeo,
+        new THREE.MeshPhysicalMaterial({ color: 0x06b6d4, roughness: 0.30, metalness: 0.10, clearcoat: 0.35, side: THREE.DoubleSide })
+    );
+    surfaceMesh.position.copy(center);
+    surfaceGroup.add(surfaceMesh);
+
+    // 4. ELECTROSTATIC POTENTIAL SURFACE (POISSON-COULOMBIC COLOR MAPPING)
+    const electroGeo = surfGeo.clone();
+    const electroPos = electroGeo.attributes.position;
+    const electroColors = new Float32Array(electroPos.count * 3);
+    const tempCol = new THREE.Color();
+
+    for(let i=0; i<electroPos.count; i++){
+        const vx = electroPos.getX(i) + center.x;
+        const vy = electroPos.getY(i) + center.y;
+        const vz = electroPos.getZ(i) + center.z;
+
+        let pot = 0;
+        originalCAPoints.forEach(c => {
+            const d = Math.hypot(vx - c.x, vy - c.y, vz - c.z) + 1.0;
+            if(c.res === 'GLU' || c.res === 'ASP') pot -= 2.5 / d;
+            else if(c.res === 'ARG' || c.res === 'LYS' || c.res === 'HIS') pot += 2.5 / d;
+        });
+
+        if(pot < -0.15) tempCol.setHSL(0.0, 0.9, 0.55); // Red acidic
+        else if(pot > 0.15) tempCol.setHSL(0.6, 0.9, 0.55); // Blue basic
+        else tempCol.setHSL(0.58, 0.1, 0.90); // White neutral
+
+        electroColors[i*3] = tempCol.r; electroColors[i*3+1] = tempCol.g; electroColors[i*3+2] = tempCol.b;
+    }
+    electroGeo.setAttribute('color', new THREE.BufferAttribute(electroColors, 3));
+    const electroMesh = new THREE.Mesh(electroGeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.35, metalness: 0.1, side: THREE.DoubleSide }));
+    electroMesh.position.copy(center);
+    electroGroup.add(electroMesh);
+
+    // 5. KYTE-DOOLITTLE HYDROPHOBIC SURFACE
+    const hydroGeo = surfGeo.clone();
+    const hydroPos = hydroGeo.attributes.position;
+    const hydroColors = new Float32Array(hydroPos.count * 3);
+    const hydroMap = {
+        'ILE': 4.5, 'VAL': 4.2, 'LEU': 3.8, 'PHE': 2.8, 'CYS': 2.5, 'MET': 1.9, 'ALA': 1.8,
+        'GLY': -0.4, 'THR': -0.7, 'SER': -0.8, 'TRP': -0.9, 'TYR': -1.3, 'PRO': -1.6,
+        'HIS': -3.2, 'GLU': -3.5, 'GLN': -3.5, 'ASP': -3.5, 'ASN': -3.5, 'LYS': -3.9, 'ARG': -4.5
+    };
+
+    for(let i=0; i<hydroPos.count; i++){
+        const vx = hydroPos.getX(i) + center.x;
+        const vy = hydroPos.getY(i) + center.y;
+        const vz = hydroPos.getZ(i) + center.z;
+
+        let score = 0;
+        originalCAPoints.forEach(c => {
+            const d = Math.hypot(vx - c.x, vy - c.y, vz - c.z) + 1.0;
+            const h = hydroMap[c.res] || 0.0;
+            score += h / d;
+        });
+
+        if(score > 0.15) tempCol.setHex(0xf97316); // Amber hydrophobic
+        else if(score < -0.15) tempCol.setHex(0x38bdf8); // Ice blue polar
+        else tempCol.setHex(0xfef08a); // Yellow neutral
+
+        hydroColors[i*3] = tempCol.r; hydroColors[i*3+1] = tempCol.g; hydroColors[i*3+2] = tempCol.b;
+    }
+    hydroGeo.setAttribute('color', new THREE.BufferAttribute(hydroColors, 3));
+    const hydroMesh = new THREE.Mesh(hydroGeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.35, metalness: 0.1, side: THREE.DoubleSide }));
+    hydroMesh.position.copy(center);
+    hydrophobicGroup.add(hydroMesh);
+
+    // 6. GLASS TRANSMISSION MOLECULAR ENVELOPE
+    const glassMat = new THREE.MeshPhysicalMaterial({
+        color: 0x0ea5e9, transparent: true, opacity: 0.32, transmission: 0.88,
+        roughness: 0.10, ior: 1.35, clearcoat: 1.0, side: THREE.DoubleSide
+    });
+    const glassMesh = new THREE.Mesh(surfGeo, glassMat);
+    glassMesh.position.copy(center);
+    glassGroup.add(glassMesh);
+
+    // 7. MESH WIREFRAME
+    const wireMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true, transparent: true, opacity: 0.65 });
+    const wireMesh = new THREE.Mesh(surfGeo, wireMat);
+    wireMesh.position.copy(center);
+    meshGroup.add(wireMesh);
+
+    // 8. BALL & STICK
+    const stickMat = new THREE.MeshPhysicalMaterial({ color: 0x93c5fd, roughness: 0.25, metalness: 0.3 });
+    const bSphereGeo = new THREE.SphereGeometry(0.32, 12, 12);
+    for(let i=0; i<caPoints.length-1; i++){
+        const p1 = caPoints[i], p2 = caPoints[i+1];
+        if(p1.distanceTo(p2) < 4.2){
+            const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, p1.distanceTo(p2), 8), stickMat);
+            cyl.position.copy(p1).add(p2).multiplyScalar(0.5);
+            cyl.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), p2.clone().sub(p1).normalize());
+            sticksGroup.add(cyl);
+        }
+        const sph = new THREE.Mesh(bSphereGeo, stickMat);
+        sph.position.copy(p1);
+        sticksGroup.add(sph);
+    }
+
+    // 9. LICORICE (THICK VALENCE BONDS)
+    const licMat = new THREE.MeshPhysicalMaterial({ color: 0x38bdf8, roughness: 0.22, metalness: 0.25 });
+    for(let i=0; i<caPoints.length-1; i++){
+        const p1 = caPoints[i], p2 = caPoints[i+1];
+        if(p1.distanceTo(p2) < 4.2){
+            const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, p1.distanceTo(p2), 10), licMat);
+            cyl.position.copy(p1).add(p2).multiplyScalar(0.5);
+            cyl.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), p2.clone().sub(p1).normalize());
+            licoriceGroup.add(cyl);
+        }
+    }
+
+    // 10. CPK SPACEFILL (VAN DER WAALS SPHERES)
+    const atoms = pdbData.atoms || [];
+    const sphereGeo = new THREE.SphereGeometry(0.50, 14, 14);
+    const elemColors = { 'C': 0x00d9ff, 'N': 0x3b82f6, 'O': 0xef4444, 'S': 0xfacc15, 'H': 0xffffff };
+    atoms.forEach(a => {
+        const mat = new THREE.MeshPhysicalMaterial({ color: elemColors[a.elem] || 0x10b981, roughness: 0.25, clearcoat: 0.4 });
+        const m = new THREE.Mesh(sphereGeo, mat);
+        m.position.set(a.x, a.y, a.z);
+        sphereGroup.add(m);
+    });
+
+    // 11. B-FACTOR / pLDDT RAINBOW CONFIDENCE
+    if(caPoints.length >= 2){
+        const fullCurve = new THREE.CatmullRomCurve3(caPoints);
+        const bGeo = new THREE.TubeGeometry(fullCurve, caPoints.length * 8, 0.45, 12, false);
+        const bCount = bGeo.attributes.position.count;
+        const bColors = new Float32Array(bCount * 3);
+        const bfCol = new THREE.Color();
+
+        for(let i=0; i<bCount; i++){
+            const t = i / bCount;
+            const resIdx = Math.min(caPoints.length - 1, Math.floor(t * caPoints.length));
+            const bf = originalCAPoints[resIdx].b_factor || 15.0;
+            // Map 8.0 to 40.0 -> Blue (rigid) to Cyan to Green to Yellow to Red (flexible)
+            const norm = Math.max(0, Math.min(1, (bf - 8.0) / 32.0));
+            bfCol.setHSL((1.0 - norm) * 0.65, 0.95, 0.50);
+
+            bColors[i*3] = bfCol.r; bColors[i*3+1] = bfCol.g; bColors[i*3+2] = bfCol.b;
+        }
+        bGeo.setAttribute('color', new THREE.BufferAttribute(bColors, 3));
+        const bMesh = new THREE.Mesh(bGeo, new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.25, clearcoat: 0.6 }));
+        bfactorGroup.add(bMesh);
+
+        originalCAPoints.forEach(c => {
+            const norm = Math.max(0, Math.min(1, ((c.b_factor || 15.0) - 8.0) / 32.0));
+            bfCol.setHSL((1.0 - norm) * 0.65, 0.95, 0.50);
+            const bead = new THREE.Mesh(
+                new THREE.SphereGeometry(0.50, 12, 12),
+                new THREE.MeshPhysicalMaterial({ color: bfCol, roughness: 0.2, clearcoat: 0.5 })
+            );
+            bead.position.set(c.x, c.y, c.z);
+            bead.name = "bfactor_bead_" + c.id;
+            bfactorGroup.add(bead);
+        });
+    }
+
+    // 12. BACKBONE TRACE (C-ALPHA SPLINE)
+    if(caPoints.length >= 2){
+        const fullCurve = new THREE.CatmullRomCurve3(caPoints);
+        const traceGeo = new THREE.TubeGeometry(fullCurve, caPoints.length * 6, 0.24, 10, false);
+        const traceMesh = new THREE.Mesh(
+            traceGeo,
+            new THREE.MeshPhysicalMaterial({ color: 0x38bdf8, roughness: 0.25, metalness: 0.35, clearcoat: 0.5 })
+        );
+        backboneGroup.add(traceMesh);
+
+        originalCAPoints.forEach(c => {
+            const node = new THREE.Mesh(
+                new THREE.SphereGeometry(0.35, 12, 12),
+                new THREE.MeshPhysicalMaterial({ color: 0x00f59b, roughness: 0.2, emissive: 0x003820 })
+            );
+            node.position.set(c.x, c.y, c.z);
+            node.name = "backbone_bead_" + c.id;
+            backboneGroup.add(node);
+        });
+    }
+
+    // OVERLAY: DISULFIDE BRIDGES (S-S BONDS)
     const ssbonds = pdbData.ssbonds || [];
     const disulfideMat = new THREE.MeshPhysicalMaterial({
         color: 0xfbbf24, roughness: 0.15, metalness: 0.85, emissive: 0x78350f, clearcoat: 0.5
@@ -1614,75 +1912,7 @@ function renderRealPDB(pdbData){
         const s2 = new THREE.Mesh(sSphereGeo, disulfideMat); s2.position.copy(p2); disulfideGroup.add(s2);
     });
 
-    // 3. ELECTROSTATIC POTENTIAL SURFACE (POISSON-COULOMBIC COLOR MAPPING)
-    const box = new THREE.Box3().setFromPoints(caPoints);
-    const size = new THREE.Vector3(); box.getSize(size);
-    const center = new THREE.Vector3(); box.getCenter(center);
-    const maxDim = Math.max(size.x, size.y, size.z) * 0.65;
-
-    const surfGeo = new THREE.IcosahedronGeometry(Math.max(8, maxDim), 4);
-    const surfPos = surfGeo.attributes.position;
-    const surfColors = new Float32Array(surfPos.count * 3);
-    const tempColor = new THREE.Color();
-
-    for(let i=0; i<surfPos.count; i++){
-        const vx = surfPos.getX(i) + center.x;
-        const vy = surfPos.getY(i) + center.y;
-        const vz = surfPos.getZ(i) + center.z;
-
-        // Calculate Coulombic potential sum
-        let pot = 0;
-        originalCAPoints.forEach(c => {
-            const d = Math.hypot(vx - c.x, vy - c.y, vz - c.z) + 1.0;
-            if(c.res === 'GLU' || c.res === 'ASP') pot -= 2.5 / d;
-            else if(c.res === 'ARG' || c.res === 'LYS' || c.res === 'HIS') pot += 2.5 / d;
-        });
-
-        // Map pot (-1.0 to +1.0) -> Red (acidic) to Silver to Blue (basic)
-        if(pot < -0.15) tempColor.setHSL(0.0, 0.9, 0.55); // Red acidic
-        else if(pot > 0.15) tempColor.setHSL(0.6, 0.9, 0.55); // Blue basic
-        else tempColor.setHSL(0.58, 0.1, 0.90); // White/silver neutral
-
-        surfColors[i*3] = tempColor.r; surfColors[i*3+1] = tempColor.g; surfColors[i*3+2] = tempColor.b;
-    }
-    surfGeo.setAttribute('color', new THREE.BufferAttribute(surfColors, 3));
-    const electroMesh = new THREE.Mesh(surfGeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.35, metalness: 0.1, side: THREE.DoubleSide }));
-    electroMesh.position.copy(center);
-    electroGroup.add(electroMesh);
-
-    // 4. GLASS TRANSMISSION MOLECULAR ENVELOPE
-    const glassMat = new THREE.MeshPhysicalMaterial({
-        color: 0x0ea5e9, transparent: true, opacity: 0.30, transmission: 0.85,
-        roughness: 0.12, ior: 1.35, side: THREE.DoubleSide
-    });
-    const glassMesh = new THREE.Mesh(surfGeo, glassMat);
-    glassMesh.position.copy(center);
-    glassGroup.add(glassMesh);
-
-    // 5. BALL & STICK
-    const stickMat = new THREE.MeshPhysicalMaterial({ color: 0x93c5fd, roughness: 0.25, metalness: 0.3 });
-    for(let i=0; i<caPoints.length-1; i++){
-        const p1 = caPoints[i], p2 = caPoints[i+1];
-        if(p1.distanceTo(p2) < 4.2){
-            const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, p1.distanceTo(p2), 8), stickMat);
-            cyl.position.copy(p1).add(p2).multiplyScalar(0.5);
-            cyl.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), p2.clone().sub(p1).normalize());
-            sticksGroup.add(cyl);
-        }
-    }
-
-    // 6. CPK SPACEFILL (VAN DER WAALS SPHERES)
-    const atoms = pdbData.atoms || [];
-    const sphereGeo = new THREE.SphereGeometry(0.48, 14, 14);
-    const elemColors = { 'C': 0x00d9ff, 'N': 0x3b82f6, 'O': 0xef4444, 'S': 0xfacc15, 'H': 0xffffff };
-    atoms.forEach(a => {
-        const mat = new THREE.MeshPhysicalMaterial({ color: elemColors[a.elem] || 0x10b981, roughness: 0.25, clearcoat: 0.4 });
-        const m = new THREE.Mesh(sphereGeo, mat);
-        m.position.set(a.x, a.y, a.z);
-        sphereGroup.add(m);
-    });
-
-    // 7. HYDRATION SHELL (TIP3P WATER ENVELOPE)
+    // OVERLAY: HYDRATION SHELL (TIP3P WATERS)
     const waterWaters = pdbData.hydration_waters || [];
     const wOGeo = new THREE.SphereGeometry(0.26, 12, 12);
     const wHGeo = new THREE.SphereGeometry(0.14, 10, 10);
@@ -1702,7 +1932,7 @@ function renderRealPDB(pdbData){
         hydrationGroup.add(wGroup);
     });
 
-    // 8. MEMBRANE BILAYER SLAB (POPC PHOSPHOLIPIDS)
+    // OVERLAY: MEMBRANE BILAYER SLAB (POPC)
     const headGeo = new THREE.SphereGeometry(0.42, 10, 10);
     const headMat1 = new THREE.MeshPhysicalMaterial({ color: 0x06b6d4, roughness: 0.25, transmission: 0.4, transparent: true, opacity: 0.75 });
     const headMat2 = new THREE.MeshPhysicalMaterial({ color: 0xf59e0b, roughness: 0.25, transmission: 0.4, transparent: true, opacity: 0.75 });
@@ -1723,10 +1953,10 @@ function renderRealPDB(pdbData){
         new THREE.MeshBasicMaterial({ color: 0x06182e, transparent: true, opacity: 0.20, side: THREE.DoubleSide })
     );
     membraneGroup.add(coreSlab);
-    membraneGroup.visible = false; // Default hidden until toggled
+    membraneGroup.visible = false; // Default hidden
 
     // Apply Active Representation
-    setRepresentation(currentRep, document.getElementById('btnRep' + currentRep.charAt(0).toUpperCase() + currentRep.slice(1)));
+    setRepresentation(currentRep);
 
     // Fit camera
     const fitDist = Math.max(26, maxDim * 2.2);
@@ -1764,12 +1994,9 @@ function renderRealPDB(pdbData){
 
 /* ================= 3D REPRESENTATIONS & CAMERA ================= */
 function setRepresentation(style, elem){
-    // Map legacy alias names if passed
-    if(style === 'cartoon') style = 'ribbon';
-    if(style === 'surface') style = 'electro';
-    if(style === 'mesh') style = 'glass';
-
     currentRep = style;
+
+    // Sync style buttons
     document.querySelectorAll(".viewerBottom .styleBtn").forEach(b => b.classList.remove("active"));
     if(elem) elem.classList.add("active");
     else {
@@ -1777,18 +2004,30 @@ function setRepresentation(style, elem){
         if(btn) btn.classList.add("active");
     }
 
+    // Sync dropdown
+    const sel = document.getElementById("viewModeSelect");
+    if(sel && sel.value !== style) sel.value = style;
+
     const wrap = document.getElementById("threeCanvasWrap");
     if(wrap && wrap.style.display === 'none'){
         switchWorkspaceTab('viewer', document.querySelectorAll('.viewer .tab')[0]);
     }
 
+    // Toggle 12 representation groups
     if(ribbonGroup) ribbonGroup.visible = (style === 'ribbon' || style === 'glass');
+    if(cartoonGroup) cartoonGroup.visible = (style === 'cartoon');
+    if(surfaceGroup) surfaceGroup.visible = (style === 'surface');
     if(electroGroup) electroGroup.visible = (style === 'electro');
+    if(hydrophobicGroup) hydrophobicGroup.visible = (style === 'hydrophobic');
     if(glassGroup) glassGroup.visible = (style === 'glass');
+    if(meshGroup) meshGroup.visible = (style === 'mesh');
     if(sticksGroup) sticksGroup.visible = (style === 'sticks');
+    if(licoriceGroup) licoriceGroup.visible = (style === 'licorice');
     if(sphereGroup) sphereGroup.visible = (style === 'sphere');
+    if(bfactorGroup) bfactorGroup.visible = (style === 'bfactor');
+    if(backboneGroup) backboneGroup.visible = (style === 'backbone');
 
-    showToast("3D Representation", `${style.toUpperCase()} active`);
+    showToast("3D Representation", `${style.toUpperCase()} view active`);
 }
 
 function resetCamera(){
@@ -1803,8 +2042,10 @@ function focusMolecule(){
 }
 
 function toggleSurface(){
-    const nextStyle = (currentRep === 'electro') ? 'ribbon' : 'electro';
-    setRepresentation(nextStyle, document.getElementById('btnRep' + nextStyle.charAt(0).toUpperCase() + nextStyle.slice(1)));
+    const modes = ['surface', 'electro', 'hydrophobic', 'glass', 'mesh', 'ribbon'];
+    const curIdx = modes.indexOf(currentRep);
+    const nextMode = modes[(curIdx + 1) % modes.length];
+    setRepresentation(nextMode);
 }
 
 function randomizeMolecule(){
@@ -1820,10 +2061,10 @@ function takeSnapshot(){
     renderer.render(scene, camera);
     const data = renderer.domElement.toDataURL("image/png");
     const link = document.createElement("a");
-    link.download = "polymathix-molecular-render.png";
+    link.download = `polymathix-${currentRep}-render.png`;
     link.href = data;
     link.click();
-    showToast("Snapshot Downloaded", "PNG render saved");
+    showToast("Snapshot Downloaded", `${currentRep.toUpperCase()} PNG render saved`);
 }
 
 function toggleViewerFullscreen(){
@@ -1895,12 +2136,23 @@ function toggleMembrane(show){
     showToast("Lipid Bilayer", show ? "POPC membrane slab visible" : "Hidden");
 }
 
+function toggleLigand(show){
+    if(glucoseGroup) glucoseGroup.visible = show;
+    if(interactionGroup) interactionGroup.visible = show;
+    showToast("Ligand & Contacts", show ? "D-Glucose & contact rays visible" : "Ligand hidden");
+}
+
+function toggleCavity(show){
+    if(cavityGroup) cavityGroup.visible = show;
+    showToast("Pocket Cavity", show ? "Binding pocket cavity mesh visible" : "Cavity hidden");
+}
+
 /* ================= MAIN ANIMATION & SIMULATION LOOP ================= */
 function animate(){
     requestAnimationFrame(animate);
     const t = performance.now() * 0.002 * simSpeed;
 
-    // Cinematic continuous slow rotation when not dragging
+    // Slow orbital rotation when idle
     if(autoRotate && moleculeGroup) {
         moleculeGroup.rotation.y += 0.0012;
     }
@@ -1909,24 +2161,29 @@ function animate(){
     if(simRunning && originalCAPoints.length > 0){
         const tempRatio = (simTemp / 300.0);
 
-        // 1. Thermal Langevin Vibrations on Ribbon Beads
+        // 1. Thermal Langevin Vibrations on Nodal CA Beads
         originalCAPoints.forEach((c, idx) => {
+            const amp = (c.sec_struct === 'loop' ? 0.38 : 0.10) * tempRatio * (simMode === 'unfold' ? 1.8 : 1.0);
+            const dx = amp * Math.sin(2.3 * t + idx * 0.7);
+            const dy = amp * Math.cos(1.9 * t + idx * 0.5);
+            const dz = amp * Math.sin(2.7 * t + idx * 0.9);
+
             const bead = ribbonGroup.getObjectByName("ca_bead_" + c.id);
-            if(bead){
-                const amp = (c.sec_struct === 'loop' ? 0.38 : 0.10) * tempRatio;
-                const dx = amp * Math.sin(2.3 * t + idx * 0.7);
-                const dy = amp * Math.cos(1.9 * t + idx * 0.5);
-                const dz = amp * Math.sin(2.7 * t + idx * 0.9);
-                bead.position.set(c.x + dx, c.y + dy, c.z + dz);
-            }
+            if(bead) bead.position.set(c.x + dx, c.y + dy, c.z + dz);
+
+            const bfBead = bfactorGroup.getObjectByName("bfactor_bead_" + c.id);
+            if(bfBead) bfBead.position.set(c.x + dx, c.y + dy, c.z + dz);
+
+            const bbBead = backboneGroup.getObjectByName("backbone_bead_" + c.id);
+            if(bbBead) bbBead.position.set(c.x + dx, c.y + dy, c.z + dz);
         });
 
         // 2. Normal Mode Conformational Breathing
-        if(simMode === 'nma' && ribbonGroup){
+        if(simMode === 'nma' && moleculeGroup){
             const hingeAngle = 0.05 * Math.sin(1.6 * t);
-            ribbonGroup.rotation.z = hingeAngle;
-        } else if(ribbonGroup) {
-            ribbonGroup.rotation.z = 0;
+            moleculeGroup.rotation.z = hingeAngle;
+        } else if(moleculeGroup) {
+            moleculeGroup.rotation.z = 0;
         }
 
         // 3. Induced-Fit D-Glucose Ligand Docking Exploration
@@ -1974,8 +2231,9 @@ function animate(){
         const hudE = document.getElementById("hudEnergy");
         const hudG = document.getElementById("hudDeltaG");
 
+        const simRMSDBase = (simMode === 'unfold') ? 1.65 : 0.82;
         if(hudT) hudT.textContent = (simTemp + Math.sin(t * 3.0) * 0.7).toFixed(1) + " K";
-        if(hudR) hudR.textContent = (0.82 + Math.abs(Math.sin(t * 1.8) * 0.06) * tempRatio).toFixed(2) + " Å";
+        if(hudR) hudR.textContent = (simRMSDBase + Math.abs(Math.sin(t * 1.8) * 0.06) * tempRatio).toFixed(2) + " Å";
         if(hudE) hudE.textContent = (Math.round(-146240 + Math.sin(t * 1.4) * 160)).toLocaleString() + " kJ";
         if(hudG) hudG.textContent = (-7.82 + Math.sin(t * 2.2) * 0.12).toFixed(2);
     }
