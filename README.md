@@ -1,22 +1,47 @@
 # 🧬 POLYMATHIX OS — Autonomous AI for Scientific Discovery
-> **Universal Computational Intelligence for Life Sciences: Plants & Crops, Animals, Human Therapeutics & Microbial Biocatalysis.**
+> **Universal Computational Intelligence for Life Sciences & Solid-State Materials: Plants & Crops, Animals, Human Therapeutics, Microbial Biocatalysis & Nanotechnology.**
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.35+-FF4B4B.svg)](https://streamlit.io)
-[![Three.js](https://img.shields.io/badge/Three.js-r160-black.svg)](https://threejs.org/)
-[![RDKit](https://img.shields.io/badge/RDKit-2023+-green.svg)](https://www.rdkit.org/)
-[![OpenMM](https://img.shields.io/badge/OpenMM-8.0+-purple.svg)](https://openmm.org/)
+[![Release: v1.0.1](https://img.shields.io/badge/Release-v1.0.1-0e71ff.svg?style=flat-square&logo=github)](https://github.com/sohel3shaikh/Polymathix/releases/tag/v1.0.1)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg?style=flat-square)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.35+-FF4B4B.svg?style=flat-square)](https://streamlit.io)
+[![Three.js](https://img.shields.io/badge/Three.js-r160-black.svg?style=flat-square)](https://threejs.org/)
+[![RDKit](https://img.shields.io/badge/RDKit-2023+-green.svg?style=flat-square)](https://www.rdkit.org/)
+[![OpenMM](https://img.shields.io/badge/OpenMM-8.0+-purple.svg?style=flat-square)](https://openmm.org/)
+[![Tests: 15/15 Passing](https://img.shields.io/badge/Tests-15%2F15%20Passing-00f59b.svg?style=flat-square)](scripts/test_all.py)
+
+---
+
+## 🎬 Interactive 3D Demo Walkthrough
+
+<div align="center">
+  <img src="assets/polymathix_demo.gif" alt="Polymathix OS v1.0.1 Interactive Showcase" width="100%" style="border-radius: 12px; border: 1px solid #38bdf8; box-shadow: 0 8px 32px rgba(0,0,0,0.5);" />
+  <p><em>Real-time 3D biophysical simulation, active pocket docking, solid-state crystallography, 23+ discovery catalog, and multi-LLM AI Co-Pilot in Polymathix OS v1.0.1.</em></p>
+  <p>
+    <a href="https://github.com/sohel3shaikh/Polymathix/releases/download/v1.0.1/Polymathix_Showcase_Demo.mp4">
+      <img src="https://img.shields.io/badge/🎬_Download_HD_Demo_Video-MP4_(24.7_MB)-00f59b?style=for-the-badge&logo=youtube&logoColor=black" alt="Download HD Demo Video">
+    </a>
+    &nbsp;
+    <a href="https://github.com/sohel3shaikh/Polymathix/releases/tag/v1.0.1">
+      <img src="https://img.shields.io/badge/🚀_GitHub_Release-v1.0.1_Notes-0e71ff?style=for-the-badge&logo=github&logoColor=white" alt="Release v1.0.1">
+    </a>
+    &nbsp;
+    <a href="https://github.com/sohel3shaikh/Polymathix/releases/download/v1.0.1/Polymathix-Master-Release.zip">
+      <img src="https://img.shields.io/badge/📦_Offline_Zip_Bundle-Download-f59e0b?style=for-the-badge&logo=archive&logoColor=white" alt="Download Offline Bundle">
+    </a>
+  </p>
+</div>
 
 ---
 
 ## 🌟 Overview
 
-**Polymathix OS** is an open-source, AI-orchestrated scientific intelligence operating system designed to accelerate discoveries across **all living beings**:
+**Polymathix OS** is an open-source, AI-orchestrated scientific intelligence operating system designed to accelerate discoveries across **all living kingdoms and inorganic solid-state materials**:
 * 🌾 **Agricultural & Crop Sciences**: Protein thermal adaptation, drought resilience, Rubisco engineering, natural plant defense metabolites.
-* 🐾 **Veterinary & Animal Health**: Zoonotic disease targets, species-specific pharmacokinetics, non-toxic veterinary therapeutics.
-* 🧪 **Human Health & De-Novo Drug Design**: Small-molecule bioisostere generation, Lipinski Rule-of-Five screening, target pocket docking.
+* 🔬 **Solid-State Materials Science & Nanotech**: Cubic Perovskites ($\text{SrTiO}_3$), 2D Graphene monolayers, Carbon Nanotubes ($(5,5)\text{ SWCNT}$), Anatase $\text{TiO}_2$ photocatalysts, and Porous MOF-5 lattices.
+* 🧪 **Human Health & De-Novo Drug Design**: Small-molecule bioisostere generation, Lipinski Rule-of-Five screening, active pocket docking.
 * 🦠 **Microbial & Environmental Biocatalysis**: Catalytic triad optimization (Ser-His-Asp), plastic-degrading enzymes (PETase), carbon-capture metalloenzymes.
+* 🐾 **Veterinary & Animal Health**: Zoonotic disease targets, species-specific pharmacokinetics, non-toxic veterinary therapeutics.
 
 Rather than acting as a static dashboard, Polymathix introduces a **closed-loop AI Orchestrator** following the **Plan ➔ Execute ➔ Verify** methodology.
 
@@ -60,26 +85,29 @@ Rather than acting as a static dashboard, Polymathix introduces a **closed-loop 
 
 ## ⚡ Key Capabilities
 
-### 1. 🧠 Natural Language AI Orchestrator
-* **Intent-Driven Protocol Selection**: Type natural research prompts (e.g., *"Run Crop Proteome & Thermal Adaptation"*, *"Synthesize novel drug with RDKit"*, *"Load Ubiquitin 1UBQ"*, *"Autonomous energy minimization"*).
+### 1. 🧠 Natural Language AI Orchestrator & Multi-LLM Co-Pilot Gateway
+* **Intent-Driven Protocol Selection**: Type natural research prompts (e.g., *"Synthesize 5-fluoro-aspirin"*, *"Run Crop Proteome & Thermal Adaptation"*, *"Load SrTiO3 Perovskite"*).
+* **Multi-LLM 3rd-Party Gateway**: Plug-and-play attachment in Settings for **Claude 3.5 Sonnet**, **OpenAI ChatGPT/GPT-4o**, **xAI Grok-2**, **Moonshot Kimi**, **Zhipu GLM-4**, **Google Gemini 1.5 Pro**, and local **Ollama** instances (100% offline, zero-cloud privacy), with autonomous deterministic fallback.
+* **Real-Time Structure Mutation**: Live conversational chat triggers instant RDKit bioisostere derivation, SMILES conversion, MMFF94 force-field geometry optimization, and direct 3D coordinate injection into the viewport.
 * **Calibrated Protocols**: Pre-calibrated protocols for membrane dynamics, de-novo pharmacophores, non-linear PCA trajectory unfolding, and binding pocket contact mapping.
-* **Autonomous Session Management**: Multi-session lifecycle with live progress calculation and execution pause/stop/resume gates.
 
-### 2. 🔬 Multi-Kingdom Discovery Engines
-* **RDKit Cheminformatics**: Automated bioisostere fragmentation, Lipinski Rule-of-Five profiling (MW ≤ 500, LogP ≤ 5, HBD ≤ 5, HBA ≤ 10, TPSA ≤ 140 Å², Rotatable Bonds ≤ 10), and 2D chemical structure synthesis.
-* **Deep Non-Linear Trajectory PCA**: Overcomes linear PCA limitations by deploying RBF Kernel PCA to unroll high-dimensional protein conformational manifolds.
-* **OpenMM Self-Healing Physics**: Autonomous PDB topology verification, hydrogen addition at pH 7.4, TIP3P solvation, and potential energy minimization with convergence tracking.
-* **Live RCSB PDB Ingestion**: Direct fetching and atomic parsing of any entry from the Protein Data Bank (e.g., `1UBQ`, `4HHB`, `6LU7`, `1CRN`).
-* **Solid-State Materials Science Engine**: Generates 3D unit cells and lattices for advanced functional materials:
-  - **Cubic Perovskite ($SrTiO_3$)**: $Pm\bar{3}m$ symmetry with octahedral $TiO_6$ coordination.
+### 2. 🔬 Multi-Kingdom & Materials Discovery Engines
+* **Solid-State Materials Science & Inorganic Crystallography**:
+  - **Cubic Perovskite ($\text{SrTiO}_3$)**: Cubic space group $Pm\bar{3}m$ (221), $a = 3.905\text{ \AA}$, 12-fold / 6-fold coordination.
   - **2D Graphene Sheet**: Honeycomb $sp^2$ Dirac semimetal monolayer lattice.
-  - **Carbon Nanotubes (SWCNT)**: Chiral $(5,5)$ armchair 1D ballistic conductors.
-  - **Anatase $TiO_2$**: Tetragonal photocatalyst coordination polyhedra.
-  - **Metal-Organic Framework (MOF-5)**: Nanoporous $Zn_4O(BDC)_3$ cage architecture.
-* **Multi-LLM 3rd-Party API Gateway**: Zero-key autonomous AI co-pilot with plug-and-play support for **Claude 3.5 Sonnet**, **OpenAI ChatGPT/GPT-4o**, **xAI Grok-2**, **Moonshot Kimi**, **Zhipu GLM-4**, **Google Gemini**, and local **Ollama** instances.
-* **3D Scientific Discovery Library**: Over 23+ pre-built discovery targets across Human Therapeutics, Crop Resilience, Materials Science, Biocatalytic Enzymes, and Veterinary Medicine with one-click 3D loading and real-time novel derivatization.
+  - **Carbon Nanotubes ($(5,5)\text{ SWCNT}$)**: Chiral armchair 1D ballistic conductors.
+  - **Anatase $\text{TiO}_2$**: Tetragonal photocatalyst coordination polyhedra.
+  - **Metal-Organic Framework ($\text{MOF-5}$)**: Nanoporous $\text{Zn}_4\text{O}(\text{BDC})_3$ cage architecture.
+  - Automatic computation of lattice parameters, density, coordination numbers, and pore diameters.
+* **3D Discovery Library Catalog (23+ Targets)**:
+  - Curated benchmark systems across **Human Therapeutics**, **Crop Science**, **Solid-State Materials**, **Microbial Biocatalysis**, and **Veterinary Health**.
+  - 1-click **"Load 3D Viewport"** and **"⚡ Make Novel Variant"** live derivatization.
+* **RDKit Cheminformatics**: Automated bioisostere fragmentation, Lipinski Rule-of-Five profiling (MW $\le$ 500, LogP $\le$ 5, HBD $\le$ 5, HBA $\le$ 10, TPSA $\le$ 140 $\text{\AA}^2$, Rotatable Bonds $\le$ 10), and 2D chemical structure synthesis.
+* **Deep Non-Linear Trajectory PCA**: Overcomes linear PCA limitations by deploying RBF Kernel PCA to unroll high-dimensional conformational manifolds.
+* **OpenMM Self-Healing Physics**: Autonomous PDB topology verification, hydrogen addition at pH 7.4, TIP3P solvation, and potential energy minimization with convergence tracking down to $-146,240\text{ kJ/mol}$.
+* **Live RCSB PDB Ingestion**: Direct fetching and atomic parsing of any entry from the Protein Data Bank (e.g., `1UBQ`, `4HHB`, `6LU7`, `1CRN`).
 
-### 3. 🎨 High-Performance 3D Molecular Simulation & Visualization Suite
+### 3. 🎨 High-Performance 3D Molecular & Materials Simulation Suite
 * **Full Pack of 12 3D Scientific Representations**: Instant switching between:
   1. **Ribbon**: PyMOL/ChimeraX continuous secondary-structure spline (purple $\alpha$-helices, golden $\beta$-sheets, cyan loops) with C-$\alpha$ nodal beads.
   2. **Cartoon**: Classic structural cartoon with cylindrical helical ribbons and directional $\beta$-sheet arrow plates.
@@ -102,7 +130,7 @@ Rather than acting as a static dashboard, Polymathix introduces a **closed-loop 
 * **3D Viewer**: Full orbit controls, focus, camera reset, snapshot download.
 * **Sequence Viewer**: Primary amino acid sequence chips with residue numbering and secondary structure color coding.
 * **Trajectory Timeline**: Dynamic frame scrubber with RMSD and energy stability tracking.
-* **Properties Table**: Molecular weight, atom count, formula, chains, resolution, and isoelectric point (pI).
+* **Properties Table**: Molecular weight, atom count, formula, chains, resolution, isoelectric point (pI), and crystal lattice parameters.
 * **Analysis**: Comparative plots for latent space manifold projections and minimization trajectories.
 
 ---
@@ -115,7 +143,7 @@ Rather than acting as a static dashboard, Polymathix introduces a **closed-loop 
 
 ### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/YourUsername/Polymathix.git
+git clone https://github.com/sohel3shaikh/Polymathix.git
 cd Polymathix
 ```
 
@@ -158,9 +186,13 @@ POLYMATHIX OS — COMPREHENSIVE END-TO-END VERIFICATION
 [TEST] 8. Frontend Scientific Assets Synchronization...           --> PASSED
 [TEST] 9. Frontend Index HTML & Three.js 3D Engine Integrity...  --> PASSED
 [TEST] 10. Streamlit Master Application Compilation...            --> PASSED
-[TEST] 11. D-Glucose Active Pocket Docking & 3D Interacting Network... --> PASSED
+[TEST] 11. D-Glucose Active Pocket Docking & 3D Interacting...    --> PASSED
+[TEST] 12. Universal Small Molecule 3D Engine (Aspirin, etc.)...  --> PASSED
+[TEST] 13. 100% Progress Convergence & Protocol Finalization...  --> PASSED
+[TEST] 14. Solid-State Materials Science & Crystallography...     --> PASSED
+[TEST] 15. 3D Discovery Library Catalog (23+) & Real-Time AI...   --> PASSED
 ============================================================
-VERIFICATION SUMMARY: 11 PASSED, 0 FAILED
+VERIFICATION SUMMARY: 15 PASSED, 0 FAILED
 ============================================================
 ```
 
@@ -173,8 +205,10 @@ Polymathix/
 ├── app.py                     # Master Streamlit entry point
 ├── polymathix/                # Core Python scientific intelligence backend
 │   ├── orchestrator.py        # AI Orchestrator (Plan -> Execute -> Verify)
-│   ├── core/                  # Multiscale dynamics
+│   ├── core/                  # Multiscale biophysics & dynamics
 │   └── modules/               # Domain-specific scientific tools
+│       ├── ai_engine/         # Multi-LLM API Gateway (Claude, ChatGPT, Grok, Kimi, GLM)
+│       ├── material_science/  # Solid-State Crystallography (SrTiO3, Graphene, SWCNT, MOF-5)
 │       ├── drug_hunting/      # RDKit de-novo synthesis & Lipinski screening
 │       ├── quick_pca/         # Deep Kernel PCA non-linear manifold learning
 │       ├── data_resilience/   # Potential energy graphing engine
@@ -183,9 +217,11 @@ Polymathix/
 │   ├── __init__.py            # Python-to-JavaScript component bridge
 │   └── frontend/              # Glassmorphic 3D dashboard
 │       ├── index.html         # Three.js WebGL dashboard & layout
-│       └── assets/            # Live scientific plots, models & renders
-├── scripts/                   # Automated testing & deployment scripts
-│   └── test_all.py            # End-to-end test suite
+│       └── assets/            # Live scientific plots, models, renders & animated demo
+├── scripts/                   # Automated testing, video generation & release scripts
+│   ├── test_all.py            # End-to-end test suite (15 tests)
+│   ├── generate_linkedin_video.py  # 48-second HD showcase video & GIF builder
+│   └── publish_github_release.py   # GitHub Releases API publishing automation
 ├── 1CRN.pdb                   # Benchmark reference (Crambin plant seed protein)
 ├── requirements.txt           # Python package requirements
 └── README.md                  # Comprehensive scientific documentation
@@ -195,7 +231,7 @@ Polymathix/
 
 ## 🤝 Contributing
 
-We welcome contributions from structural biologists, bioinformaticians, agronomists, veterinary researchers, and machine learning engineers!
+We welcome contributions from structural biologists, crystallographers, materials scientists, bioinformaticians, agronomists, veterinary researchers, and machine learning engineers!
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/NewDiscoveryEngine`)
 3. Commit your Changes (`git commit -m 'Add Crop Drought Resilience Module'`)
@@ -214,6 +250,6 @@ Distributed under the **MIT License**. Free for academic, industrial, and open-s
   title = {Polymathix OS: Autonomous AI for Multi-Kingdom Scientific Discovery},
   year = {2026},
   publisher = {GitHub},
-  url = {https://github.com/YourUsername/Polymathix}
+  url = {https://github.com/sohel3shaikh/Polymathix}
 }
 ```

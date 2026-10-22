@@ -42,3 +42,7 @@ venv.bak/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Video media
+*.mp4
+
