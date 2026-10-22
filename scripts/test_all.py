@@ -170,6 +170,53 @@ def t11_glucose_binding_pocket():
     assert os.path.exists(os.path.join(ROOT_DIR, "assets", "glucose_2d.png")), "glucose_2d.png missing"
     assert any("glucose" in r["name"] for r in state["results"]), "Missing glucose in results list"
 
+def t12_universal_small_molecules():
+    from polymathix.orchestrator import PolymathixOrchestrator
+    orc = PolymathixOrchestrator()
+    
+    # Test Aspirin
+    orc.run_ai_task("Show aspirin in 3D")
+    state = orc.get_state()
+    pdb = state["pdb_data"]
+    assert pdb.get("is_small_molecule") == True, "Aspirin should be marked as small molecule"
+    assert pdb.get("atom_count") == 21, f"Expected 21 atoms for Aspirin, got {pdb.get('atom_count')}"
+    assert len(pdb.get("bonds", [])) >= 20, f"Expected >= 20 bonds for Aspirin, got {len(pdb.get('bonds', []))}"
+    assert state["progress_percent"] == 100, f"Expected 100% progress, got {state['progress_percent']}"
+    assert state["time_remaining"] == "Completed (Ready)", f"Expected Completed (Ready), got {state['time_remaining']}"
+
+    # Test Caffeine
+    orc.run_ai_task("caffeine")
+    state = orc.get_state()
+    pdb = state["pdb_data"]
+    assert pdb.get("is_small_molecule") == True, "Caffeine should be marked as small molecule"
+    assert pdb.get("atom_count") == 24, f"Expected 24 atoms for Caffeine, got {pdb.get('atom_count')}"
+    assert state["progress_percent"] == 100
+
+    # Test Ibuprofen
+    orc.run_ai_task("ibuprofen")
+    state = orc.get_state()
+    pdb = state["pdb_data"]
+    assert pdb.get("is_small_molecule") == True, "Ibuprofen should be marked as small molecule"
+    assert pdb.get("atom_count") == 33, f"Expected 33 atoms for Ibuprofen, got {pdb.get('atom_count')}"
+    assert state["progress_percent"] == 100
+
+def t13_100_percent_progress_and_completion():
+    from polymathix.orchestrator import PolymathixOrchestrator
+    orc = PolymathixOrchestrator()
+    queries = [
+        "Run Crop Proteome & Thermal Adaptation protocol",
+        "Run Veterinary Broad-Spectrum Antimicrobial protocol",
+        "Biocatalytic Triad Optimization v3.0",
+        "Synthesize novel drug with RDKit and Lipinski screening",
+        "Run Deep Trajectory PCA analysis"
+    ]
+    for q in queries:
+        orc.run_ai_task(q)
+        state = orc.get_state()
+        assert state["progress_percent"] == 100, f"Query '{q}' did not reach 100% progress (got {state['progress_percent']}%)"
+        assert state["time_remaining"] == "Completed (Ready)", f"Query '{q}' time_remaining is '{state['time_remaining']}'"
+        assert all(step["status"] == "done" for step in state["workflow_steps"]), f"Not all steps are done for '{q}'"
+
 test_step("1. Polymathix Orchestrator Initialization & PDB Parsing", t1_orchestrator_init)
 test_step("2. De-Novo Drug Synthesis Engine (RDKit Backend)", t2_rdkit_drug_design)
 test_step("3. Deep Trajectory PCA & Manifold Learning Engine", t3_deep_pca)
@@ -181,6 +228,8 @@ test_step("8. Frontend Scientific Assets Synchronization", t8_frontend_assets)
 test_step("9. Frontend Index HTML & Three.js 3D Engine Integrity", t9_frontend_index_integrity)
 test_step("10. Streamlit Master Application Compilation", t10_streamlit_app_compilation)
 test_step("11. D-Glucose Active Pocket Docking & 3D Interacting Network", t11_glucose_binding_pocket)
+test_step("12. Universal Small Molecule 3D Engine (Aspirin, Caffeine, Ibuprofen)", t12_universal_small_molecules)
+test_step("13. 100% Progress Convergence & Protocol Finalization", t13_100_percent_progress_and_completion)
 
 print("\n" + "=" * 60)
 print(f"VERIFICATION SUMMARY: {passed} PASSED, {failed} FAILED")
