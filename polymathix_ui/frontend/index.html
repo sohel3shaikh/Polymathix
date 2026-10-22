@@ -776,18 +776,20 @@ button, input{ font:inherit; color:var(--text); outline:none; }
 <!-- TOPBAR -->
 <header class="topbar">
     <div class="search">
-        <div class="aiOrb">✦</div>
+        <div class="aiOrb" onclick="openChatModal()" style="cursor:pointer;" title="Open AI Scientific Discovery Co-Pilot">✦</div>
         <div class="searchText">
             <input type="text" class="searchMainInput" id="aiInput" placeholder="Ask Polymathix anything... (e.g. 'Show aspirin in 3D', 'Show caffeine', '4HHB', or 'Crop Resilience')" onkeydown="if(event.key==='Enter') runAI()" />
             <div class="promptChips">
                 <span class="chip chip-drug" onclick="runAI('Show aspirin in 3D')">💊 Aspirin 3D</span>
+                <span class="chip chip-pdb" onclick="runAI('perovskite')">💎 Perovskite (SrTiO3)</span>
+                <span class="chip chip-pdb" onclick="runAI('graphene')">▦ 2D Graphene</span>
                 <span class="chip chip-drug" onclick="runAI('Show caffeine in 3D')">☕ Caffeine 3D</span>
-                <span class="chip chip-glucose" onclick="runAI('Show glucose binding site and identify residues within 4 Å')">🍬 Glucose Pocket (4.0 Å)</span>
                 <span class="chip chip-crop" onclick="runAI('Run Crop Proteome & Thermal Adaptation protocol')">🌿 Crop Resilience</span>
                 <span class="chip chip-animal" onclick="runAI('Run Veterinary Broad-Spectrum Antimicrobial protocol')">🐾 Veterinary Health</span>
                 <span class="chip chip-drug" onclick="runAI('Synthesize novel drug with RDKit and Lipinski screening')">🧪 De-Novo Drug Design</span>
-                <span class="chip chip-pdb" onclick="runAI('Load 1UBQ')">🧬 Fetch Ubiquitin (1UBQ)</span>
-                <span class="chip chip-pdb" onclick="runAI('Load 4HHB')">🩸 Fetch Hemoglobin (4HHB)</span>
+                <span class="chip chip-glucose" onclick="runAI('Show glucose binding site and identify residues within 4 Å')">🍬 Glucose Pocket</span>
+                <span class="chip chip-pdb" onclick="runAI('Load 4HHB')">🩸 Hemoglobin (4HHB)</span>
+                <span class="chip chip-drug" onclick="openLibraryModal()">▦ Open 3D Library (23+)</span>
             </div>
         </div>
         <button class="sendBtn" onclick="runAI()">➤</button>
@@ -1239,6 +1241,70 @@ button, input{ font:inherit; color:var(--text); outline:none; }
     </div>
 </div>
 
+<!-- 3D SCIENTIFIC LIBRARY MODAL -->
+<div class="modalOverlay" id="libraryModalOverlay">
+    <div class="modalBox" style="width:960px;max-height:90vh;">
+        <div class="modalHeader">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:22px;">▦</span>
+                <div>
+                    <div class="modalTitle">3D Scientific Discovery Library</div>
+                    <div style="font-size:10px;color:#38bdf8;">Pre-Built Multi-Kingdom & Materials Science Discovery Catalog</div>
+                </div>
+            </div>
+            <button class="modalClose" onclick="closeLibraryModal()">✕</button>
+        </div>
+        <div class="modalBody" style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                <input type="text" id="libSearchInput" placeholder="Filter by compound name, formula, or domain..." oninput="searchLibrary(this.value)" style="flex:1;min-width:200px;padding:6px 12px;border-radius:8px;background:rgba(10,31,57,0.7);border:1px solid rgba(56,189,248,0.3);color:#fff;font-size:11px;" />
+                <div style="display:flex;gap:4px;overflow-x:auto;">
+                    <button class="styleBtn active" onclick="filterLibrary('All', this)">All (23)</button>
+                    <button class="styleBtn" onclick="filterLibrary('Human Therapeutics', this)">💊 Therapeutics</button>
+                    <button class="styleBtn" onclick="filterLibrary('Agricultural & Crop Resilience', this)">🌾 Crops & Plants</button>
+                    <button class="styleBtn" onclick="filterLibrary('Materials Science & Crystals', this)">💎 Materials Science</button>
+                    <button class="styleBtn" onclick="filterLibrary('Microbial & Environmental Living Beings', this)">🦠 Biocatalysis</button>
+                    <button class="styleBtn" onclick="filterLibrary('Veterinary & Animal Health', this)">🐾 Veterinary</button>
+                </div>
+            </div>
+            <div id="libraryGrid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:10px;overflow-y:auto;max-height:58vh;padding-right:4px;">
+                <!-- Populated dynamically from window._libraryExamples -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI SCIENTIFIC CO-PILOT CHAT MODAL -->
+<div class="modalOverlay" id="chatModalOverlay">
+    <div class="modalBox" style="width:850px;height:82vh;">
+        <div class="modalHeader">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span class="aiOrb" style="width:28px;height:28px;font-size:13px;">✦</span>
+                <div>
+                    <div class="modalTitle">Polymathix AI Discovery Co-Pilot</div>
+                    <div style="font-size:10px;color:#38bdf8;" id="chatActiveProviderText">Autonomous Scientific Co-Pilot (Built-in Zero-Key)</div>
+                </div>
+            </div>
+            <button class="modalClose" onclick="closeChatModal()">✕</button>
+        </div>
+        <div class="modalBody" style="display:flex;flex-direction:column;gap:10px;flex:1;overflow:hidden;padding:14px;">
+            <div id="chatMessagesContainer" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-right:6px;">
+                <!-- Populated dynamically -->
+            </div>
+            <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;" id="chatPromptChips">
+                <span class="chip chip-drug" onclick="sendChatPrompt('Fluorinate aspirin at position 4 and evaluate metabolic stability')">💊 Fluorinate Aspirin at C4</span>
+                <span class="chip chip-pdb" onclick="sendChatPrompt('Load Strontium Titanate Perovskite cubic lattice')">💎 Perovskite (SrTiO3)</span>
+                <span class="chip chip-pdb" onclick="sendChatPrompt('Load 2D Graphene monolayer')">▦ 2D Graphene</span>
+                <span class="chip chip-crop" onclick="sendChatPrompt('Derivatize Curcumin for enhanced water solubility')">🌱 Derivatize Curcumin</span>
+                <span class="chip chip-drug" onclick="sendChatPrompt('Synthesize a novel non-steroidal anti-inflammatory scaffold')">🧪 De-Novo Drug Design</span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+                <input type="text" id="chatModalInput" placeholder="Ask AI Co-Pilot to synthesize, mutate, dock, or model any chemical or material in 3D..." onkeydown="if(event.key==='Enter') submitChatModal()" style="flex:1;padding:8px 12px;border-radius:10px;background:rgba(6,22,42,0.85);border:1px solid rgba(56,189,248,0.35);color:#fff;font-size:12px;" />
+                <button class="sendBtn" onclick="submitChatModal()" style="width:38px;height:38px;">➤</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- SETTINGS MODAL -->
 <div class="modalOverlay" id="settingsModalOverlay">
     <div class="modalBox" style="width:550px;">
@@ -1271,6 +1337,41 @@ button, input{ font:inherit; color:var(--text); outline:none; }
                         <input type="checkbox" id="chkAutoRotate" checked onchange="autoRotate = this.checked;" />
                         <span>Enable slow cinematic molecular rotation</span>
                     </label>
+                </div>
+
+                <!-- 3rd-Party AI Provider Attachment -->
+                <div style="border-top:1px solid rgba(90,178,255,0.15);padding-top:12px;margin-top:6px;">
+                    <div style="font-weight:600;color:#7dd3fc;display:flex;align-items:center;gap:6px;">
+                        <span>✦</span>
+                        <span>AI Model Provider & 3rd-Party API Attachment</span>
+                    </div>
+                    <div style="font-size:10px;color:#94a3b8;margin-top:2px;">Attach Claude, ChatGPT, Grok, Kimi, GLM, Gemini, or Local Ollama</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+                        <div>
+                            <label style="font-size:10px;color:#cbd5e1;">Provider:</label>
+                            <select id="cfgProvider" style="width:100%;margin-top:4px;padding:6px;border-radius:6px;background:#061426;border:1px solid #38bdf8;color:#fff;font-size:11px;" onchange="updateProviderSettingsUI()">
+                                <option value="offline">Polymathix Autonomous Co-Pilot (Built-in Zero-Key)</option>
+                                <option value="openai">OpenAI (ChatGPT / GPT-4o)</option>
+                                <option value="claude">Anthropic (Claude 3.5 Sonnet)</option>
+                                <option value="grok">xAI (Grok-2)</option>
+                                <option value="kimi">Moonshot AI (Kimi)</option>
+                                <option value="glm">Zhipu AI (GLM-4)</option>
+                                <option value="gemini">Google (Gemini 1.5)</option>
+                                <option value="ollama">Local Ollama (http://localhost:11434)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:10px;color:#cbd5e1;">Model Name (Optional):</label>
+                            <input type="text" id="cfgModel" placeholder="e.g. gpt-4o, claude-3-5-sonnet" style="width:100%;margin-top:4px;padding:6px;border-radius:6px;background:#061426;border:1px solid rgba(56,189,248,0.3);color:#fff;font-size:11px;" />
+                        </div>
+                    </div>
+                    <div style="margin-top:8px;">
+                        <label style="font-size:10px;color:#cbd5e1;">API Key:</label>
+                        <input type="password" id="cfgApiKey" placeholder="sk-... (Saved securely in your browser session)" style="width:100%;margin-top:4px;padding:6px;border-radius:6px;background:#061426;border:1px solid rgba(56,189,248,0.3);color:#fff;font-size:11px;" />
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px;">
+                        <button class="agentBtn agentBtn-run" style="padding:6px 14px;" onclick="saveAIProviderSettings()">Save & Test Connection</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2494,21 +2595,184 @@ function filterLogs(){
 }
 
 /* ================= SIDEBAR NAV ROUTING ================= */
+
+/* ================= 3D SCIENTIFIC LIBRARY MODAL ================= */
+let activeLibCategory = 'All';
+function openLibraryModal(){
+    const o = document.getElementById("libraryModalOverlay");
+    if(o) o.classList.add("show");
+    renderLibraryGrid();
+}
+function closeLibraryModal(){
+    const o = document.getElementById("libraryModalOverlay");
+    if(o) o.classList.remove("show");
+}
+function filterLibrary(cat, elem){
+    activeLibCategory = cat;
+    document.querySelectorAll("#libraryModalOverlay .styleBtn").forEach(b => b.classList.remove("active"));
+    if(elem) elem.classList.add("active");
+    renderLibraryGrid();
+}
+function searchLibrary(val){
+    renderLibraryGrid(val);
+}
+function renderLibraryGrid(searchFilter){
+    const container = document.getElementById("libraryGrid");
+    if(!container) return;
+    const items = window._libraryExamples || [];
+    const filter = (searchFilter || "").toLowerCase().trim();
+    
+    let html = "";
+    items.forEach(item => {
+        if(activeLibCategory !== 'All' && item.category !== activeLibCategory) return;
+        if(filter && !item.name.toLowerCase().includes(filter) && !item.formula.toLowerCase().includes(filter) && !item.category.toLowerCase().includes(filter)) return;
+        
+        html += `
+            <div style="background:rgba(10,31,57,0.65);border:1px solid rgba(56,189,248,0.25);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:6px;transition:.2s;" onmouseover="this.style.borderColor='#38bdf8'" onmouseout="this.style.borderColor='rgba(56,189,248,0.25)'">
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        <span style="font-size:18px;">${item.icon}</span>
+                        <span style="font-weight:700;color:#f1f5f9;font-size:12px;">${item.name}</span>
+                    </div>
+                    <span style="font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(56,189,248,0.2);color:#38bdf8;font-weight:600;">${item.badge}</span>
+                </div>
+                <div style="font-size:10px;color:#7dd3fc;font-family:monospace;">${item.formula} | ${item.mw}</div>
+                <div style="font-size:10px;color:#94a3b8;line-height:1.35;flex:1;">${item.desc}</div>
+                <div style="display:flex;gap:6px;margin-top:6px;">
+                    <button style="flex:1;padding:5px 8px;border-radius:6px;background:linear-gradient(135deg,#087dff,#624dff);color:#fff;border:none;font-size:10px;font-weight:600;cursor:pointer;" onclick="runAI('${item.query.replace(/'/g, "\\\'")}'); closeLibraryModal();">▶ Load 3D</button>
+                    <button style="flex:1;padding:5px 8px;border-radius:6px;background:rgba(14,46,80,0.8);border:1px solid rgba(56,189,248,0.3);color:#e2e8f0;font-size:10px;font-weight:600;cursor:pointer;" onclick="runAI('${item.derivatize_query.replace(/'/g, "\\\'")}'); closeLibraryModal();">⚡ Make Novel</button>
+                </div>
+            </div>
+        `;
+    });
+    if(!html) html = `<div style="grid-column:1/-1;text-align:center;padding:30px;color:#64748b;">No matching structures found in 3D Library</div>`;
+    container.innerHTML = html;
+}
+
+// ================= AI CHAT MODAL =================
+function openChatModal(){
+    const o = document.getElementById("chatModalOverlay");
+    if(o) o.classList.add("show");
+    renderChatMessages();
+    setTimeout(() => { const inp = document.getElementById("chatModalInput"); if(inp) inp.focus(); }, 150);
+}
+function closeChatModal(){
+    const o = document.getElementById("chatModalOverlay");
+    if(o) o.classList.remove("show");
+}
+function sendChatPrompt(promptText){
+    const inp = document.getElementById("chatModalInput");
+    if(inp) inp.value = promptText;
+    submitChatModal();
+}
+function submitChatModal(){
+    const inp = document.getElementById("chatModalInput");
+    if(!inp || !inp.value.trim()) return;
+    const msg = inp.value.trim();
+    inp.value = "";
+    
+    if(!window._chatHistory) window._chatHistory = [];
+    window._chatHistory.push({ sender: 'user', time: new Date().toTimeString().split(' ')[0], text: msg });
+    renderChatMessages();
+
+    const savedProv = localStorage.getItem("polymathix_provider") || "offline";
+    const savedKey = localStorage.getItem("polymathix_api_key") || "";
+    const savedModel = localStorage.getItem("polymathix_model") || "";
+
+    showToast("AI Co-Pilot", "Processing scientific reasoning...");
+    sendToStreamlit({
+        action: "chat_message",
+        message: msg,
+        provider: savedProv,
+        api_key: savedKey,
+        model: savedModel,
+        timestamp: Date.now()
+    });
+}
+function renderChatMessages(){
+    const container = document.getElementById("chatMessagesContainer");
+    if(!container) return;
+    const history = window._chatHistory || [];
+    let html = "";
+    history.forEach(m => {
+        const isUser = (m.sender === 'user');
+        const bubbleStyle = isUser
+            ? "align-self:flex-end;background:linear-gradient(135deg,#0e6ad6,#4338ca);color:#fff;border-radius:12px 12px 2px 12px;max-width:80%;padding:10px 14px;"
+            : "align-self:flex-start;background:rgba(10,31,57,0.85);border:1px solid rgba(56,189,248,0.25);color:#e2e8f0;border-radius:12px 12px 12px 2px;max-width:88%;padding:12px 16px;";
+        const senderLabel = isUser ? "Scientist" : (m.provider || "Polymathix Co-Pilot");
+        const formattedText = (m.text || "").replace(/\n/g, "<br>").replace(/\*\*(.*?)\*\*/g, "<b style='color:#38bdf8;'>$1</b>").replace(/`(.*?)`/g, "<code style='background:rgba(56,189,248,0.15);padding:1px 4px;border-radius:4px;color:#7dd3fc;font-family:monospace;'>$1</code>");
+        html += `
+            <div style="${bubbleStyle}">
+                <div style="font-size:9px;color:${isUser ? '#93c5fd' : '#38bdf8'};font-weight:700;margin-bottom:4px;display:flex;justify-content:space-between;gap:12px;">
+                    <span>${senderLabel}</span>
+                    <span style="opacity:0.7;">${m.time || ''}</span>
+                </div>
+                <div style="font-size:11px;line-height:1.5;">${formattedText}</div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+    container.scrollTop = container.scrollHeight;
+}
+
+// ================= AI PROVIDER SETTINGS =================
+function updateProviderSettingsUI(){
+    const prov = document.getElementById("cfgProvider") ? document.getElementById("cfgProvider").value : "offline";
+    const keyField = document.getElementById("cfgApiKey");
+    if(keyField){
+        keyField.disabled = (prov === "offline");
+        keyField.placeholder = (prov === "offline") ? "No API key required for built-in autonomous intelligence" : "Enter API Key...";
+    }
+}
+function saveAIProviderSettings(){
+    const prov = document.getElementById("cfgProvider").value;
+    const key = document.getElementById("cfgApiKey").value;
+    const model = document.getElementById("cfgModel").value;
+
+    localStorage.setItem("polymathix_provider", prov);
+    localStorage.setItem("polymathix_api_key", key);
+    localStorage.setItem("polymathix_model", model);
+
+    sendToStreamlit({
+        action: "update_ai_config",
+        provider: prov,
+        api_key: key,
+        model: model,
+        timestamp: Date.now()
+    });
+
+    const badge = document.getElementById("chatActiveProviderText");
+    if(badge){
+        const map = {
+            "offline": "Autonomous Scientific Co-Pilot (Built-in Zero-Key)",
+            "openai": "OpenAI (ChatGPT / GPT-4o)",
+            "claude": "Anthropic (Claude 3.5 Sonnet)",
+            "grok": "xAI (Grok-2)",
+            "kimi": "Moonshot AI (Kimi)",
+            "glm": "Zhipu AI (GLM-4)",
+            "gemini": "Google (Gemini 1.5)",
+            "ollama": "Local Ollama"
+        };
+        badge.textContent = map[prov] || prov;
+    }
+
+    showToast("AI Attachment Saved", `Connected to ${prov.toUpperCase()}`);
+    closeSettingsModal();
+}
+
 function navSelect(name, elem){
     document.querySelectorAll(".sidebar .navItem").forEach(n => n.classList.remove("active"));
     if(elem) elem.classList.add("active");
 
     if(name === 'Home') switchWorkspaceTab('viewer', document.querySelectorAll('.viewer .tab')[0]);
-    else if(name === 'AI Chat') {
-        const inp = document.getElementById('aiInput');
-        if(inp){ inp.focus(); showToast("AI Chat", "Type scientific query and press Enter"); }
-    }
+    else if(name === 'AI Chat') openChatModal();
     else if(name === 'Research Sessions') openSessionModal();
     else if(name === 'Protocols') runAI('Run Crop Proteome & Thermal Adaptation protocol');
     else if(name === 'Simulations') switchWorkspaceTab('trajectory', document.querySelectorAll('.viewer .tab')[2]);
     else if(name === 'Data Analysis') switchWorkspaceTab('analysis', document.querySelectorAll('.viewer .tab')[5]);
     else if(name === 'Visualization') switchWorkspaceTab('viewer', document.querySelectorAll('.viewer .tab')[0]);
-    else if(name === '3D Library' || name === 'Files & Data') openResultsModal();
+    else if(name === '3D Library') openLibraryModal();
+    else if(name === 'Files & Data') openResultsModal();
     else if(name === 'Settings') openSettingsModal();
     else showToast("Polymathix OS", `${name} selected`);
 }
@@ -2733,6 +2997,22 @@ function updateStateFromPython(state){
     // Render PDB
     if(state.pdb_data){
         renderRealPDB(state.pdb_data);
+    }
+
+    // Sync 3D Library Examples
+    if(state.library_examples && Array.isArray(state.library_examples)){
+        window._libraryExamples = state.library_examples;
+        if(document.getElementById("libraryModalOverlay") && document.getElementById("libraryModalOverlay").classList.contains("show")){
+            renderLibraryGrid();
+        }
+    }
+
+    // Sync AI Chat History
+    if(state.chat_history && Array.isArray(state.chat_history)){
+        window._chatHistory = state.chat_history;
+        if(document.getElementById("chatModalOverlay") && document.getElementById("chatModalOverlay").classList.contains("show")){
+            renderChatMessages();
+        }
     }
 }
 

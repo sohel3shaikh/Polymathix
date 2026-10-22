@@ -217,6 +217,56 @@ def t13_100_percent_progress_and_completion():
         assert state["time_remaining"] == "Completed (Ready)", f"Query '{q}' time_remaining is '{state['time_remaining']}'"
         assert all(step["status"] == "done" for step in state["workflow_steps"]), f"Not all steps are done for '{q}'"
 
+def t14_materials_science_crystals():
+    from polymathix.orchestrator import PolymathixOrchestrator
+    orc = PolymathixOrchestrator()
+    
+    # 1. Perovskite (SrTiO3)
+    orc.run_ai_task("perovskite")
+    state = orc.get_state()
+    pdb = state["pdb_data"]
+    assert "Perovskite" in pdb["pdb_name"], "Expected Perovskite name"
+    assert pdb.get("is_material") == True, "Expected is_material flag True"
+    assert pdb.get("atom_count") == 15, f"Expected 15 atoms for SrTiO3, got {pdb.get('atom_count')}"
+    assert len(pdb.get("bonds", [])) >= 20, f"Expected coordination bonds, got {len(pdb.get('bonds', []))}"
+    assert state["active_protocol_key"] == "material_discovery", "Expected material_discovery protocol"
+    assert state["progress_percent"] == 100
+
+    # 2. 2D Graphene
+    orc.run_ai_task("graphene")
+    state = orc.get_state()
+    pdb = state["pdb_data"]
+    assert "Graphene" in pdb["pdb_name"], "Expected Graphene name"
+    assert pdb.get("atom_count") == 32, f"Expected 32 carbon atoms for graphene, got {pdb.get('atom_count')}"
+    assert len(pdb.get("bonds", [])) >= 30, f"Expected sp2 bonds, got {len(pdb.get('bonds', []))}"
+
+    # 3. SWCNT Carbon Nanotube
+    orc.run_ai_task("swcnt")
+    state = orc.get_state()
+    pdb = state["pdb_data"]
+    assert "Carbon Nanotube" in pdb["pdb_name"], "Expected SWCNT name"
+    assert pdb.get("atom_count") == 60, f"Expected 60 atoms for (5,5) SWCNT, got {pdb.get('atom_count')}"
+
+def t15_library_catalog_and_copilot():
+    from polymathix.orchestrator import PolymathixOrchestrator
+    orc = PolymathixOrchestrator()
+    state = orc.get_state()
+    
+    # Verify Library catalog
+    assert "library_examples" in state, "Missing library_examples in state"
+    examples = state["library_examples"]
+    assert len(examples) >= 20, f"Expected at least 20 examples, got {len(examples)}"
+    categories = set(e["category"] for e in examples)
+    assert "Human Therapeutics" in categories, "Missing Human Therapeutics"
+    assert "Materials Science & Crystals" in categories, "Missing Materials Science"
+    assert "Agricultural & Crop Resilience" in categories, "Missing Agricultural Resilience"
+
+    # Verify AI Co-Pilot chat response and real-time structure mutation
+    reply = orc.handle_chat_message("Fluorinate aspirin at position 4 to enhance metabolic stability")
+    assert len(reply) > 50, "Expected detailed scientific co-pilot reply"
+    assert len(orc.chat_history) >= 2, "Chat history should contain user and AI messages"
+    assert "5-Fluoro-Aspirin" in orc.pdb_data["pdb_name"], "Structure was not updated to 5-Fluoro-Aspirin in real time"
+
 test_step("1. Polymathix Orchestrator Initialization & PDB Parsing", t1_orchestrator_init)
 test_step("2. De-Novo Drug Synthesis Engine (RDKit Backend)", t2_rdkit_drug_design)
 test_step("3. Deep Trajectory PCA & Manifold Learning Engine", t3_deep_pca)
@@ -230,6 +280,8 @@ test_step("10. Streamlit Master Application Compilation", t10_streamlit_app_comp
 test_step("11. D-Glucose Active Pocket Docking & 3D Interacting Network", t11_glucose_binding_pocket)
 test_step("12. Universal Small Molecule 3D Engine (Aspirin, Caffeine, Ibuprofen)", t12_universal_small_molecules)
 test_step("13. 100% Progress Convergence & Protocol Finalization", t13_100_percent_progress_and_completion)
+test_step("14. Solid-State Materials Science & Crystallography Engine (SrTiO3, Graphene, SWCNT)", t14_materials_science_crystals)
+test_step("15. 3D Discovery Library Catalog (23+ Targets) & Real-Time AI Co-Pilot", t15_library_catalog_and_copilot)
 
 print("\n" + "=" * 60)
 print(f"VERIFICATION SUMMARY: {passed} PASSED, {failed} FAILED")

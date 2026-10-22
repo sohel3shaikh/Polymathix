@@ -75,3 +75,18 @@ if action_data and isinstance(action_data, dict):
             name = action_data.get("name", "")
             orchestrator.toggle_connector(name)
             st.rerun()
+
+        elif action == "chat_message":
+            msg = action_data.get("message", "")
+            provider = action_data.get("provider", None)
+            api_key = action_data.get("api_key", None)
+            model = action_data.get("model", None)
+            orchestrator.handle_chat_message(msg, provider=provider, api_key=api_key, model=model)
+            st.rerun()
+
+        elif action == "update_ai_config":
+            provider = action_data.get("provider", "offline")
+            api_key = action_data.get("api_key", "")
+            model = action_data.get("model", "")
+            orchestrator.set_ai_provider(provider, api_key, model)
+            st.rerun()

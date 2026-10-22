@@ -70,6 +70,14 @@ Rather than acting as a static dashboard, Polymathix introduces a **closed-loop 
 * **Deep Non-Linear Trajectory PCA**: Overcomes linear PCA limitations by deploying RBF Kernel PCA to unroll high-dimensional protein conformational manifolds.
 * **OpenMM Self-Healing Physics**: Autonomous PDB topology verification, hydrogen addition at pH 7.4, TIP3P solvation, and potential energy minimization with convergence tracking.
 * **Live RCSB PDB Ingestion**: Direct fetching and atomic parsing of any entry from the Protein Data Bank (e.g., `1UBQ`, `4HHB`, `6LU7`, `1CRN`).
+* **Solid-State Materials Science Engine**: Generates 3D unit cells and lattices for advanced functional materials:
+  - **Cubic Perovskite ($SrTiO_3$)**: $Pm\bar{3}m$ symmetry with octahedral $TiO_6$ coordination.
+  - **2D Graphene Sheet**: Honeycomb $sp^2$ Dirac semimetal monolayer lattice.
+  - **Carbon Nanotubes (SWCNT)**: Chiral $(5,5)$ armchair 1D ballistic conductors.
+  - **Anatase $TiO_2$**: Tetragonal photocatalyst coordination polyhedra.
+  - **Metal-Organic Framework (MOF-5)**: Nanoporous $Zn_4O(BDC)_3$ cage architecture.
+* **Multi-LLM 3rd-Party API Gateway**: Zero-key autonomous AI co-pilot with plug-and-play support for **Claude 3.5 Sonnet**, **OpenAI ChatGPT/GPT-4o**, **xAI Grok-2**, **Moonshot Kimi**, **Zhipu GLM-4**, **Google Gemini**, and local **Ollama** instances.
+* **3D Scientific Discovery Library**: Over 23+ pre-built discovery targets across Human Therapeutics, Crop Resilience, Materials Science, Biocatalytic Enzymes, and Veterinary Medicine with one-click 3D loading and real-time novel derivatization.
 
 ### 3. 🎨 High-Performance 3D Molecular Simulation & Visualization Suite
 * **Full Pack of 12 3D Scientific Representations**: Instant switching between:
