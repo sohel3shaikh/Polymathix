@@ -19,7 +19,7 @@
   <p><em>Real-time 3D biophysical simulation, active pocket docking, solid-state crystallography, 23+ discovery catalog, and multi-LLM AI Co-Pilot in Polymathix OS v1.0.1.</em></p>
   <p>
     <a href="https://github.com/sohel3shaikh/Polymathix/releases/download/v1.0.1/Polymathix_Showcase_Demo.mp4">
-      <img src="https://img.shields.io/badge/🎬_Download_HD_Demo_Video-MP4_(24.7_MB)-00f59b?style=for-the-badge&logo=youtube&logoColor=black" alt="Download HD Demo Video">
+      <img src="https://img.shields.io/badge/🎬_Download_HD_Demo_Video-MP4_(21.0_MB)-00f59b?style=for-the-badge&logo=youtube&logoColor=black" alt="Download HD Demo Video">
     </a>
     &nbsp;
     <a href="https://github.com/sohel3shaikh/Polymathix/releases/tag/v1.0.1">

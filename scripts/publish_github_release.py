@@ -157,10 +157,11 @@ def publish_release():
         print(f"Failed to publish release: {e}")
         return False
 
-    # 3. Upload assets (Zip & Video)
+    # 3. Upload assets (Zip & Videos)
     assets_to_upload = [
         (os.path.join(os.path.dirname(ROOT_DIR), "Polymathix-Master-Release.zip"), "Polymathix-Master-Release.zip", "application/zip"),
-        (os.path.join(os.path.dirname(ROOT_DIR), "Polymathix_Showcase_Demo.mp4"), "Polymathix_Showcase_Demo.mp4", "video/mp4")
+        (os.path.join(os.path.dirname(ROOT_DIR), "Polymathix_Showcase_Demo.mp4"), "Polymathix_Showcase_Demo.mp4", "video/mp4"),
+        (os.path.join(os.path.dirname(ROOT_DIR), "Polymathix_Showcase_Demo1.mp4"), "Polymathix_Showcase_Demo1.mp4", "video/mp4")
     ]
 
     # Fetch existing assets on the release
