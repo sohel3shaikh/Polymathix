@@ -30,6 +30,8 @@ from polymathix.modules.visual_factory.pdb_to_obj import pdb_to_obj
 from polymathix.modules.data_resilience.graph_engine import generate_energy_plot
 from polymathix.modules.material_science.crystal_engine import resolve_material_3d
 from polymathix.modules.ai_engine.llm_gateway import dispatch_copilot_query
+from polymathix.core.invariants import CrossDomainCorrectnessVerifier
+from polymathix.core.provenance import ScientificRunManifest, DeterministicReplayEngine
 
 # Curated small-molecule dictionary
 OFFLINE_MOLECULES = {
@@ -638,6 +640,14 @@ class PolymathixOrchestrator:
         ]
 
         self.pdb_data = self._parse_pdb_file(os.path.join(ROOT_DIR, "1CRN.pdb"), title="1CRN (Crambin Plant Protein with Glucose Pocket)")
+        self.verifier = CrossDomainCorrectnessVerifier()
+        self.correctness_dossier = self.verifier.verify_system(self.pdb_data)
+        self.run_provenance = ScientificRunManifest.create_manifest(
+            self.protocol_name,
+            "Default Session Initializer",
+            self.pdb_data,
+            self.ai_config
+        )
 
     def _now_str(self):
         return datetime.now().strftime("%H:%M:%S")
@@ -650,6 +660,25 @@ class PolymathixOrchestrator:
         })
         if len(self.logs) > 100:
             self.logs = self.logs[-100:]
+
+    def _finalize_step_verification(self, query):
+        try:
+            self.correctness_dossier = self.verifier.verify_system(self.pdb_data)
+            self.run_provenance = ScientificRunManifest.create_manifest(
+                self.protocol_name,
+                query,
+                self.pdb_data,
+                self.ai_config
+            )
+            score_pct = int(self.correctness_dossier.get('confidence_score', 1.0) * 100)
+            passed = self.correctness_dossier.get('checks_passed', 0)
+            total = self.correctness_dossier.get('checks_evaluated', 0)
+            self.add_log("SUCCESS", f"Verify Loop: {self.correctness_dossier.get('status', 'VERIFIED')} ({passed}/{total} physical invariants passed, Confidence: {score_pct}%).")
+            coord_sha = self.run_provenance.get('canonical_intermediate_representation', {}).get('coordinate_sha256', '')[:10]
+            run_id = self.run_provenance.get('run_id', '')[:8]
+            self.add_log("INFO", f"Provenance Ledger: Run {run_id} locked (Coord SHA256: {coord_sha}..., PRNG Seed: 42).")
+        except Exception as e:
+            self.add_log("WARN", f"Verification invariant evaluation: {e}")
 
     def _sync_asset(self, filename):
         src = os.path.join(ROOT_DIR, "assets", filename)
@@ -884,6 +913,7 @@ class PolymathixOrchestrator:
             self.add_log("SUCCESS", f"RCSB PDB {pdb_id} downloaded and cached successfully.")
             self.pdb_data = self._parse_pdb_file(local_cache, title=f"{pdb_id} (RCSB Entry)")
             self.add_log("SUCCESS", f"Structure loaded: {self.pdb_data['atom_count']} atoms, {self.pdb_data['residue_count']} residues.")
+            self._finalize_step_verification(f"Fetch RCSB {pdb_id}")
             return True
         except Exception as e:
             self.add_log("WARN", f"RCSB fetch for {pdb_id} failed: {e}. Keeping current structure.")
@@ -1091,6 +1121,7 @@ class PolymathixOrchestrator:
                 reply, prov = dispatch_copilot_query(query, provider=self.ai_config.get("provider", "offline"), api_key=self.ai_config.get("api_key", ""), model=self.ai_config.get("model", ""))
                 self.chat_history.append({"sender": "user", "time": self._now_str(), "text": query})
                 self.chat_history.append({"sender": "ai", "time": self._now_str(), "provider": prov, "text": reply})
+            self._finalize_step_verification(query)
             self.kpis["running_jobs"] += 1
             return
 
@@ -1146,6 +1177,7 @@ class PolymathixOrchestrator:
                 reply, prov = dispatch_copilot_query(query, provider=self.ai_config.get("provider", "offline"), api_key=self.ai_config.get("api_key", ""), model=self.ai_config.get("model", ""))
                 self.chat_history.append({"sender": "user", "time": self._now_str(), "text": query})
                 self.chat_history.append({"sender": "ai", "time": self._now_str(), "provider": prov, "text": reply})
+            self._finalize_step_verification(query)
             self.kpis["running_jobs"] += 1
             return
 
@@ -1215,6 +1247,7 @@ class PolymathixOrchestrator:
                 reply, prov = dispatch_copilot_query(query, provider=self.ai_config.get("provider", "offline"), api_key=self.ai_config.get("api_key", ""), model=self.ai_config.get("model", ""))
                 self.chat_history.append({"sender": "user", "time": self._now_str(), "text": query})
                 self.chat_history.append({"sender": "ai", "time": self._now_str(), "provider": prov, "text": reply})
+            self._finalize_step_verification(query)
             self.kpis["running_jobs"] += 1
             return
 
@@ -1364,6 +1397,7 @@ class PolymathixOrchestrator:
             reply, prov = dispatch_copilot_query(query, provider=self.ai_config.get("provider", "offline"), api_key=self.ai_config.get("api_key", ""), model=self.ai_config.get("model", ""))
             self.chat_history.append({"sender": "user", "time": self._now_str(), "text": query})
             self.chat_history.append({"sender": "ai", "time": self._now_str(), "provider": prov, "text": reply})
+        self._finalize_step_verification(query)
         self.kpis["running_jobs"] += 1
 
     def handle_quick_action(self, action_type):
@@ -1436,5 +1470,7 @@ class PolymathixOrchestrator:
             "pdb_data": self.pdb_data,
             "chat_history": self.chat_history,
             "library_examples": self.library_examples,
-            "ai_config": self.ai_config
+            "ai_config": self.ai_config,
+            "correctness_dossier": self.correctness_dossier,
+            "run_provenance": self.run_provenance
         }

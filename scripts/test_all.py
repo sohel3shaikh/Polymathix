@@ -267,6 +267,67 @@ def t15_library_catalog_and_copilot():
     assert len(orc.chat_history) >= 2, "Chat history should contain user and AI messages"
     assert "5-Fluoro-Aspirin" in orc.pdb_data["pdb_name"], "Structure was not updated to 5-Fluoro-Aspirin in real time"
 
+def t16_cross_domain_correctness_invariants():
+    from polymathix.orchestrator import PolymathixOrchestrator
+    from polymathix.core.invariants import CrossDomainCorrectnessVerifier
+    orc = PolymathixOrchestrator()
+    verifier = CrossDomainCorrectnessVerifier()
+
+    # 1. Biomolecular domain verification (Crambin fold + Glucose pocket)
+    st = orc.get_state()
+    assert "correctness_dossier" in st, "Missing correctness_dossier in orchestrator state"
+    cd = st["correctness_dossier"]
+    assert cd["status"] == "VERIFIED", f"Expected VERIFIED, got {cd['status']}"
+    assert cd["confidence_score"] >= 0.85, f"Expected high confidence, got {cd['confidence_score']}"
+    assert cd["checks_passed"] >= 3, "Expected at least 3 invariant checks passed"
+
+    # 2. Solid-State Materials domain verification (SrTiO3 Perovskite)
+    orc.run_ai_task("perovskite")
+    st = orc.get_state()
+    cd = st["correctness_dossier"]
+    assert cd["domain"] == "Solid-State Chemistry & Materials Crystallography"
+    assert cd["status"] == "VERIFIED"
+    assert cd["confidence_score"] == 1.0
+    invariant_names = [c["invariant"] for c in cd["checks"]]
+    assert "Unit Cell Electroneutrality Invariant" in invariant_names
+    assert "Crystallographic Space Group Invariance" in invariant_names
+
+    # 3. Cheminformatics & Small Molecule domain verification (Aspirin)
+    orc.run_ai_task("aspirin")
+    st = orc.get_state()
+    cd = st["correctness_dossier"]
+    assert cd["domain"] == "Cheminformatics & Molecular Mechanics"
+    assert cd["status"] == "VERIFIED"
+    assert cd["confidence_score"] == 1.0
+
+def t17_provenance_and_deterministic_replay():
+    from polymathix.orchestrator import PolymathixOrchestrator
+    from polymathix.core.provenance import ScientificRunManifest, DeterministicReplayEngine
+    orc = PolymathixOrchestrator()
+
+    # 1. Verify cryptographic run manifest compilation
+    st = orc.get_state()
+    assert "run_provenance" in st, "Missing run_provenance in orchestrator state"
+    prov = st["run_provenance"]
+    assert len(prov["run_id"]) > 10, "Invalid UUID in run manifest"
+    assert "canonical_intermediate_representation" in prov
+    assert "coordinate_sha256" in prov["canonical_intermediate_representation"]
+    assert prov["kernel_environment"]["prng_seed"] == 42
+    assert prov["reproducibility_guarantee"] == "BIT_EXACT_REPRODUCIBLE"
+
+    # 2. Test Deterministic Replay Engine
+    replay_report = DeterministicReplayEngine.verify_replay(prov, st["pdb_data"])
+    assert replay_report["replay_verified"] is True, f"Deterministic replay verification failed: {replay_report}"
+    assert replay_report["match_level"] == "BIT_EXACT"
+
+    # 3. Test Replay on Material Science Lattice
+    orc.run_ai_task("graphene")
+    st_mat = orc.get_state()
+    prov_mat = st_mat["run_provenance"]
+    mat_replay = DeterministicReplayEngine.verify_replay(prov_mat, st_mat["pdb_data"])
+    assert mat_replay["replay_verified"] is True
+    assert mat_replay["match_level"] == "BIT_EXACT"
+
 test_step("1. Polymathix Orchestrator Initialization & PDB Parsing", t1_orchestrator_init)
 test_step("2. De-Novo Drug Synthesis Engine (RDKit Backend)", t2_rdkit_drug_design)
 test_step("3. Deep Trajectory PCA & Manifold Learning Engine", t3_deep_pca)
@@ -282,6 +343,8 @@ test_step("12. Universal Small Molecule 3D Engine (Aspirin, Caffeine, Ibuprofen)
 test_step("13. 100% Progress Convergence & Protocol Finalization", t13_100_percent_progress_and_completion)
 test_step("14. Solid-State Materials Science & Crystallography Engine (SrTiO3, Graphene, SWCNT)", t14_materials_science_crystals)
 test_step("15. 3D Discovery Library Catalog (23+ Targets) & Real-Time AI Co-Pilot", t15_library_catalog_and_copilot)
+test_step("16. Cross-Domain Physical Invariants & Correctness Verifier", t16_cross_domain_correctness_invariants)
+test_step("17. Cryptographic Run Provenance & Deterministic Replay Engine", t17_provenance_and_deterministic_replay)
 
 print("\n" + "=" * 60)
 print(f"VERIFICATION SUMMARY: {passed} PASSED, {failed} FAILED")

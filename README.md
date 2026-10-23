@@ -1,32 +1,32 @@
 # 🧬 POLYMATHIX OS — Autonomous AI for Scientific Discovery
 > **Universal Computational Intelligence for Life Sciences & Solid-State Materials: Plants & Crops, Animals, Human Therapeutics, Microbial Biocatalysis & Nanotechnology.**
 
-[![Release: v1.0.1](https://img.shields.io/badge/Release-v1.0.1-0e71ff.svg?style=flat-square&logo=github)](https://github.com/sohel3shaikh/Polymathix/releases/tag/v1.0.1)
+[![Release: v1.0.2](https://img.shields.io/badge/Release-v1.0.2-0e71ff.svg?style=flat-square&logo=github)](https://github.com/sohel3shaikh/Polymathix/releases/tag/v1.0.2)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg?style=flat-square)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.35+-FF4B4B.svg?style=flat-square)](https://streamlit.io)
 [![Three.js](https://img.shields.io/badge/Three.js-r160-black.svg?style=flat-square)](https://threejs.org/)
 [![RDKit](https://img.shields.io/badge/RDKit-2023+-green.svg?style=flat-square)](https://www.rdkit.org/)
 [![OpenMM](https://img.shields.io/badge/OpenMM-8.0+-purple.svg?style=flat-square)](https://openmm.org/)
-[![Tests: 15/15 Passing](https://img.shields.io/badge/Tests-15%2F15%20Passing-00f59b.svg?style=flat-square)](scripts/test_all.py)
+[![Tests: 17/17 Passing](https://img.shields.io/badge/Tests-17%2F17%20Passing-00f59b.svg?style=flat-square)](scripts/test_all.py)
 
 ---
 
 ## 🎬 Interactive 3D Demo Walkthrough
 
 <div align="center">
-  <img src="assets/polymathix_demo.gif" alt="Polymathix OS v1.0.1 Interactive Showcase" width="100%" style="border-radius: 12px; border: 1px solid #38bdf8; box-shadow: 0 8px 32px rgba(0,0,0,0.5);" />
-  <p><em>Real-time 3D biophysical simulation, active pocket docking, solid-state crystallography, 23+ discovery catalog, and multi-LLM AI Co-Pilot in Polymathix OS v1.0.1.</em></p>
+  <img src="assets/polymathix_demo.gif" alt="Polymathix OS v1.0.2 Interactive Showcase" width="100%" style="border-radius: 12px; border: 1px solid #38bdf8; box-shadow: 0 8px 32px rgba(0,0,0,0.5);" />
+  <p><em>Real-time 3D biophysical simulation, active pocket docking, solid-state crystallography, 23+ discovery catalog, and multi-LLM AI Co-Pilot in Polymathix OS v1.0.2.</em></p>
   <p>
-    <a href="https://github.com/sohel3shaikh/Polymathix/releases/download/v1.0.1/Polymathix_Showcase_Demo.mp4">
+    <a href="https://github.com/sohel3shaikh/Polymathix/releases/download/v1.0.2/Polymathix_Showcase_Demo1.mp4">
       <img src="https://img.shields.io/badge/🎬_Download_HD_Demo_Video-MP4_(21.0_MB)-00f59b?style=for-the-badge&logo=youtube&logoColor=black" alt="Download HD Demo Video">
     </a>
     &nbsp;
-    <a href="https://github.com/sohel3shaikh/Polymathix/releases/tag/v1.0.1">
-      <img src="https://img.shields.io/badge/🚀_GitHub_Release-v1.0.1_Notes-0e71ff?style=for-the-badge&logo=github&logoColor=white" alt="Release v1.0.1">
+    <a href="https://github.com/sohel3shaikh/Polymathix/releases/tag/v1.0.2">
+      <img src="https://img.shields.io/badge/🚀_GitHub_Release-v1.0.2_Notes-0e71ff?style=for-the-badge&logo=github&logoColor=white" alt="Release v1.0.2">
     </a>
     &nbsp;
-    <a href="https://github.com/sohel3shaikh/Polymathix/releases/download/v1.0.1/Polymathix-Master-Release.zip">
+    <a href="https://github.com/sohel3shaikh/Polymathix/releases/download/v1.0.2/Polymathix-Master-Release.zip">
       <img src="https://img.shields.io/badge/📦_Offline_Zip_Bundle-Download-f59e0b?style=for-the-badge&logo=archive&logoColor=white" alt="Download Offline Bundle">
     </a>
   </p>
@@ -191,8 +191,10 @@ POLYMATHIX OS — COMPREHENSIVE END-TO-END VERIFICATION
 [TEST] 13. 100% Progress Convergence & Protocol Finalization...  --> PASSED
 [TEST] 14. Solid-State Materials Science & Crystallography...     --> PASSED
 [TEST] 15. 3D Discovery Library Catalog (23+) & Real-Time AI...   --> PASSED
+[TEST] 16. Cross-Domain Physical Invariants & Correctness...      --> PASSED
+[TEST] 17. Cryptographic Run Provenance & Replay Engine...        --> PASSED
 ============================================================
-VERIFICATION SUMMARY: 15 PASSED, 0 FAILED
+VERIFICATION SUMMARY: 17 PASSED, 0 FAILED
 ============================================================
 ```
 
@@ -205,7 +207,10 @@ Polymathix/
 ├── app.py                     # Master Streamlit entry point
 ├── polymathix/                # Core Python scientific intelligence backend
 │   ├── orchestrator.py        # AI Orchestrator (Plan -> Execute -> Verify)
-│   ├── core/                  # Multiscale biophysics & dynamics
+│   ├── core/                  # Multiscale biophysics & verification
+│   │   ├── invariants.py      # Domain-Agnostic Physical Invariants & Correctness Verifier
+│   │   ├── provenance.py      # Cryptographic Scientific Provenance & Replay Engine
+│   │   └── hybrid_dynamics.py # QM/MM boundary dynamics
 │   └── modules/               # Domain-specific scientific tools
 │       ├── ai_engine/         # Multi-LLM API Gateway (Claude, ChatGPT, Grok, Kimi, GLM)
 │       ├── material_science/  # Solid-State Crystallography (SrTiO3, Graphene, SWCNT, MOF-5)
