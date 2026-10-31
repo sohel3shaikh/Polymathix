@@ -328,6 +328,34 @@ def t17_provenance_and_deterministic_replay():
     assert mat_replay["replay_verified"] is True
     assert mat_replay["match_level"] == "BIT_EXACT"
 
+def t18_bcl2_navitoclax_four_key_qc():
+    from polymathix.orchestrator import PolymathixOrchestrator
+    from polymathix.core.ai_qc import generate_bcl2_navitoclax_benchmark, FourKeyQCGrid, PoseBustersAudit
+    orc = PolymathixOrchestrator()
+
+    # 1. Direct benchmark evaluation
+    bcl2_data = generate_bcl2_navitoclax_benchmark()
+    assert "qc_grid" in bcl2_data, "Missing qc_grid in bcl2_data"
+    qc = bcl2_data["qc_grid"]
+    assert qc["qc_score"] >= 85.0, f"QC score too low: {qc['qc_score']}"
+    assert qc["key1_fit"]["pocket_rmsd"] < 1.0, f"Pocket RMSD must be sub-angstrom: {qc['key1_fit']['pocket_rmsd']}"
+    assert qc["key1_fit"]["ligand_rmsd"] < 2.0, f"Ligand RMSD must be < 2.0 Å: {qc['key1_fit']['ligand_rmsd']}"
+    assert qc["key2_confidence"]["pocket_mean_plddt"] >= 80.0
+    assert qc["key3_deviation"]["rigid_anchor_count"] >= 10
+    assert qc["key4_pae"]["pocket_intra_pae_angstrom"] < 3.0
+    assert qc["posebusters_audit"]["tests_passed"] == 12
+    assert qc["posebusters_audit"]["compliance_rate"] == "100.0%"
+
+    # 2. Orchestrator workflow trigger
+    orc.run_ai_task("Load BCL-2 bound to Navitoclax with 4-Key AI vs Experiment QC Grid")
+    st = orc.get_state()
+    assert st["active_protocol_key"] == "ai_qc_triangulation"
+    assert st["progress_percent"] == 100
+    assert "qc_grid" in st and st["qc_grid"] is not None
+    assert st["qc_grid"]["qc_score"] >= 85.0
+    assert any("qc_grid_comparison.png" in r["name"] for r in st["results"])
+    assert any("pae_heatmap.png" in r["name"] for r in st["results"])
+
 test_step("1. Polymathix Orchestrator Initialization & PDB Parsing", t1_orchestrator_init)
 test_step("2. De-Novo Drug Synthesis Engine (RDKit Backend)", t2_rdkit_drug_design)
 test_step("3. Deep Trajectory PCA & Manifold Learning Engine", t3_deep_pca)
@@ -345,6 +373,7 @@ test_step("14. Solid-State Materials Science & Crystallography Engine (SrTiO3, G
 test_step("15. 3D Discovery Library Catalog (23+ Targets) & Real-Time AI Co-Pilot", t15_library_catalog_and_copilot)
 test_step("16. Cross-Domain Physical Invariants & Correctness Verifier", t16_cross_domain_correctness_invariants)
 test_step("17. Cryptographic Run Provenance & Deterministic Replay Engine", t17_provenance_and_deterministic_replay)
+test_step("18. 4-Key AI vs Experiment QC Grid, PoseBusters & BCL-2 Navitoclax Benchmark", t18_bcl2_navitoclax_four_key_qc)
 
 print("\n" + "=" * 60)
 print(f"VERIFICATION SUMMARY: {passed} PASSED, {failed} FAILED")

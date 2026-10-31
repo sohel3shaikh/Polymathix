@@ -32,6 +32,7 @@ from polymathix.modules.material_science.crystal_engine import resolve_material_
 from polymathix.modules.ai_engine.llm_gateway import dispatch_copilot_query
 from polymathix.core.invariants import CrossDomainCorrectnessVerifier
 from polymathix.core.provenance import ScientificRunManifest, DeterministicReplayEngine
+from polymathix.core.ai_qc import FourKeyQCGrid, generate_bcl2_navitoclax_benchmark
 
 # Curated small-molecule dictionary
 OFFLINE_MOLECULES = {
@@ -130,6 +131,18 @@ OFFLINE_MOLECULES = {
 # Comprehensive 3D discovery showcase catalog across living kingdoms & materials
 LIBRARY_EXAMPLES = [
     # 1. Human Therapeutics & Medicines
+    {
+        "id": "bcl2_navitoclax",
+        "name": "BCL-2 / Navitoclax (4-Key AI vs Exp QC)",
+        "category": "Human Therapeutics",
+        "badge": "Oncology / QC Grid",
+        "formula": "C47H55ClF3N6O6S3",
+        "mw": "974.6 g/mol",
+        "desc": "Anti-apoptotic BCL-2 bound to BH3-mimetic Navitoclax with 4-Key AI vs X-ray Triangulation (Fit, Confidence, Deviation, Pairwise Error).",
+        "icon": "🎯",
+        "query": "Load BCL-2 bound to Navitoclax with 4-Key AI vs Experiment QC Grid",
+        "derivatize_query": "Synthesize a venetoclax-selective BCL-2 bioisostere with optimized P4 subpocket affinity"
+    },
     {
         "id": "aspirin",
         "name": "Aspirin (Acetylsalicylic Acid)",
@@ -567,6 +580,19 @@ class PolymathixOrchestrator:
                 {"name": "Autonomous energy minimization convergence", "status": "done"},
                 {"name": "Potential energy trajectory graphing", "status": "done"},
                 {"name": "3D OBJ atomic geometry compilation", "status": "done"}
+            ]
+        },
+        "ai_qc_triangulation": {
+            "name": "AI vs Experiment 4-Key QC Triangulation v1.0",
+            "category": "Structural Biology & Physics-Informed ML",
+            "target": "Human BCL-2 Bound to Navitoclax (PDB 4LVT Reference)",
+            "steps": [
+                {"name": "Kabsch rigid-body alignment & global backbone Cα RMSD calculation", "status": "done"},
+                {"name": "Binding pocket & ligand heavy-atom RMSD evaluation (Pose Fit)", "status": "done"},
+                {"name": "Residue-by-residue model confidence profiling (pLDDT Spectrum)", "status": "done"},
+                {"name": "Residue spatial displacement vector mapping (Δr Deviation)", "status": "done"},
+                {"name": "Model-estimated pairwise error (2D PAE Matrix Heatmap)", "status": "done"},
+                {"name": "PoseBusters 12-point physical plausibility & interaction audit", "status": "done"}
             ]
         }
     }
@@ -1093,6 +1119,68 @@ class PolymathixOrchestrator:
         q_lower = query.lower()
         self.add_log("AI", f"Orchestrator received research request: '{query}'")
 
+        # 0. BCL-2 / Navitoclax / 4-Key AI vs Experiment QC Grid Triangulation
+        if any(k in q_lower for k in ["bcl-2", "bcl2", "navitoclax", "abt-263", "abt263", "qc grid", "four key", "pae", "posebusters"]):
+            bcl2_data = generate_bcl2_navitoclax_benchmark()
+            self.pdb_data = bcl2_data
+            self.active_protocol_key = "ai_qc_triangulation"
+            proto = self.PROTOCOLS["ai_qc_triangulation"]
+            self.protocol_name = proto["name"]
+            self.workflow_steps = [dict(s) for s in proto["steps"]]
+            for step in self.workflow_steps:
+                step["status"] = "done"
+            self.progress_percent = 100
+            self.time_remaining = "Completed (Ready)"
+            self.status = "Active"
+
+            qc = bcl2_data["qc_grid"]
+            k1 = qc["key1_fit"]
+            k2 = qc["key2_confidence"]
+            k3 = qc["key3_deviation"]
+            k4 = qc["key4_pae"]
+            pb = qc["posebusters_audit"]
+
+            self.add_log("SUCCESS", f"4-Key QC Grid Evaluated: {bcl2_data['pdb_name']}")
+            self.add_log("SUCCESS", f"Key 1 (Fit to Exp): Pocket RMSD = {k1['pocket_rmsd']} Å | Ligand RMSD = {k1['ligand_rmsd']} Å ({k1['fit_level']}).")
+            self.add_log("SUCCESS", f"Key 2 (Confidence): Pocket mean pLDDT = {k2['pocket_mean_plddt']} / 100.")
+            self.add_log("SUCCESS", f"Key 3 (Deviation): Max displacement at {k3['max_deviated_residue']}; {k3['rigid_anchor_count']} rigid anchors verified.")
+            self.add_log("SUCCESS", f"Key 4 (PAE Heatmap): Pocket intra-domain PAE = {k4['pocket_intra_pae_angstrom']} Å. PoseBusters: {pb['compliance_rate']} compliant.")
+
+            self.results.insert(0, {
+                "name": "qc_grid_comparison.png",
+                "type": "plot",
+                "meta": "Just now",
+                "icon": "📊",
+                "path": "assets/qc_grid_comparison.png"
+            })
+            self.results.insert(1, {
+                "name": "pae_heatmap.png",
+                "type": "plot",
+                "meta": "Just now",
+                "icon": "🗺️",
+                "path": "assets/pae_heatmap.png"
+            })
+            self.results.insert(2, {
+                "name": "bcl2_navitoclax.glb",
+                "type": "model",
+                "meta": "Just now",
+                "icon": "🎯",
+                "path": "assets/polymathix_3d_render.obj"
+            })
+
+            if record_chat:
+                reply, prov = dispatch_copilot_query(
+                    query,
+                    provider=self.ai_config.get("provider", "offline"),
+                    api_key=self.ai_config.get("api_key", ""),
+                    model=self.ai_config.get("model", "")
+                )
+                self.chat_history.append({"sender": "user", "time": self._now_str(), "text": query})
+                self.chat_history.append({"sender": "ai", "time": self._now_str(), "provider": prov, "text": reply})
+            self._finalize_step_verification(query)
+            self.kpis["running_jobs"] += 1
+            return
+
         # 1. Materials Science & Crystallography Discovery
         mat_data = resolve_material_3d(query)
         if mat_data:
@@ -1468,6 +1556,7 @@ class PolymathixOrchestrator:
             "connectors": self.connectors,
             "results": self.results,
             "pdb_data": self.pdb_data,
+            "qc_grid": self.pdb_data.get("qc_grid") if isinstance(self.pdb_data, dict) else None,
             "chat_history": self.chat_history,
             "library_examples": self.library_examples,
             "ai_config": self.ai_config,

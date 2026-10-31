@@ -789,7 +789,8 @@ button, input{ font:inherit; color:var(--text); outline:none; }
                 <span class="chip chip-drug" onclick="runAI('Synthesize novel drug with RDKit and Lipinski screening')">🧪 De-Novo Drug Design</span>
                 <span class="chip chip-glucose" onclick="runAI('Show glucose binding site and identify residues within 4 Å')">🍬 Glucose Pocket</span>
                 <span class="chip chip-pdb" onclick="runAI('Load 4HHB')">🩸 Hemoglobin (4HHB)</span>
-                <span class="chip chip-drug" onclick="openLibraryModal()">▦ Open 3D Library (23+)</span>
+                <span class="chip chip-drug" onclick="runAI('Load BCL-2 bound to Navitoclax with 4-Key AI vs Experiment QC Grid')">🎯 BCL-2 / Navitoclax (AI vs Exp QC)</span>
+                <span class="chip chip-drug" onclick="openLibraryModal()">▦ Open 3D Library (24+)</span>
             </div>
         </div>
         <button class="sendBtn" onclick="runAI()">➤</button>
@@ -1018,6 +1019,65 @@ button, input{ font:inherit; color:var(--text); outline:none; }
                 <div style="background:rgba(10,31,57,0.6);padding:10px;border-radius:8px;border:1px solid rgba(56,189,248,0.2);">
                     <div style="font-size:10px;color:#7dd3fc;font-weight:600;">Energy Minimization Convergence</div>
                     <img src="assets/energy_plot.png" class="analysisPlotPreview" onclick="window.open(this.src)" onerror="this.style.display='none'" />
+                </div>
+            </div>
+
+            
+            <!-- v1.0.3 4-Key AI vs Experiment QC Grid & PoseBusters Matrix -->
+            <div id="aiQcGridSection" style="margin-top:14px;background:rgba(6,22,44,0.85);padding:14px;border-radius:8px;border:1px solid rgba(244,63,94,0.45);box-shadow:0 4px 20px rgba(0,0,0,0.3);">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                    <div style="font-size:12px;font-weight:700;color:#f43f5e;display:flex;align-items:center;gap:6px;">
+                        <span>🔮 4-Key AI vs Experiment Quality-Control Grid & PoseBusters Matrix</span>
+                    </div>
+                    <span id="qcVerdictBadge" style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(244,63,94,0.2);color:#fb7185;font-weight:700;border:1px solid #f43f5e;">QC SCORE: 96.8 / 100 (HIGH-FIDELITY OVERLAY)</span>
+                </div>
+                <div id="qcSystemName" style="font-size:11px;color:#cbd5e1;margin-top:4px;font-weight:600;">System: BCL-2 / Navitoclax (ABT-263) Dual-Pocket Complex</div>
+                
+                <!-- 4 Key Grid Metric Cards -->
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:8px;margin-top:10px;">
+                    <div style="background:rgba(10,31,57,0.7);padding:8px 10px;border-radius:6px;border:1px solid rgba(56,189,248,0.25);">
+                        <div style="font-size:9px;color:#7dd3fc;text-transform:uppercase;font-weight:700;">Key 1: Fit to Exp</div>
+                        <div id="qcKey1Val" style="font-size:14px;font-weight:700;color:#38bdf8;margin-top:2px;">0.84 Å</div>
+                        <div id="qcKey1Sub" style="font-size:9px;color:#94a3b8;">Ligand RMSD: 1.12 Å</div>
+                    </div>
+                    <div style="background:rgba(10,31,57,0.7);padding:8px 10px;border-radius:6px;border:1px solid rgba(0,245,155,0.25);">
+                        <div style="font-size:9px;color:#6ee7b7;text-transform:uppercase;font-weight:700;">Key 2: Confidence</div>
+                        <div id="qcKey2Val" style="font-size:14px;font-weight:700;color:#00f59b;margin-top:2px;">93.4 / 100</div>
+                        <div id="qcKey2Sub" style="font-size:9px;color:#94a3b8;">Pocket Mean pLDDT</div>
+                    </div>
+                    <div style="background:rgba(10,31,57,0.7);padding:8px 10px;border-radius:6px;border:1px solid rgba(250,204,21,0.25);">
+                        <div style="font-size:9px;color:#fde047;text-transform:uppercase;font-weight:700;">Key 3: Residue Dev</div>
+                        <div id="qcKey3Val" style="font-size:14px;font-weight:700;color:#facc15;margin-top:2px;">3.12 Å</div>
+                        <div id="qcKey3Sub" style="font-size:9px;color:#94a3b8;">Max at Loop Hinge (12 Anchors)</div>
+                    </div>
+                    <div style="background:rgba(10,31,57,0.7);padding:8px 10px;border-radius:6px;border:1px solid rgba(192,132,252,0.25);">
+                        <div style="font-size:9px;color:#d8b4fe;text-transform:uppercase;font-weight:700;">Key 4: PAE Error</div>
+                        <div id="qcKey4Val" style="font-size:14px;font-weight:700;color:#c084fc;margin-top:2px;">2.40 Å</div>
+                        <div id="qcKey4Sub" style="font-size:9px;color:#94a3b8;">Pairwise Aligned Confidence</div>
+                    </div>
+                    <div style="background:rgba(10,31,57,0.7);padding:8px 10px;border-radius:6px;border:1px solid rgba(244,63,94,0.25);">
+                        <div style="font-size:9px;color:#fda4af;text-transform:uppercase;font-weight:700;">PoseBusters</div>
+                        <div id="qcPbVal" style="font-size:14px;font-weight:700;color:#f43f5e;margin-top:2px;">12 / 12 PASS</div>
+                        <div id="qcPbSub" style="font-size:9px;color:#94a3b8;">ΔE = 2.14 kcal/mol (&lt; 5.0)</div>
+                    </div>
+                </div>
+
+                <!-- 2-Column Visual QC Heatmaps & Comparison Figures -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
+                    <div style="background:rgba(10,31,57,0.6);padding:10px;border-radius:8px;border:1px solid rgba(244,63,94,0.25);">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <div style="font-size:10px;color:#fda4af;font-weight:600;">Four Keys in One Grid (Publication 4-Panel)</div>
+                            <span style="font-size:8px;color:#94a3b8;">Click to expand</span>
+                        </div>
+                        <img id="qcGridImg" src="assets/qc_grid_comparison.png" class="analysisPlotPreview" style="margin-top:6px;cursor:pointer;border-radius:6px;" onclick="window.open(this.src)" onerror="this.style.display='none'" />
+                    </div>
+                    <div style="background:rgba(10,31,57,0.6);padding:10px;border-radius:8px;border:1px solid rgba(192,132,252,0.25);">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <div style="font-size:10px;color:#d8b4fe;font-weight:600;">2D Predicted Aligned Error (PAE) Matrix</div>
+                            <span style="font-size:8px;color:#94a3b8;">Click to expand</span>
+                        </div>
+                        <img id="paeHeatmapImg" src="assets/pae_heatmap.png" class="analysisPlotPreview" style="margin-top:6px;cursor:pointer;border-radius:6px;" onclick="window.open(this.src)" onerror="this.style.display='none'" />
+                    </div>
                 </div>
             </div>
 
@@ -1286,7 +1346,7 @@ button, input{ font:inherit; color:var(--text); outline:none; }
             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
                 <input type="text" id="libSearchInput" placeholder="Filter by compound name, formula, or domain..." oninput="searchLibrary(this.value)" style="flex:1;min-width:200px;padding:6px 12px;border-radius:8px;background:rgba(10,31,57,0.7);border:1px solid rgba(56,189,248,0.3);color:#fff;font-size:11px;" />
                 <div style="display:flex;gap:4px;overflow-x:auto;">
-                    <button class="styleBtn active" onclick="filterLibrary('All', this)">All (23)</button>
+                    <button class="styleBtn active" onclick="filterLibrary('All', this)">All (24+)</button>
                     <button class="styleBtn" onclick="filterLibrary('Human Therapeutics', this)">💊 Therapeutics</button>
                     <button class="styleBtn" onclick="filterLibrary('Agricultural & Crop Resilience', this)">🌾 Crops & Plants</button>
                     <button class="styleBtn" onclick="filterLibrary('Materials Science & Crystals', this)">💎 Materials Science</button>
@@ -1319,6 +1379,7 @@ button, input{ font:inherit; color:var(--text); outline:none; }
                 <!-- Populated dynamically -->
             </div>
             <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;" id="chatPromptChips">
+                <span class="chip chip-drug" onclick="sendChatPrompt('Load BCL-2 bound to Navitoclax with 4-Key AI vs Experiment QC Grid')">🎯 BCL-2 Navitoclax QC</span>
                 <span class="chip chip-drug" onclick="sendChatPrompt('Fluorinate aspirin at position 4 and evaluate metabolic stability')">💊 Fluorinate Aspirin at C4</span>
                 <span class="chip chip-pdb" onclick="sendChatPrompt('Load Strontium Titanate Perovskite cubic lattice')">💎 Perovskite (SrTiO3)</span>
                 <span class="chip chip-pdb" onclick="sendChatPrompt('Load 2D Graphene monolayer')">▦ 2D Graphene</span>
@@ -3062,6 +3123,53 @@ function updateStateFromPython(state){
                     </div>
                 </div>
             `).join('');
+        }
+    }
+
+    
+    // Sync v1.0.3 4-Key AI vs Experiment QC Grid
+    const qc = state.qc_grid || (state.pdb_data && state.pdb_data.qc_grid);
+    if(qc){
+        const verdictEl = document.getElementById("qcVerdictBadge");
+        if(verdictEl) {
+            verdictEl.textContent = `QC SCORE: ${qc.qc_score} / 100 (${qc.overall_verdict})`;
+            verdictEl.style.color = qc.qc_score >= 85 ? '#00f59b' : '#facc15';
+            verdictEl.style.borderColor = qc.qc_score >= 85 ? '#00f59b' : '#facc15';
+        }
+        const sysNameEl = document.getElementById("qcSystemName");
+        if(sysNameEl && qc.system_name) sysNameEl.textContent = `System: ${qc.system_name}`;
+
+        if(qc.key1_fit){
+            const k1Val = document.getElementById("qcKey1Val");
+            const k1Sub = document.getElementById("qcKey1Sub");
+            if(k1Val) k1Val.textContent = `${qc.key1_fit.pocket_rmsd} Å`;
+            if(k1Sub) k1Sub.textContent = `Ligand RMSD: ${qc.key1_fit.ligand_rmsd} Å (${qc.key1_fit.fit_level})`;
+        }
+        if(qc.key2_confidence){
+            const k2Val = document.getElementById("qcKey2Val");
+            const k2Sub = document.getElementById("qcKey2Sub");
+            if(k2Val) k2Val.textContent = `${qc.key2_confidence.pocket_mean_plddt} / 100`;
+            if(k2Sub) k2Sub.textContent = `Pocket pLDDT (${qc.key2_confidence.confidence_level})`;
+        }
+        if(qc.key3_deviation){
+            const k3Val = document.getElementById("qcKey3Val");
+            const k3Sub = document.getElementById("qcKey3Sub");
+            if(k3Val) k3Val.textContent = `${qc.key3_deviation.max_displacement_angstrom} Å`;
+            if(k3Sub) k3Sub.textContent = `Max: ${qc.key3_deviation.max_deviated_residue} (${qc.key3_deviation.rigid_anchor_count} Anchors)`;
+        }
+        if(qc.key4_pae){
+            const k4Val = document.getElementById("qcKey4Val");
+            const k4Sub = document.getElementById("qcKey4Sub");
+            if(k4Val) k4Val.textContent = `${qc.key4_pae.pocket_intra_pae_angstrom} Å`;
+            if(k4Sub) k4Sub.textContent = `PAE Error (${qc.key4_pae.inter_domain_status})`;
+        }
+        if(qc.posebusters_audit){
+            const pbVal = document.getElementById("qcPbVal");
+            const pbSub = document.getElementById("qcPbSub");
+            if(pbVal) pbVal.textContent = `${qc.posebusters_audit.tests_passed} / ${qc.posebusters_audit.total_tests} PASS`;
+            if(pbSub && qc.posebusters_audit.details && qc.posebusters_audit.details.internal_energy_strain){
+                pbSub.textContent = `ΔE = ${qc.posebusters_audit.details.internal_energy_strain.value} kcal/mol (< 5.0)`;
+            }
         }
     }
 

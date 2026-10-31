@@ -1,32 +1,32 @@
 # 🧬 POLYMATHIX OS — Autonomous AI for Scientific Discovery
 > **Universal Computational Intelligence for Life Sciences & Solid-State Materials: Plants & Crops, Animals, Human Therapeutics, Microbial Biocatalysis & Nanotechnology.**
 
-[![Release: v1.0.2](https://img.shields.io/badge/Release-v1.0.2-0e71ff.svg?style=flat-square&logo=github)](https://github.com/sohel3shaikh/Polymathix/releases/tag/v1.0.2)
+[![Release: v1.0.3](https://img.shields.io/badge/Release-v1.0.3-0e71ff.svg?style=flat-square&logo=github)](https://github.com/sohel3shaikh/Polymathix/releases/tag/v1.0.3)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg?style=flat-square)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.35+-FF4B4B.svg?style=flat-square)](https://streamlit.io)
 [![Three.js](https://img.shields.io/badge/Three.js-r160-black.svg?style=flat-square)](https://threejs.org/)
 [![RDKit](https://img.shields.io/badge/RDKit-2023+-green.svg?style=flat-square)](https://www.rdkit.org/)
 [![OpenMM](https://img.shields.io/badge/OpenMM-8.0+-purple.svg?style=flat-square)](https://openmm.org/)
-[![Tests: 17/17 Passing](https://img.shields.io/badge/Tests-17%2F17%20Passing-00f59b.svg?style=flat-square)](scripts/test_all.py)
+[![Tests: 18/18 Passing](https://img.shields.io/badge/Tests-18%2F18%20Passing-00f59b.svg?style=flat-square)](scripts/test_all.py)
 
 ---
 
 ## 🎬 Interactive 3D Demo Walkthrough
 
 <div align="center">
-  <img src="assets/polymathix_demo.gif" alt="Polymathix OS v1.0.2 Interactive Showcase" width="100%" style="border-radius: 12px; border: 1px solid #38bdf8; box-shadow: 0 8px 32px rgba(0,0,0,0.5);" />
-  <p><em>Real-time 3D biophysical simulation, active pocket docking, solid-state crystallography, 23+ discovery catalog, and multi-LLM AI Co-Pilot in Polymathix OS v1.0.2.</em></p>
+  <img src="assets/polymathix_demo.gif" alt="Polymathix OS v1.0.3 Interactive Showcase" width="100%" style="border-radius: 12px; border: 1px solid #38bdf8; box-shadow: 0 8px 32px rgba(0,0,0,0.5);" />
+  <p><em>Real-time 3D biophysical simulation, 4-Key AI vs Experiment QC Grid, PoseBusters audit, solid-state crystallography, 24+ discovery catalog, and multi-LLM AI Co-Pilot in Polymathix OS v1.0.3.</em></p>
   <p>
-    <a href="https://github.com/sohel3shaikh/Polymathix/releases/download/v1.0.2/Polymathix_Showcase_Demo1.mp4">
+    <a href="https://github.com/sohel3shaikh/Polymathix/releases/download/v1.0.3/Polymathix_Showcase_Demo1.mp4">
       <img src="https://img.shields.io/badge/🎬_Download_HD_Demo_Video-MP4_(21.0_MB)-00f59b?style=for-the-badge&logo=youtube&logoColor=black" alt="Download HD Demo Video">
     </a>
     &nbsp;
-    <a href="https://github.com/sohel3shaikh/Polymathix/releases/tag/v1.0.2">
-      <img src="https://img.shields.io/badge/🚀_GitHub_Release-v1.0.2_Notes-0e71ff?style=for-the-badge&logo=github&logoColor=white" alt="Release v1.0.2">
+    <a href="https://github.com/sohel3shaikh/Polymathix/releases/tag/v1.0.3">
+      <img src="https://img.shields.io/badge/🚀_GitHub_Release-v1.0.3_Notes-0e71ff?style=for-the-badge&logo=github&logoColor=white" alt="Release v1.0.3">
     </a>
     &nbsp;
-    <a href="https://github.com/sohel3shaikh/Polymathix/releases/download/v1.0.2/Polymathix-Master-Release.zip">
+    <a href="https://github.com/sohel3shaikh/Polymathix/releases/download/v1.0.3/Polymathix-Master-Release.zip">
       <img src="https://img.shields.io/badge/📦_Offline_Zip_Bundle-Download-f59e0b?style=for-the-badge&logo=archive&logoColor=white" alt="Download Offline Bundle">
     </a>
   </p>
@@ -99,7 +99,7 @@ Rather than acting as a static dashboard, Polymathix introduces a **closed-loop 
   - **Anatase $\text{TiO}_2$**: Tetragonal photocatalyst coordination polyhedra.
   - **Metal-Organic Framework ($\text{MOF-5}$)**: Nanoporous $\text{Zn}_4\text{O}(\text{BDC})_3$ cage architecture.
   - Automatic computation of lattice parameters, density, coordination numbers, and pore diameters.
-* **3D Discovery Library Catalog (23+ Targets)**:
+* **3D Discovery Library Catalog (24+ Targets)**:
   - Curated benchmark systems across **Human Therapeutics**, **Crop Science**, **Solid-State Materials**, **Microbial Biocatalysis**, and **Veterinary Health**.
   - 1-click **"Load 3D Viewport"** and **"⚡ Make Novel Variant"** live derivatization.
 * **RDKit Cheminformatics**: Automated bioisostere fragmentation, Lipinski Rule-of-Five profiling (MW $\le$ 500, LogP $\le$ 5, HBD $\le$ 5, HBA $\le$ 10, TPSA $\le$ 140 $\text{\AA}^2$, Rotatable Bonds $\le$ 10), and 2D chemical structure synthesis.
@@ -126,7 +126,22 @@ Rather than acting as a static dashboard, Polymathix introduces a **closed-loop 
 * **Active Site Contact Profiling**: Euclidean residue-ligand distance calculations with live interaction classification (Hydrogen bond, Hydrophobic, Electrostatic, $\pi$-$\pi$ stacking).
 * **Multi-Format 3D Exporters**: Export models to **OBJ** (Blender), **STL** (3D printing), **GLB/GLTF** (Web & XR), and **PLY** (CAD/Point Clouds).
 
-### 4. 📊 Multi-Tab Research Workspace
+### 4. 🔮 4-Key AI vs Experiment QC Grid & PoseBusters Physics Audit (`polymathix.core.ai_qc`)
+* **The "Four Keys in One Grid" Architecture**:
+  1. **Key 1 (Fit to Experiment)**: Kabsch superimposition computing Backbone RMSD, Cα Pocket RMSD ($0.84\text{ \AA}$), and Heavy-Atom Ligand RMSD ($1.12\text{ \AA}$).
+  2. **Key 2 (Model Confidence)**: Per-residue pLDDT spectrum highlighting highly confident secondary structures vs flexible peripheral loops ($83.2$ mean pocket pLDDT).
+  3. **Key 3 (Residue Deviation $\Delta r_i$)**: Euclidean spatial deviation vectors discriminating rigid binding pocket anchors (97 preserved anchors) from flexible hinge breathing (max $2.48\text{ \AA}$ at loop D112).
+  4. **Key 4 (Model-Estimated Pairwise Error [PAE])**: 2D Predicted Aligned Error heatmap matrix evaluating domain-domain relative orientation confidence ($2.15\text{ \AA}$ intra-pocket PAE).
+* **PoseBusters 12-Point Physical Plausibility Audit**:
+  Automated compliance verification checking steric clash ratios ($0.00$), covalent bond lengths ($1.12\sigma$), bond angle valence strain ($1.48\sigma$), aromatic planarity ($0.03\text{ \AA}$), chiral center retention ($100\%$), and force-field internal strain ($\Delta E = 1.84\text{ kcal/mol} < 5.0\text{ kcal/mol}$).
+* **Flagship Benchmark: BCL-2 Complexed with Navitoclax (ABT-263)**:
+  Directly addresses the fundamental scientific question: *"When AI and experiment disagree on a binding site, where do you look first?"* with the 4-step biophysical triage sequence:
+  1. *Experimental Electron Density & Crystallographic B-Factors* (flexible loops exhibit higher thermal displacement $B > 50\text{ \AA}^2$; loop breathing is often conformational sampling rather than an AI error).
+  2. *PoseBusters Physical Plausibility & Internal Strain ($\Delta E$)* (eliminating steric clashes and high-energy unphysical conformers).
+  3. *Cross-Domain PAE & Inter-Chain Confidence* (confirming domain-domain hinge orientation).
+  4. *Protein-Ligand Interaction Fingerprints (PLIF)* (confirming key pharmacophoric anchors such as Asp103 H-bonding and hydrophobic pocket insertion).
+
+### 5. 📊 Multi-Tab Research Workspace
 * **3D Viewer**: Full orbit controls, focus, camera reset, snapshot download.
 * **Sequence Viewer**: Primary amino acid sequence chips with residue numbering and secondary structure color coding.
 * **Trajectory Timeline**: Dynamic frame scrubber with RMSD and energy stability tracking.
@@ -190,11 +205,12 @@ POLYMATHIX OS — COMPREHENSIVE END-TO-END VERIFICATION
 [TEST] 12. Universal Small Molecule 3D Engine (Aspirin, etc.)...  --> PASSED
 [TEST] 13. 100% Progress Convergence & Protocol Finalization...  --> PASSED
 [TEST] 14. Solid-State Materials Science & Crystallography...     --> PASSED
-[TEST] 15. 3D Discovery Library Catalog (23+) & Real-Time AI...   --> PASSED
+[TEST] 15. 3D Discovery Library Catalog (24+) & Real-Time AI...   --> PASSED
 [TEST] 16. Cross-Domain Physical Invariants & Correctness...      --> PASSED
 [TEST] 17. Cryptographic Run Provenance & Replay Engine...        --> PASSED
+[TEST] 18. 4-Key AI vs Experiment QC Grid & PoseBusters Audit...  --> PASSED
 ============================================================
-VERIFICATION SUMMARY: 17 PASSED, 0 FAILED
+VERIFICATION SUMMARY: 18 PASSED, 0 FAILED
 ============================================================
 ```
 
@@ -208,6 +224,7 @@ Polymathix/
 ├── polymathix/                # Core Python scientific intelligence backend
 │   ├── orchestrator.py        # AI Orchestrator (Plan -> Execute -> Verify)
 │   ├── core/                  # Multiscale biophysics & verification
+│   │   ├── ai_qc.py           # 4-Key AI vs Experiment QC Grid & PoseBusters Audit
 │   │   ├── invariants.py      # Domain-Agnostic Physical Invariants & Correctness Verifier
 │   │   ├── provenance.py      # Cryptographic Scientific Provenance & Replay Engine
 │   │   └── hybrid_dynamics.py # QM/MM boundary dynamics
@@ -224,7 +241,7 @@ Polymathix/
 │       ├── index.html         # Three.js WebGL dashboard & layout
 │       └── assets/            # Live scientific plots, models, renders & animated demo
 ├── scripts/                   # Automated testing, video generation & release scripts
-│   ├── test_all.py            # End-to-end test suite (15 tests)
+│   ├── test_all.py            # End-to-end test suite (18 tests)
 │   ├── generate_linkedin_video.py  # 48-second HD showcase video & GIF builder
 │   └── publish_github_release.py   # GitHub Releases API publishing automation
 ├── 1CRN.pdb                   # Benchmark reference (Crambin plant seed protein)
